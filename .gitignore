@@ -1,0 +1,5 @@
+.claude/design-refs/
+.agents/
+node_modules/
+target/
+.env
