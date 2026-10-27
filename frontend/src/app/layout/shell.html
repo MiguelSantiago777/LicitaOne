@@ -1,0 +1,68 @@
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+<header class="phone-bar">
+  <a routerLink="/painel" class="product">
+    <app-brand-mark [size]="24" />
+    <span>ShemaCRM</span>
+  </a>
+  <button
+    type="button"
+    class="btn ghost"
+    (click)="toggleMenu()"
+    [attr.aria-expanded]="menuOpen()"
+    aria-controls="navegacao"
+    [attr.aria-label]="menuOpen() ? 'Fechar menu' : 'Abrir menu'"
+  >
+    <app-icon [name]="menuOpen() ? 'x' : 'menu'" [size]="20" />
+  </button>
+</header>
+
+<div class="app">
+  <nav id="navegacao" class="sidebar" [class.open]="menuOpen()" aria-label="Navegação principal">
+    <a routerLink="/painel" class="product desktop-only">
+      <app-brand-mark />
+      <span class="product-text">
+        <span class="product-name">ShemaCRM</span>
+        <span class="scope">Shema Suprimentos e Serviços</span>
+      </span>
+    </a>
+
+    @for (group of groups; track group.label) {
+      @if (group.label) {
+        <p class="group-label">{{ group.label }}</p>
+      }
+      <ul class="nav-list">
+        @for (item of group.items; track item.path) {
+          <li>
+            <a
+              class="nav-item"
+              [routerLink]="item.path"
+              routerLinkActive
+              ariaCurrentWhenActive="page"
+            >
+              <app-icon [name]="item.icon" />
+              <span>{{ item.label }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (session.user(); as user) {
+      <div class="user-row">
+        <span class="avatar" aria-hidden="true">{{ user.initials }}</span>
+        <span class="user-text">
+          <span class="user-name">{{ user.name }}</span>
+          <span class="user-role">{{ user.roleLabel }}</span>
+        </span>
+        <button type="button" class="btn ghost logout" (click)="logout()" aria-label="Sair">
+          <app-icon name="logout" />
+        </button>
+      </div>
+    }
+  </nav>
+
+  <main id="conteudo" class="canvas" tabindex="-1">
+    <router-outlet />
+  </main>
+</div>

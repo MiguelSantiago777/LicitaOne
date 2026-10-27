@@ -1,0 +1,66 @@
+<div class="title-row">
+  <div>
+    <h1>Licitações</h1>
+    <p class="sub">Da vitória ao encerramento do contrato.</p>
+  </div>
+  <button type="button" class="btn primary" disabled title="O cadastro chega na próxima entrega">
+    <app-icon name="plus" />
+    Cadastrar licitação
+  </button>
+</div>
+
+<div class="tabs" role="tablist" aria-label="Situação">
+  @for (tab of tabs; track tab.id) {
+    <button
+      type="button"
+      role="tab"
+      [id]="'tab-' + tab.id"
+      [attr.aria-selected]="selected() === tab"
+      aria-controls="tenders-panel"
+      (click)="selected.set(tab)"
+    >
+      <span>{{ tab.label }}</span>
+      <span class="tab-figure">0 · R$ 0,00</span>
+    </button>
+  }
+</div>
+
+<section id="tenders-panel" role="tabpanel" [attr.aria-labelledby]="'tab-' + selected().id">
+  <div class="toolbar">
+    <label class="search">
+      <span class="visually-hidden">Buscar licitações</span>
+      <app-icon name="search" />
+      <input class="input" type="search" placeholder="Órgão, UASG ou pregão" disabled />
+    </label>
+    <span class="count">0 licitações</span>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <caption class="visually-hidden">
+        {{
+          selected().label
+        }}
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Órgão</th>
+          <th scope="col">UASG / Pregão</th>
+          <th scope="col">Tipo de material</th>
+          <th scope="col">Responsável</th>
+          <th scope="col" class="n">Valor</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="5">
+            <div class="empty">
+              <strong>{{ selected().empty }}</strong>
+              <span>O cadastro de licitações chega na próxima entrega.</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>

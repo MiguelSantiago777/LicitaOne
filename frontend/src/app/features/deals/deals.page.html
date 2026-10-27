@@ -1,0 +1,25 @@
+<div class="title-row">
+  <div>
+    <h1>Negociações</h1>
+    <p class="sub">Funil de vendas e caronas em atas vigentes.</p>
+  </div>
+</div>
+
+<div class="board" role="list" aria-label="Etapas do funil">
+  @for (stage of stages; track stage) {
+    <section class="column" role="listitem" [attr.aria-label]="stage">
+      <header>
+        <h2>{{ stage }}</h2>
+        <p class="column-figure">0 · R$ 0,00</p>
+      </header>
+      <div class="column-body">
+        @if ($first) {
+          <div class="empty">
+            <strong>Nenhuma negociação.</strong>
+            <span>O kanban chega na Fase 4.</span>
+          </div>
+        }
+      </div>
+    </section>
+  }
+</div>

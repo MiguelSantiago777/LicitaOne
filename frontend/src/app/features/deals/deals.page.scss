@@ -1,0 +1,32 @@
+.board {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(232px, 1fr);
+  gap: var(--gap);
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.column {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 320px;
+  background: var(--raised);
+  border-radius: var(--radius-card);
+  padding: 12px;
+}
+.column header {
+  padding: 2px 2px 12px;
+}
+.column h2 {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  line-height: 20px;
+}
+.column-figure {
+  color: var(--muted);
+  font-size: var(--fs-small);
+  font-variant-numeric: tabular-nums;
+}
+.column .empty {
+  background: var(--surface);
+}
