@@ -1,0 +1,5 @@
+# Perfil usado pelo docker compose: logs em JSON (ECS) com o correlationId do MDC.
+logging:
+  structured:
+    format:
+      console: ecs
