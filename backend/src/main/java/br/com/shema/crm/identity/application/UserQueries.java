@@ -1,5 +1,6 @@
 package br.com.shema.crm.identity.application;
 
+import br.com.shema.crm.identity.UserSummary;
 import br.com.shema.crm.identity.domain.User;
 import br.com.shema.crm.identity.infrastructure.UserRepository;
 import br.com.shema.crm.shared.web.ApiException;
@@ -26,5 +27,12 @@ public class UserQueries {
 
     public List<User> list() {
         return users.findAll(Sort.by("name"));
+    }
+
+    public List<UserSummary> activeSummaries() {
+        return users.findAll(Sort.by("name")).stream()
+                .filter(User::isActive)
+                .map(UserDirectoryService::summary)
+                .toList();
     }
 }

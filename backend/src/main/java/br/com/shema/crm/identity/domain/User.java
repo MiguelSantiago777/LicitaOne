@@ -98,6 +98,18 @@ public class User extends AuditableEntity {
         lastLoginAt = now;
     }
 
+    public void changeProfile(String name, Role role, boolean active) {
+        this.name = requireText(name, "name").trim();
+        this.role = Objects.requireNonNull(role, "role");
+        this.active = active;
+    }
+
+    public void changePassword(String passwordHash) {
+        this.passwordHash = requireText(passwordHash, "passwordHash");
+        this.failedLoginAttempts = 0;
+        this.lockedUntil = null;
+    }
+
     /** Iniciais para o avatar: primeira letra do primeiro e do último nome. */
     public String initials() {
         String[] parts =

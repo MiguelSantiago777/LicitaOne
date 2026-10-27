@@ -13,6 +13,8 @@ public enum ErrorCode {
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "Sem permissão"),
     NOT_FOUND(HttpStatus.NOT_FOUND, "Recurso não encontrado"),
     VERSION_CONFLICT(HttpStatus.CONFLICT, "O registro foi alterado por outra pessoa"),
+    CONFLICT(HttpStatus.CONFLICT, "Conflito com dados existentes"),
+    BUSINESS_RULE(HttpStatus.UNPROCESSABLE_CONTENT, "Regra de negócio"),
     RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "Muitas tentativas"),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno");
 

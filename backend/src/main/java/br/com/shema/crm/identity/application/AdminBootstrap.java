@@ -12,7 +12,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Cria o primeiro administrador a partir de variáveis de ambiente quando o banco ainda não tem usuários. */
+/**
+ * Cria o primeiro administrador a partir de variáveis de ambiente quando ainda não existe nenhum administrador.
+ * (O seed de desenvolvimento cria usuários comerciais, por isso o critério é "nenhum ADMIN", não "nenhum usuário".)
+ */
 @Component
 class AdminBootstrap implements ApplicationRunner {
 
@@ -31,11 +34,11 @@ class AdminBootstrap implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (users.count() > 0) {
+        if (users.existsByRole(Role.ADMIN)) {
             return;
         }
         if (isBlank(properties.email()) || isBlank(properties.password())) {
-            log.warn("Nenhum usuário cadastrado e SHEMA_ADMIN_EMAIL/SHEMA_ADMIN_PASSWORD não definidos.");
+            log.warn("Nenhum administrador cadastrado e SHEMA_ADMIN_EMAIL/SHEMA_ADMIN_PASSWORD não definidos.");
             return;
         }
         users.save(new User(

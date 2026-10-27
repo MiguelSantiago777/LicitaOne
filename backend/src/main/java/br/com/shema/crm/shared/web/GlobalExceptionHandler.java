@@ -1,5 +1,6 @@
 package br.com.shema.crm.shared.web;
 
+import br.com.shema.crm.shared.domain.DomainRuleViolation;
 import jakarta.persistence.OptimisticLockException;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ApiException.class)
     ResponseEntity<ProblemDetail> handleApi(ApiException ex) {
         return respond(Problems.of(ex.code(), ex.getMessage()));
+    }
+
+    /** Regra de negócio violada: 422 com o código da regra em "rule". */
+    @ExceptionHandler(DomainRuleViolation.class)
+    ResponseEntity<ProblemDetail> handleRule(DomainRuleViolation ex) {
+        ProblemDetail problem = Problems.of(ErrorCode.BUSINESS_RULE, ex.getMessage());
+        problem.setProperty("rule", ex.rule());
+        return respond(problem);
     }
 
     @ExceptionHandler({ObjectOptimisticLockingFailureException.class, OptimisticLockException.class})

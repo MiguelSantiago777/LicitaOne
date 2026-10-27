@@ -2,9 +2,19 @@ package br.com.shema.crm.identity.api;
 
 import br.com.shema.crm.identity.domain.Role;
 import br.com.shema.crm.identity.domain.User;
+import java.time.Instant;
 import java.util.UUID;
 
-public record UserResponse(UUID id, String name, String email, Role role, String roleLabel, String initials) {
+public record UserResponse(
+        UUID id,
+        String name,
+        String email,
+        Role role,
+        String roleLabel,
+        String initials,
+        boolean active,
+        Instant lastLoginAt,
+        long version) {
 
     static UserResponse from(User user) {
         return new UserResponse(
@@ -13,6 +23,9 @@ public record UserResponse(UUID id, String name, String email, Role role, String
                 user.getEmail(),
                 user.getRole(),
                 user.getRole().label(),
-                user.initials());
+                user.initials(),
+                user.isActive(),
+                user.getLastLoginAt(),
+                user.getVersion() == null ? 0 : user.getVersion());
     }
 }
