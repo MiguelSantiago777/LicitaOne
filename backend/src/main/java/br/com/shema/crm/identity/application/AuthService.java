@@ -71,6 +71,7 @@ public class AuthService {
                 log.warn("Conta {} bloqueada após tentativas de login sem sucesso", user.getId());
                 throw lockedError();
             }
+            log.info("Login recusado: senha incorreta para o usuário {}", user.getId());
             throw new ApiException(ErrorCode.INVALID_CREDENTIALS);
         }
         user.recordSuccessfulLogin(now);

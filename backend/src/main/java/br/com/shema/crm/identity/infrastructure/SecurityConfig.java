@@ -45,6 +45,9 @@ class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/error")
                         .permitAll()
+                        // Actuator roda na porta de gestão (8081), que não é publicada fora do compose
+                        .requestMatchers("/actuator/health/**", "/actuator/info", "/actuator/prometheus")
+                        .permitAll()
                         .anyRequest()
                         .authenticated())
                 .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter()))

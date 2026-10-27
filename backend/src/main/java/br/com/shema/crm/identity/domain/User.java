@@ -13,7 +13,12 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
+import org.hibernate.annotations.OptimisticLock;
 
+/**
+ * Usuário. Os campos de controle de login ficam fora do optimistic locking: dois logins simultâneos do mesmo
+ * usuário não podem dar conflito de versão.
+ */
 @Entity
 @Table(name = "users")
 public class User extends AuditableEntity {
@@ -37,12 +42,15 @@ public class User extends AuditableEntity {
     @Column(nullable = false)
     private boolean active;
 
+    @OptimisticLock(excluded = true)
     @Column(name = "failed_login_attempts", nullable = false)
     private int failedLoginAttempts;
 
+    @OptimisticLock(excluded = true)
     @Column(name = "locked_until")
     private Instant lockedUntil;
 
+    @OptimisticLock(excluded = true)
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 

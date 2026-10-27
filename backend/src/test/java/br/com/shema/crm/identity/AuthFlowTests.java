@@ -144,6 +144,21 @@ class AuthFlowTests {
     }
 
     @Test
+    void concurrentLoginsOfSameUserDoNotConflict() throws Exception {
+        users.save(new User("Dois Logins", "dois@test.local", passwordEncoder.encode("Senha-dois-1"), Role.SALES));
+        try (var executor = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()) {
+            var results = executor.invokeAll(java.util.Collections.nCopies(
+                    6,
+                    () -> login("dois@test.local", "Senha-dois-1")
+                            .getStatusCode()
+                            .value()));
+            for (var result : results) {
+                assertThat(result.get()).isEqualTo(200);
+            }
+        }
+    }
+
+    @Test
     void viewerCannotListUsers() {
         users.save(new User("Leitor", "leitor@test.local", passwordEncoder.encode("Senha-leitor-1"), Role.VIEWER));
         String token =
