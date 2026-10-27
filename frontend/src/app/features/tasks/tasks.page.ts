@@ -1,12 +1,13 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { DemoBadge } from '../../shared/ui/demo-badge';
 import { Avatar } from '../../shared/ui/avatar';
 import { Icon } from '../../shared/ui/icon';
 import { DemoTask, TASKS, daysBetween } from '../demo/demo-data';
 
 @Component({
   selector: 'app-tasks-page',
-  imports: [CurrencyPipe, DatePipe, Avatar, Icon],
+  imports: [DemoBadge, CurrencyPipe, DatePipe, Avatar, Icon],
   templateUrl: './tasks.page.html',
   styleUrl: './tasks.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

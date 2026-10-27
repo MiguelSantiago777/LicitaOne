@@ -89,8 +89,19 @@ public class AuthService {
         if (current == null) {
             throw new ApiException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
+        if (current.wasRotatedWithin(now, properties.refreshReuseGrace())) {
+            // Corrida comum (recarregou a página no meio da renovação): emite um novo sem derrubar nada
+            User user = users.findById(current.getUserId())
+                    .filter(u -> u.canLogin(now))
+                    .orElseThrow(() -> new ApiException(ErrorCode.INVALID_REFRESH_TOKEN));
+            return issueTokens(user, now);
+        }
+        if (current.isRevoked() && !current.isRotated()) {
+            // Encerrado por logout ou pelo administrador: só é inválido, não é sinal de roubo
+            throw new ApiException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
         if (current.isRevoked()) {
-            // Token já usado sendo reapresentado: possível roubo. Derruba todas as sessões do usuário.
+            // Token trocado sendo reapresentado fora da janela: possível roubo. Derruba todas as sessões.
             log.warn("Reuso de refresh token revogado para o usuário {}", current.getUserId());
             refreshTokens.revokeAllForUser(current.getUserId(), now);
             throw new ApiException(ErrorCode.INVALID_REFRESH_TOKEN);
@@ -101,7 +112,7 @@ public class AuthService {
         User user = users.findById(current.getUserId())
                 .filter(u -> u.canLogin(now))
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_REFRESH_TOKEN));
-        current.revoke(now);
+        current.rotate(now);
         return issueTokens(user, now);
     }
 

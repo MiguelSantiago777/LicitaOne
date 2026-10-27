@@ -1,0 +1,98 @@
+.form {
+  display: grid;
+  gap: 16px;
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.span-2 {
+  grid-column: span 2;
+}
+.narrow {
+  max-width: 220px;
+}
+.textarea {
+  height: auto;
+  padding: 10px 12px;
+  resize: vertical;
+  line-height: 20px;
+}
+.alert {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--red-bg);
+  color: var(--red);
+  font-weight: 500;
+}
+.status-choice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.status-choice legend {
+  margin-bottom: 6px;
+  font-weight: 550;
+  font-size: 13px;
+}
+.choice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+.choice.on {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+.choice input {
+  margin-top: 3px;
+  accent-color: var(--brand);
+}
+.choice span {
+  display: grid;
+}
+.choice small {
+  color: var(--text-2);
+  font-size: 12px;
+}
+.money-input {
+  position: relative;
+}
+.money-input span {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  translate: 0 -50%;
+  color: var(--text-3);
+  font-weight: 550;
+}
+.money-input .input {
+  padding-left: 38px;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 560px) {
+  .grid-2,
+  .grid-3,
+  .status-choice {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .span-2 {
+    grid-column: auto;
+  }
+}

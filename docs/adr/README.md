@@ -14,3 +14,4 @@ Cada decisão relevante tem um arquivo `NNNN-titulo.md` com contexto, decisão e
 | [0008](0008-sistema-visual.md) | Sistema visual e componentes do front | Substituído por 0010 |
 | [0009](0009-arquitetura-do-frontend.md) | Arquitetura do frontend: Signals, cliente gerado, sessão em memória | Aceito |
 | [0010](0010-redesign-crm-moderno.md) | Redesign: visual de CRM moderno | Aceito |
+| [0011](0011-licitacoes-fase-1.md) | Licitações: ciclo de vida, permissões e sessão | Aceito |

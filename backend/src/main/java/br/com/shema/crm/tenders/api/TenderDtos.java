@@ -88,13 +88,13 @@ final class TenderDtos {
         }
     }
 
-    record AgencyRef(UUID id, String name, String city, String state) {}
+    record AgencyRefResponse(UUID id, String name, String city, String state) {}
 
-    record NextStatus(TenderStatus status, String label, String requiredDate) {}
+    record NextStatusResponse(TenderStatus status, String label, String requiredDate) {}
 
     record TenderResponse(
             UUID id,
-            AgencyRef agency,
+            AgencyRefResponse agency,
             Modality modality,
             String modalityLabel,
             String uasg,
@@ -114,23 +114,23 @@ final class TenderDtos {
             LocalDate closedAt,
             OwnerResponse owner,
             String notes,
-            List<NextStatus> nextStatuses,
+            List<NextStatusResponse> nextStatuses,
             boolean canEdit,
             long version,
             Instant createdAt,
             Instant updatedAt) {
 
         static TenderResponse from(Tender t, UserSummary owner, boolean canEdit) {
-            List<NextStatus> next = t.getStatus().next().stream()
+            List<NextStatusResponse> next = t.getStatus().next().stream()
                     .sorted()
-                    .map(s -> new NextStatus(
+                    .map(s -> new NextStatusResponse(
                             s,
                             s.label(),
                             s.requiredDate() == null ? null : s.requiredDate().label()))
                     .toList();
             return new TenderResponse(
                     t.getId(),
-                    new AgencyRef(
+                    new AgencyRefResponse(
                             t.getAgency().getId(),
                             t.getAgency().getName(),
                             t.getAgency().getCity(),
@@ -183,9 +183,11 @@ final class TenderDtos {
             TenderStatus toStatus,
             String toLabel,
             LocalDate eventDate,
-            List<TenderService.FieldChange> changes,
+            List<FieldChangeResponse> changes,
             String userName,
             Instant occurredAt) {}
+
+    record FieldChangeResponse(String field, String from, String to) {}
 
     record SuggestionsResponse(List<String> materialTypes, List<String> portals) {}
 }

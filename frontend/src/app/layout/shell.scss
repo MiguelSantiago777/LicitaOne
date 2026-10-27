@@ -152,7 +152,7 @@
   font-size: 12px;
   line-height: 16px;
 }
-.logout {
+.user-btn {
   display: grid;
   place-items: center;
   width: 32px;
@@ -163,7 +163,7 @@
   color: #94a3b8;
   cursor: pointer;
 }
-.logout:hover {
+.user-btn:hover {
   background: rgb(255 255 255 / 0.08);
   color: #fff;
 }

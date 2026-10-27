@@ -57,3 +57,11 @@ As dúvidas da seção 11(c) da [especificação](especificacao.md) foram enviad
 3. O quadro *Organização mensal* organiza o quê: as licitações do mês (sessões marcadas), as tarefas ou as entregas?
 4. O limite de 200% vale por item ou pelo valor total da ata?
 5. Quem recebe os e-mails de alerta: o responsável, todos ou uma lista configurável?
+
+### Respostas assumidas para começar a Fase 1 (27/10/2026)
+O usuário autorizou seguir sem esperar o cliente. Assumimos o seguinte; tudo pode mudar quando o cliente confirmar:
+1. Uma licitação pode ter vários contratos ou empenhos (entra como entidade na Fase 2).
+2. Existem os estados *Em disputa* e *Perdida*: a licitação pode ser cadastrada antes do resultado.
+3. O quadro de organização mensal organiza as sessões de licitação do mês (Fase 4).
+4. Limite de carona configurável, começando em 200% por item (Fase 3).
+5. Alertas por e-mail para o responsável pela licitação (Fase 5).

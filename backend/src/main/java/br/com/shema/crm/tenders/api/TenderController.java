@@ -168,12 +168,18 @@ class TenderController {
                         e.getToStatus(),
                         e.getToStatus() == null ? null : e.getToStatus().label(),
                         e.getEventDate(),
-                        e.getChanges() == null
-                                ? List.of()
-                                : json.readValue(
-                                        e.getChanges(), new TypeReference<List<TenderService.FieldChange>>() {}),
+                        changes(e.getChanges()),
                         e.getUserName(),
                         e.getOccurredAt()))
+                .toList();
+    }
+
+    private List<TenderDtos.FieldChangeResponse> changes(String changesJson) {
+        if (changesJson == null) {
+            return List.of();
+        }
+        return json.readValue(changesJson, new TypeReference<List<TenderService.FieldChange>>() {}).stream()
+                .map(c -> new TenderDtos.FieldChangeResponse(c.field(), c.from(), c.to()))
                 .toList();
     }
 

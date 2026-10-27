@@ -1,13 +1,17 @@
+import { DemoBadge } from '../../shared/ui/demo-badge';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Icon } from '../../shared/ui/icon';
 
 @Component({
   selector: 'app-imports-page',
-  imports: [Icon],
+  imports: [DemoBadge, Icon],
   template: `
     <div class="page-head">
       <div>
-        <h1>Importação</h1>
+        <div class="title-line">
+          <h1>Importação</h1>
+          <app-demo-badge [phase]="2" />
+        </div>
         <p class="sub">Traga a planilha de controle de contratos e ajuste depois.</p>
       </div>
     </div>

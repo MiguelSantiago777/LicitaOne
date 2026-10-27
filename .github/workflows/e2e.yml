@@ -18,6 +18,7 @@ jobs:
       - name: Sobe o sistema completo
         run: |
           cp .env.example .env
+          echo "SHEMA_LOGIN_ATTEMPTS_PER_MINUTE=1000" >> .env
           docker compose up -d --build --wait
       - uses: actions/setup-node@v5
         with:

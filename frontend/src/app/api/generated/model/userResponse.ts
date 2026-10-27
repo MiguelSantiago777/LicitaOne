@@ -14,4 +14,7 @@ export interface UserResponse {
   role: UserResponseRole;
   roleLabel: string;
   initials: string;
+  active: boolean;
+  lastLoginAt: string;
+  version: number;
 }

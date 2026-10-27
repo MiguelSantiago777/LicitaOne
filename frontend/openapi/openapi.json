@@ -12,8 +12,16 @@
   ],
   "tags": [
     {
+      "name": "tenders",
+      "description": "Licitações"
+    },
+    {
       "name": "auth",
       "description": "Autenticação"
+    },
+    {
+      "name": "agencies",
+      "description": "Órgãos"
     },
     {
       "name": "users",
@@ -21,6 +29,550 @@
     }
   ],
   "paths": {
+    "/api/v1/users/{id}": {
+      "put": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Altera nome, perfil ou situação de um usuário",
+        "operationId": "updateUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUser"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenders/{id}": {
+      "get": {
+        "tags": [
+          "tenders"
+        ],
+        "summary": "Uma licitação",
+        "operationId": "getTender",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "tenders"
+        ],
+        "summary": "Altera os dados de uma licitação",
+        "operationId": "updateTender",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTenderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agencies/{id}": {
+      "get": {
+        "tags": [
+          "agencies"
+        ],
+        "summary": "Um órgão",
+        "operationId": "getAgency",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgencyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "agencies"
+        ],
+        "summary": "Altera um órgão",
+        "operationId": "updateAgency",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgencyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgencyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Lista os usuários (só administradores)",
+        "operationId": "listUsers",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Cadastra um usuário",
+        "operationId": "createUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUser"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/password": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Define uma nova senha para o usuário",
+        "operationId": "resetUserPassword",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPassword"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/tenders": {
+      "get": {
+        "tags": [
+          "tenders"
+        ],
+        "summary": "Lista licitações com filtros, ordenação e paginação",
+        "operationId": "searchTenders",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "EM_DISPUTA",
+                  "PERDIDA",
+                  "VENCIDA",
+                  "AGUARDANDO_ASSINATURA",
+                  "CONTRATO_ASSINADO",
+                  "EM_ANDAMENTO",
+                  "ENCERRADO"
+                ]
+              },
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "agencyId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "materialType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minValue",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxValue",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "ownerId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "signedBefore",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 25
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "value"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "desc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseTenderResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "tenders"
+        ],
+        "summary": "Cadastra uma licitação (em disputa ou já vencida)",
+        "operationId": "createTender",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTenderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenders/{id}/transitions": {
+      "post": {
+        "tags": [
+          "tenders"
+        ],
+        "summary": "Muda a situação da licitação",
+        "operationId": "transitionTender",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/password": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Troca a própria senha",
+        "operationId": "changeOwnPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeOwnPassword"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/api/v1/auth/refresh": {
       "post": {
         "tags": [
@@ -110,13 +662,93 @@
         "security": []
       }
     },
-    "/api/v1/users": {
+    "/api/v1/agencies": {
+      "get": {
+        "tags": [
+          "agencies"
+        ],
+        "summary": "Busca órgãos por nome ou município",
+        "operationId": "searchAgencies",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseAgencyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "agencies"
+        ],
+        "summary": "Cadastra um órgão",
+        "operationId": "createAgency",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgencyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgencyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/options": {
       "get": {
         "tags": [
           "users"
         ],
-        "summary": "Lista os usuários (só administradores)",
-        "operationId": "listUsers",
+        "summary": "Usuários ativos, para escolher responsável",
+        "operationId": "listUserOptions",
         "responses": {
           "200": {
             "description": "OK",
@@ -125,8 +757,174 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/UserResponse"
+                    "$ref": "#/components/schemas/UserOptionResponse"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenders/{id}/history": {
+      "get": {
+        "tags": [
+          "tenders"
+        ],
+        "summary": "Histórico de alterações",
+        "operationId": "tenderHistory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TenderEventResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenders/summary": {
+      "get": {
+        "tags": [
+          "tenders"
+        ],
+        "summary": "Quantidade e valor por situação (segue os mesmos filtros da lista)",
+        "operationId": "tenderSummary",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "agencyId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "materialType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minValue",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxValue",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "ownerId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StatusTotalResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenders/suggestions": {
+      "get": {
+        "tags": [
+          "tenders"
+        ],
+        "summary": "Tipos de material e portais já usados, para autocompletar",
+        "operationId": "tenderSuggestions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionsResponse"
                 }
               }
             }
@@ -158,28 +956,29 @@
   },
   "components": {
     "schemas": {
-      "AccessTokenResponse": {
+      "UpdateUser": {
         "type": "object",
         "properties": {
-          "accessToken": {
-            "type": "string"
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
           },
-          "tokenType": {
-            "type": "string"
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMIN",
+              "SALES",
+              "VIEWER"
+            ]
           },
-          "expiresIn": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "user": {
-            "$ref": "#/components/schemas/UserResponse"
+          "active": {
+            "type": "boolean"
           }
         },
         "required": [
-          "accessToken",
-          "expiresIn",
-          "tokenType",
-          "user"
+          "name",
+          "role"
         ]
       },
       "UserResponse": {
@@ -208,15 +1007,588 @@
           },
           "initials": {
             "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "active",
+          "email",
+          "id",
+          "initials",
+          "lastLoginAt",
+          "name",
+          "role",
+          "roleLabel",
+          "version"
+        ]
+      },
+      "TenderRequest": {
+        "type": "object",
+        "properties": {
+          "agencyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "modality": {
+            "type": "string",
+            "enum": [
+              "PREGAO_ELETRONICO",
+              "PREGAO_PRESENCIAL",
+              "DISPENSA",
+              "CONCORRENCIA",
+              "OUTRA"
+            ]
+          },
+          "uasg": {
+            "type": "string",
+            "maxLength": 10,
+            "minLength": 0
+          },
+          "processNumber": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0
+          },
+          "portal": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 0
+          },
+          "sessionAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "object": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "materialType": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "itemsQuantity": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "totalValue": {
+            "type": "number",
+            "minimum": 0
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "agencyId",
+          "materialType",
+          "object",
+          "totalValue"
+        ]
+      },
+      "UpdateTenderRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "tender": {
+            "$ref": "#/components/schemas/TenderRequest"
+          }
+        },
+        "required": [
+          "tender",
+          "version"
+        ]
+      },
+      "AgencyRefResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city",
+          "id",
+          "name",
+          "state"
+        ]
+      },
+      "NextStatusResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "EM_DISPUTA",
+              "PERDIDA",
+              "VENCIDA",
+              "AGUARDANDO_ASSINATURA",
+              "CONTRATO_ASSINADO",
+              "EM_ANDAMENTO",
+              "ENCERRADO"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "requiredDate": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "requiredDate",
+          "status"
+        ]
+      },
+      "OwnerResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "initials": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "initials",
+          "name"
+        ]
+      },
+      "TenderResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "agency": {
+            "$ref": "#/components/schemas/AgencyRefResponse"
+          },
+          "modality": {
+            "type": "string",
+            "enum": [
+              "PREGAO_ELETRONICO",
+              "PREGAO_PRESENCIAL",
+              "DISPENSA",
+              "CONCORRENCIA",
+              "OUTRA"
+            ]
+          },
+          "modalityLabel": {
+            "type": "string"
+          },
+          "uasg": {
+            "type": "string"
+          },
+          "processNumber": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "portal": {
+            "type": "string"
+          },
+          "sessionAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "object": {
+            "type": "string"
+          },
+          "materialType": {
+            "type": "string"
+          },
+          "itemsQuantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalValue": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "EM_DISPUTA",
+              "PERDIDA",
+              "VENCIDA",
+              "AGUARDANDO_ASSINATURA",
+              "CONTRATO_ASSINADO",
+              "EM_ANDAMENTO",
+              "ENCERRADO"
+            ]
+          },
+          "statusLabel": {
+            "type": "string"
+          },
+          "wonAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "signedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "ordersStartedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "closedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/OwnerResponse"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "nextStatuses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NextStatusResponse"
+            }
+          },
+          "canEdit": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "agency",
+          "canEdit",
+          "closedAt",
+          "createdAt",
+          "id",
+          "itemsQuantity",
+          "materialType",
+          "modality",
+          "modalityLabel",
+          "nextStatuses",
+          "notes",
+          "object",
+          "ordersStartedAt",
+          "owner",
+          "portal",
+          "processNumber",
+          "reference",
+          "sessionAt",
+          "signedAt",
+          "status",
+          "statusLabel",
+          "totalValue",
+          "uasg",
+          "updatedAt",
+          "version",
+          "wonAt"
+        ]
+      },
+      "AgencyRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "sphere": {
+            "type": "string",
+            "enum": [
+              "MUNICIPAL",
+              "ESTADUAL",
+              "FEDERAL",
+              "OUTRA"
+            ]
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "state": {
+            "type": "string",
+            "maxLength": 2,
+            "minLength": 2
+          },
+          "cnpj": {
+            "type": "string",
+            "maxLength": 18,
+            "minLength": 0
+          },
+          "defaultUasg": {
+            "type": "string",
+            "maxLength": 10,
+            "minLength": 0
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "city",
+          "name",
+          "sphere",
+          "state"
+        ]
+      },
+      "AgencyResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sphere": {
+            "type": "string",
+            "enum": [
+              "MUNICIPAL",
+              "ESTADUAL",
+              "FEDERAL",
+              "OUTRA"
+            ]
+          },
+          "sphereLabel": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "cnpj": {
+            "type": "string"
+          },
+          "defaultUasg": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "city",
+          "cnpj",
+          "defaultUasg",
+          "id",
+          "name",
+          "notes",
+          "sphere",
+          "sphereLabel",
+          "state",
+          "version"
+        ]
+      },
+      "CreateUser": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254,
+            "minLength": 0
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMIN",
+              "SALES",
+              "VIEWER"
+            ]
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
           }
         },
         "required": [
           "email",
-          "id",
-          "initials",
           "name",
-          "role",
-          "roleLabel"
+          "password",
+          "role"
+        ]
+      },
+      "ResetPassword": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "password"
+        ]
+      },
+      "CreateTenderRequest": {
+        "type": "object",
+        "properties": {
+          "initialStatus": {
+            "type": "string",
+            "enum": [
+              "EM_DISPUTA",
+              "PERDIDA",
+              "VENCIDA",
+              "AGUARDANDO_ASSINATURA",
+              "CONTRATO_ASSINADO",
+              "EM_ANDAMENTO",
+              "ENCERRADO"
+            ]
+          },
+          "wonAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "tender": {
+            "$ref": "#/components/schemas/TenderRequest"
+          }
+        },
+        "required": [
+          "initialStatus",
+          "tender"
+        ]
+      },
+      "TransitionRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "target": {
+            "type": "string",
+            "enum": [
+              "EM_DISPUTA",
+              "PERDIDA",
+              "VENCIDA",
+              "AGUARDANDO_ASSINATURA",
+              "CONTRATO_ASSINADO",
+              "EM_ANDAMENTO",
+              "ENCERRADO"
+            ]
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "target",
+          "version"
+        ]
+      },
+      "ChangeOwnPassword": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "minLength": 1
+          },
+          "newPassword": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
+      },
+      "AccessTokenResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "tokenType": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          }
+        },
+        "required": [
+          "accessToken",
+          "expiresIn",
+          "tokenType",
+          "user"
         ]
       },
       "LoginRequest": {
@@ -237,6 +1609,243 @@
         "required": [
           "email",
           "password"
+        ]
+      },
+      "UserOptionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "initials": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "initials",
+          "name"
+        ]
+      },
+      "PageResponseTenderResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenderResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalItems",
+          "totalPages"
+        ]
+      },
+      "FieldChangeResponse": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "from",
+          "to"
+        ]
+      },
+      "TenderEventResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "UPDATED",
+              "STATUS_CHANGED"
+            ]
+          },
+          "fromStatus": {
+            "type": "string",
+            "enum": [
+              "EM_DISPUTA",
+              "PERDIDA",
+              "VENCIDA",
+              "AGUARDANDO_ASSINATURA",
+              "CONTRATO_ASSINADO",
+              "EM_ANDAMENTO",
+              "ENCERRADO"
+            ]
+          },
+          "fromLabel": {
+            "type": "string"
+          },
+          "toStatus": {
+            "type": "string",
+            "enum": [
+              "EM_DISPUTA",
+              "PERDIDA",
+              "VENCIDA",
+              "AGUARDANDO_ASSINATURA",
+              "CONTRATO_ASSINADO",
+              "EM_ANDAMENTO",
+              "ENCERRADO"
+            ]
+          },
+          "toLabel": {
+            "type": "string"
+          },
+          "eventDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldChangeResponse"
+            }
+          },
+          "userName": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "changes",
+          "eventDate",
+          "fromLabel",
+          "fromStatus",
+          "id",
+          "occurredAt",
+          "toLabel",
+          "toStatus",
+          "type",
+          "userName"
+        ]
+      },
+      "StatusTotalResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "EM_DISPUTA",
+              "PERDIDA",
+              "VENCIDA",
+              "AGUARDANDO_ASSINATURA",
+              "CONTRATO_ASSINADO",
+              "EM_ANDAMENTO",
+              "ENCERRADO"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "count",
+          "label",
+          "status",
+          "value"
+        ]
+      },
+      "SuggestionsResponse": {
+        "type": "object",
+        "properties": {
+          "materialTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "portals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "materialTypes",
+          "portals"
+        ]
+      },
+      "PageResponseAgencyResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgencyResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalItems",
+          "totalPages"
         ]
       }
     },

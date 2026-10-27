@@ -1,0 +1,165 @@
+<div class="page-head">
+  <div>
+    <h1>Órgãos</h1>
+    <p class="sub">Prefeituras, secretarias, batalhões e institutos com quem a Shema vende.</p>
+  </div>
+  @if (canEdit()) {
+    <div class="page-actions">
+      <button type="button" class="btn primary" (click)="openNew()">
+        <app-icon name="plus" [size]="16" />Novo órgão
+      </button>
+    </div>
+  }
+</div>
+
+<section class="card">
+  <div class="toolbar">
+    <label class="search">
+      <span class="visually-hidden">Buscar órgãos</span>
+      <app-icon name="search" [size]="16" />
+      <input
+        class="input"
+        type="search"
+        placeholder="Nome ou município"
+        (input)="onSearch($event)"
+      />
+    </label>
+  </div>
+  <div class="table-wrap">
+    <table class="data">
+      <caption class="visually-hidden">
+        Órgãos
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Órgão</th>
+          <th scope="col">Esfera</th>
+          <th scope="col">Município</th>
+          <th scope="col">UASG padrão</th>
+          <th scope="col"><span class="visually-hidden">Licitações</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (list.error()) {
+          <tr>
+            <td colspan="5">
+              <div class="empty" role="alert">
+                <strong>Não foi possível carregar.</strong
+                ><button type="button" class="btn sm" (click)="list.reload()">
+                  Tentar de novo
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+        @for (a of list.value()?.items ?? []; track a.id) {
+          <tr [class.clickable]="canEdit()" (click)="openEdit(a)">
+            <td>
+              <div class="entity">
+                <app-avatar [name]="a.name" [size]="34" [square]="true" />
+                <span class="cell-main">{{ a.name }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="chip">{{ a.sphereLabel }}</span>
+            </td>
+            <td>{{ a.city }}/{{ a.state }}</td>
+            <td class="num">{{ a.defaultUasg ?? '—' }}</td>
+            <td class="n">
+              <a
+                class="link"
+                [routerLink]="['/licitacoes']"
+                [queryParams]="{ q: a.name, aba: 'vencidas' }"
+                (click)="$event.stopPropagation()"
+                >Ver licitações</a
+              >
+            </td>
+          </tr>
+        } @empty {
+          @if (!list.isLoading()) {
+            <tr>
+              <td colspan="5">
+                <div class="empty"><strong>Nenhum órgão encontrado.</strong></div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-pager
+    [page]="page()"
+    [total]="list.value()?.totalItems ?? 0"
+    (pageChange)="page.set($event)"
+  />
+</section>
+
+<app-panel
+  [open]="formOpen()"
+  [title]="editing() ? 'Editar órgão' : 'Novo órgão'"
+  (closed)="formOpen.set(false)"
+>
+  <form id="agency-form" class="form" (ngSubmit)="save()">
+    <div class="field">
+      <label for="a-name">Nome</label>
+      <input id="a-name" class="input" name="name" [(ngModel)]="form.name" required />
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="a-sphere">Esfera</label>
+        <select id="a-sphere" class="input" name="sphere" [(ngModel)]="form.sphere">
+          @for (s of spheres; track s.value) {
+            <option [value]="s.value">{{ s.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="a-city">Município</label>
+        <input id="a-city" class="input" name="city" [(ngModel)]="form.city" required />
+      </div>
+      <div class="field">
+        <label for="a-state">UF</label>
+        <select id="a-state" class="input" name="state" [(ngModel)]="form.state">
+          @for (uf of ufs; track uf) {
+            <option [value]="uf">{{ uf }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="a-uasg">UASG padrão</label>
+        <input
+          id="a-uasg"
+          class="input"
+          name="defaultUasg"
+          [(ngModel)]="form.defaultUasg"
+          inputmode="numeric"
+        />
+      </div>
+      <div class="field">
+        <label for="a-cnpj">CNPJ</label>
+        <input id="a-cnpj" class="input" name="cnpj" [(ngModel)]="form.cnpj" inputmode="numeric" />
+      </div>
+    </div>
+    <div class="field">
+      <label for="a-notes">Observações</label>
+      <textarea
+        id="a-notes"
+        class="input textarea"
+        rows="3"
+        name="notes"
+        [(ngModel)]="form.notes"
+      ></textarea>
+    </div>
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+    }
+  </form>
+  <ng-container panel-footer>
+    <button type="button" class="btn" (click)="formOpen.set(false)">Cancelar</button>
+    <button type="submit" form="agency-form" class="btn primary" [disabled]="saving()">
+      {{ saving() ? 'Salvando…' : 'Salvar' }}
+    </button>
+  </ng-container>
+</app-panel>

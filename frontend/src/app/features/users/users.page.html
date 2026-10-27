@@ -1,0 +1,132 @@
+<div class="page-head">
+  <div>
+    <h1>Usuários</h1>
+    <p class="sub">Quem acessa o ShemaCRM e o que cada um pode fazer.</p>
+  </div>
+  <div class="page-actions">
+    <button type="button" class="btn primary" (click)="openCreate()">
+      <app-icon name="plus" [size]="16" />Novo usuário
+    </button>
+  </div>
+</div>
+
+<section class="card table-wrap">
+  <table class="data">
+    <caption class="visually-hidden">
+      Usuários
+    </caption>
+    <thead>
+      <tr>
+        <th scope="col">Nome</th>
+        <th scope="col">Perfil</th>
+        <th scope="col">Situação</th>
+        <th scope="col">Último acesso</th>
+        <th scope="col"><span class="visually-hidden">Ações</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (u of list.value() ?? []; track u.id) {
+        <tr>
+          <td>
+            <div class="entity">
+              <app-avatar [name]="u.name" [size]="32" />
+              <div>
+                <div class="cell-main">{{ u.name }}</div>
+                <div class="cell-sub">{{ u.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="badge" [class.blue]="u.role === 'ADMIN'">{{ u.roleLabel }}</span>
+          </td>
+          <td>
+            @if (u.active) {
+              <span class="badge green"><span class="dot"></span>Ativo</span>
+            } @else {
+              <span class="badge"><span class="dot"></span>Inativo</span>
+            }
+          </td>
+          <td class="num">
+            {{ u.lastLoginAt ? (u.lastLoginAt | date: "dd/MM/yyyy 'às' HH:mm") : 'Nunca entrou' }}
+          </td>
+          <td>
+            <div class="actions">
+              <button type="button" class="btn sm" (click)="openEdit(u)">Editar</button>
+              <button type="button" class="btn sm" (click)="openPassword(u)">Definir senha</button>
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</section>
+
+<app-panel
+  [open]="mode() !== null"
+  [title]="title()"
+  [subtitle]="current()?.name ?? null"
+  (closed)="mode.set(null)"
+>
+  <form id="user-form" class="form" (ngSubmit)="save()">
+    @if (mode() !== 'password') {
+      <div class="field">
+        <label for="u-name">Nome</label>
+        <input id="u-name" class="input" name="name" [(ngModel)]="form.name" required />
+      </div>
+      @if (mode() === 'create') {
+        <div class="field">
+          <label for="u-email">E-mail</label>
+          <input
+            id="u-email"
+            class="input"
+            type="email"
+            name="email"
+            [(ngModel)]="form.email"
+            required
+          />
+        </div>
+      }
+      <div class="field">
+        <label for="u-role">Perfil</label>
+        <select id="u-role" class="input" name="role" [(ngModel)]="form.role">
+          @for (r of roles; track r.value) {
+            <option [value]="r.value">{{ r.label }} — {{ r.hint }}</option>
+          }
+        </select>
+      </div>
+      @if (mode() === 'edit') {
+        <label class="switch"
+          ><input type="checkbox" name="active" [(ngModel)]="form.active" />Ativo (pode entrar no
+          sistema)</label
+        >
+      }
+    }
+    @if (mode() !== 'edit') {
+      <div class="field">
+        <label for="u-password">{{ mode() === 'create' ? 'Senha inicial' : 'Nova senha' }}</label>
+        <input
+          id="u-password"
+          class="input"
+          type="password"
+          name="password"
+          autocomplete="new-password"
+          [(ngModel)]="form.password"
+          aria-describedby="u-password-hint"
+          required
+        />
+        <p id="u-password-hint" class="hint">
+          Pelo menos 10 caracteres. Passe para a pessoa por um canal seguro.
+        </p>
+      </div>
+    }
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+    }
+  </form>
+  <ng-container panel-footer>
+    <button type="button" class="btn" (click)="mode.set(null)">Cancelar</button>
+    <button type="submit" form="user-form" class="btn primary" [disabled]="saving()">
+      {{ saving() ? 'Salvando…' : 'Salvar' }}
+    </button>
+  </ng-container>
+</app-panel>

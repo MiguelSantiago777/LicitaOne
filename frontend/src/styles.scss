@@ -137,6 +137,12 @@ a {
   font-weight: 650;
   letter-spacing: -0.02em;
 }
+.title-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 .page-head .sub {
   margin-top: 4px;
   color: var(--text-2);

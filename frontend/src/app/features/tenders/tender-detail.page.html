@@ -1,0 +1,269 @@
+<a class="back link" routerLink="/licitacoes"
+  ><app-icon name="chevron-right" [size]="16" class="flip" />Licitações</a
+>
+
+@if (tender.isLoading() && !tender.hasValue()) {
+  <div class="card loading" aria-busy="true">
+    <span class="sk w-40"></span>
+    <span class="sk w-60"></span>
+  </div>
+} @else if (notFound()) {
+  <div class="card empty">
+    <strong>Licitação não encontrada.</strong>
+    <a class="btn sm" routerLink="/licitacoes">Voltar para a lista</a>
+  </div>
+} @else if (tender.error()) {
+  <div class="card empty" role="alert">
+    <strong>Não foi possível carregar a licitação.</strong>
+    <button type="button" class="btn sm" (click)="tender.reload()">Tentar de novo</button>
+  </div>
+} @else if (tender.value(); as t) {
+  <header class="card head">
+    <div class="head-main">
+      <app-avatar [name]="t.agency.name" [size]="52" [square]="true" />
+      <div class="head-text">
+        <div class="head-title">
+          <h1>{{ t.agency.name }}</h1>
+          <span class="badge" [class]="tone(t.status)"
+            ><span class="dot"></span>{{ t.statusLabel }}</span
+          >
+        </div>
+        <p class="sub">
+          {{ t.reference }} · {{ t.agency.city }}/{{ t.agency.state }} · {{ t.materialType }}
+        </p>
+      </div>
+      <div class="head-value">
+        <span class="cell-sub">Valor total</span>
+        <strong class="num">{{ t.totalValue | currency: 'BRL' }}</strong>
+      </div>
+    </div>
+
+    @if (t.canEdit) {
+      <div class="head-actions">
+        @for (next of t.nextStatuses; track next.status) {
+          <button
+            type="button"
+            class="btn"
+            [class.primary]="$first && next.status !== 'PERDIDA'"
+            (click)="transitionTarget.set(next)"
+          >
+            {{ actionLabels[next.status] }}
+          </button>
+        }
+        <button type="button" class="btn ghost" (click)="editing.set(true)">Editar</button>
+      </div>
+    } @else {
+      <p class="readonly-note">
+        <app-icon name="circle-alert" [size]="16" />Só o responsável ou um administrador pode
+        alterar esta licitação.
+      </p>
+    }
+  </header>
+
+  <div class="tabs detail-tabs" role="tablist" aria-label="Seções da licitação">
+    @for (item of tabs; track item.id) {
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="tab() === item.id"
+        (click)="tab.set(item.id)"
+      >
+        {{ item.label }}
+      </button>
+    }
+  </div>
+
+  @switch (tab()) {
+    @case ('resumo') {
+      <div class="summary">
+        <section class="card">
+          <header class="card-head"><h2>Dados da licitação</h2></header>
+          <dl class="facts">
+            <div>
+              <dt>Órgão</dt>
+              <dd>{{ t.agency.name }}</dd>
+            </div>
+            <div>
+              <dt>Município</dt>
+              <dd>{{ t.agency.city }}/{{ t.agency.state }}</dd>
+            </div>
+            <div>
+              <dt>Modalidade</dt>
+              <dd>{{ t.modalityLabel }}</dd>
+            </div>
+            <div>
+              <dt>UASG</dt>
+              <dd class="num">{{ t.uasg ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt>Nº do processo</dt>
+              <dd class="num">{{ t.processNumber ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt>Portal</dt>
+              <dd>{{ t.portal ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt>Sessão</dt>
+              <dd class="num">
+                {{ t.sessionAt ? (t.sessionAt | date: "dd/MM/yyyy 'às' HH:mm") : '—' }}
+              </dd>
+            </div>
+            <div>
+              <dt>Tipo de material</dt>
+              <dd>{{ t.materialType }}</dd>
+            </div>
+            <div>
+              <dt>Quantidade de itens</dt>
+              <dd class="num">{{ t.itemsQuantity ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt>Valor total</dt>
+              <dd class="num money">{{ t.totalValue | currency: 'BRL' }}</dd>
+            </div>
+            <div class="wide">
+              <dt>Objeto</dt>
+              <dd>{{ t.object }}</dd>
+            </div>
+            @if (t.notes) {
+              <div class="wide">
+                <dt>Observações</dt>
+                <dd class="pre">{{ t.notes }}</dd>
+              </div>
+            }
+          </dl>
+        </section>
+
+        <div class="side">
+          <section class="card">
+            <header class="card-head"><h2>Responsável</h2></header>
+            <div class="card-body owner">
+              @if (t.owner) {
+                <app-avatar [name]="t.owner.name" [size]="36" />
+                <span class="cell-main">{{ t.owner.name }}</span>
+              } @else {
+                <span class="cell-sub">Sem responsável</span>
+              }
+            </div>
+          </section>
+
+          <section class="card">
+            <header class="card-head"><h2>Ciclo de vida</h2></header>
+            <ol class="timeline">
+              @for (step of timeline(); track step.label) {
+                <li [class.done]="!!step.date">
+                  <span class="mark"></span>
+                  <span class="step-label">{{ step.label }}</span>
+                  <span class="step-date num">{{
+                    step.date ? (step.date | date: 'dd/MM/yyyy') : '—'
+                  }}</span>
+                </li>
+              }
+            </ol>
+            @if (t.status === 'CONTRATO_ASSINADO' && days(t.signedAt) > 30) {
+              <p class="alert-line">
+                <app-icon name="alert" [size]="16" />Assinado há {{ days(t.signedAt) }} dias e ainda
+                sem pedido.
+              </p>
+            }
+          </section>
+        </div>
+      </div>
+    }
+    @case ('historico') {
+      <section class="card">
+        @if (history.isLoading()) {
+          <div class="card-body"><span class="sk w-60"></span></div>
+        } @else {
+          <ol class="history">
+            @for (e of history.value() ?? []; track e.id) {
+              <li>
+                <span class="h-icon" [class]="e.type"
+                  ><app-icon
+                    [name]="
+                      e.type === 'STATUS_CHANGED'
+                        ? 'arrow-up-right'
+                        : e.type === 'CREATED'
+                          ? 'plus'
+                          : 'settings'
+                    "
+                    [size]="14"
+                /></span>
+                <div class="h-body">
+                  <p>
+                    <strong>{{ e.userName ?? 'Sistema' }}</strong>
+                    @switch (e.type) {
+                      @case ('CREATED') {
+                        cadastrou a licitação como <strong>{{ e.toLabel }}</strong>
+                      }
+                      @case ('STATUS_CHANGED') {
+                        mudou de <strong>{{ e.fromLabel }}</strong> para
+                        <strong>{{ e.toLabel }}</strong>
+                      }
+                      @default {
+                        alterou {{ e.changes.length }}
+                        {{ e.changes.length === 1 ? 'campo' : 'campos' }}
+                      }
+                    }
+                    @if (e.eventDate && e.type !== 'UPDATED') {
+                      <span class="cell-sub">
+                        · data informada {{ e.eventDate | date: 'dd/MM/yyyy' }}</span
+                      >
+                    }
+                  </p>
+                  @if (e.changes.length) {
+                    <ul class="changes">
+                      @for (c of e.changes; track c.field) {
+                        <li>
+                          <span class="c-field">{{ c.field }}</span> <s>{{ c.from ?? '—' }}</s> →
+                          {{ c.to ?? '—' }}
+                        </li>
+                      }
+                    </ul>
+                  }
+                  <p class="cell-sub num">{{ e.occurredAt | date: "dd/MM/yyyy 'às' HH:mm" }}</p>
+                </div>
+              </li>
+            } @empty {
+              <li class="empty">Sem registros.</li>
+            }
+          </ol>
+        }
+      </section>
+    }
+    @default {
+      <section class="card empty upcoming">
+        <strong>
+          @switch (tab()) {
+            @case ('itens') {
+              Itens, pedidos e saldo chegam na Fase 2.
+            }
+            @case ('documentos') {
+              Anexo da ata e de outros documentos chega na Fase 3.
+            }
+            @case ('tarefas') {
+              Tarefas ligadas à licitação chegam na Fase 4.
+            }
+            @default {
+              Negociações ligadas à licitação chegam na Fase 4.
+            }
+          }
+        </strong>
+        <span>Esta aba já está reservada para não mudar o lugar das coisas depois.</span>
+      </section>
+    }
+  }
+
+  <app-tender-form
+    [open]="editing()"
+    [tender]="t"
+    (closed)="editing.set(false)"
+    (saved)="onSaved($event)"
+  />
+  <app-transition-dialog
+    [tender]="t"
+    [target]="transitionTarget()"
+    (closed)="transitionTarget.set(null)"
+    (saved)="onSaved($event)"
+  />
+}

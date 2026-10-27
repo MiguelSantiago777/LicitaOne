@@ -1,6 +1,9 @@
 <div class="page-head">
   <div>
-    <h1>Negociações</h1>
+    <div class="title-line">
+      <h1>Negociações</h1>
+      <app-demo-badge [phase]="4" />
+    </div>
     <p class="sub">
       <span class="num">{{ deals().length }}</span> negociações ·
       <strong class="num">{{ total() | currency: 'BRL' }}</strong> no funil

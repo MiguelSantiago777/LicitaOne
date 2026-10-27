@@ -1,4 +1,5 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
+import { DemoBadge } from '../../shared/ui/demo-badge';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Avatar } from '../../shared/ui/avatar';
 import { Icon } from '../../shared/ui/icon';
@@ -6,11 +7,14 @@ import { TENDERS, daysBetween } from '../demo/demo-data';
 
 @Component({
   selector: 'app-price-records-page',
-  imports: [CurrencyPipe, DatePipe, Avatar, Icon],
+  imports: [DemoBadge, CurrencyPipe, DatePipe, Avatar, Icon],
   template: `
     <div class="page-head">
       <div>
-        <h1>Atas</h1>
+        <div class="title-line">
+          <h1>Atas</h1>
+          <app-demo-badge [phase]="3" />
+        </div>
         <p class="sub">
           Atas de registro de preços vigentes. Cada uma pode virar carona em outro município.
         </p>

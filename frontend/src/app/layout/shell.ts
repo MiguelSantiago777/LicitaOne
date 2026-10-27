@@ -1,66 +1,108 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
+import { TendersService } from '../api/generated/tenders/tenders.service';
 import { Session } from '../core/auth/session';
-import { TASKS, TENDERS, daysBetween } from '../features/demo/demo-data';
 import { Avatar } from '../shared/ui/avatar';
 import { BrandMark } from '../shared/ui/brand-mark';
 import { Icon } from '../shared/ui/icon';
+import { PasswordDialog } from './password-dialog';
 
 interface NavItem {
   path: string;
   label: string;
   icon: string;
   badge?: number;
+  badgeLabel?: string;
 }
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon, BrandMark, Avatar],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon, BrandMark, Avatar, PasswordDialog],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Shell {
   protected readonly session = inject(Session);
+  private readonly router = inject(Router);
+  private readonly tendersApi = inject(TendersService);
+
   protected readonly menuOpen = signal(false);
+  protected readonly passwordOpen = signal(false);
 
-  private readonly overdueTasks = TASKS.filter((t) => !t.done && daysBetween(t.dueAt) > 0).length;
-  private readonly awaitingContract = TENDERS.filter((t) => t.status === 'VENCIDA').length;
+  /** Contador real do menu: licitações vencidas que ainda esperam contrato. */
+  private readonly summary = rxResource({ stream: () => this.tendersApi.tenderSummary() });
+  private readonly awaitingContract = computed(() =>
+    (this.summary.value() ?? [])
+      .filter((s) => s.status === 'VENCIDA' || s.status === 'AGUARDANDO_ASSINATURA')
+      .reduce((a, s) => a + s.count, 0),
+  );
 
-  protected readonly groups: { label: string | null; items: NavItem[] }[] = [
-    { label: null, items: [{ path: '/painel', label: 'Painel', icon: 'dashboard' }] },
-    {
-      label: 'Contratos',
-      items: [
-        { path: '/licitacoes', label: 'Licitações', icon: 'tenders', badge: this.awaitingContract },
-        { path: '/atas', label: 'Atas', icon: 'records' },
-      ],
-    },
-    {
-      label: 'Comercial',
-      items: [
-        { path: '/negociacoes', label: 'Negociações', icon: 'deals' },
-        { path: '/tarefas', label: 'Tarefas', icon: 'tasks', badge: this.overdueTasks },
-      ],
-    },
-    { label: 'Dados', items: [{ path: '/importacao', label: 'Importação', icon: 'imports' }] },
-  ];
+  protected readonly isViewer = computed(() => this.session.user()?.role === 'VIEWER');
 
-  protected readonly firstName = computed(() => this.session.user()?.name.split(' ')[0] ?? '');
+  protected readonly groups = computed<{ label: string | null; items: NavItem[] }[]>(() => {
+    const groups: { label: string | null; items: NavItem[] }[] = [
+      { label: null, items: [{ path: '/painel', label: 'Painel', icon: 'dashboard' }] },
+      {
+        label: 'Contratos',
+        items: [
+          {
+            path: '/licitacoes',
+            label: 'Licitações',
+            icon: 'tenders',
+            badge: this.awaitingContract(),
+            badgeLabel: 'vencidas aguardando contrato',
+          },
+          { path: '/orgaos', label: 'Órgãos', icon: 'landmark' },
+          { path: '/atas', label: 'Atas', icon: 'records' },
+        ],
+      },
+      {
+        label: 'Comercial',
+        items: [
+          { path: '/negociacoes', label: 'Negociações', icon: 'deals' },
+          { path: '/tarefas', label: 'Tarefas', icon: 'tasks' },
+        ],
+      },
+      { label: 'Dados', items: [{ path: '/importacao', label: 'Importação', icon: 'imports' }] },
+    ];
+    if (this.session.user()?.role === 'ADMIN') {
+      groups.push({
+        label: 'Administração',
+        items: [{ path: '/usuarios', label: 'Usuários', icon: 'settings' }],
+      });
+    }
+    return groups;
+  });
 
   constructor() {
-    inject(Router)
-      .events.pipe(
+    this.router.events
+      .pipe(
         filter((e) => e instanceof NavigationEnd),
         takeUntilDestroyed(),
       )
-      .subscribe(() => this.menuOpen.set(false));
+      .subscribe(() => {
+        this.menuOpen.set(false);
+        this.summary.reload();
+      });
   }
 
   protected toggleMenu(): void {
     this.menuOpen.update((open) => !open);
+  }
+
+  protected search(event: Event): void {
+    event.preventDefault();
+    const input = (event.target as HTMLFormElement).elements.namedItem('q') as HTMLInputElement;
+    void this.router.navigate(['/licitacoes'], {
+      queryParams: { q: input.value.trim() || null, aba: null },
+    });
+  }
+
+  protected newTender(): void {
+    void this.router.navigate(['/licitacoes'], { queryParams: { novo: 1 } });
   }
 
   protected logout(): void {

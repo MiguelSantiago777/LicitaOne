@@ -32,6 +32,10 @@ public class RefreshToken {
     @Column(name = "revoked_at")
     private Instant revokedAt;
 
+    /** Revogado por ter sido trocado por um novo (rotação), e não por logout ou por suspeita de roubo. */
+    @Column(nullable = false)
+    private boolean rotated;
+
     protected RefreshToken() {}
 
     public RefreshToken(UUID userId, String tokenHash, Instant now, Duration ttl) {
@@ -48,6 +52,26 @@ public class RefreshToken {
 
     public boolean isRevoked() {
         return revokedAt != null;
+    }
+
+    public boolean isRotated() {
+        return rotated;
+    }
+
+    /** Troca por um token novo: revoga este e lembra que foi rotação. */
+    public void rotate(Instant now) {
+        if (revokedAt == null) {
+            revokedAt = now;
+            rotated = true;
+        }
+    }
+
+    /**
+     * Foi trocado há pouco? Um navegador que recarrega a página no meio de uma renovação descarta a resposta e
+     * reapresenta o token anterior. Dentro desta janela isso é tratado como corrida, não como roubo.
+     */
+    public boolean wasRotatedWithin(Instant now, java.time.Duration grace) {
+        return rotated && revokedAt != null && !now.isAfter(revokedAt.plus(grace));
     }
 
     public void revoke(Instant now) {

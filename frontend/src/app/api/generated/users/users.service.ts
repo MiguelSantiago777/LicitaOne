@@ -12,7 +12,14 @@ import { Injectable, inject } from '@angular/core';
 
 import type { Observable } from 'rxjs';
 
-import type { UserResponse } from '../model';
+import type {
+  ChangeOwnPassword,
+  CreateUser,
+  ResetPassword,
+  UpdateUser,
+  UserOptionResponse,
+  UserResponse,
+} from '../model';
 
 import type { HttpHeaders, HttpResponse as AngularHttpResponse } from '@angular/common/http';
 
@@ -56,6 +63,48 @@ type HttpClientObserveOptions = HttpClientOptions & {
 export class UsersService {
   private readonly http = inject(HttpClient);
   /**
+   * @summary Altera nome, perfil ou situação de um usuário
+   */
+  updateUser<TData = UserResponse>(
+    id: string,
+    updateUserBody: UpdateUser,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  updateUser<TData = UserResponse>(
+    id: string,
+    updateUserBody: UpdateUser,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  updateUser<TData = UserResponse>(
+    id: string,
+    updateUserBody: UpdateUser,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  updateUser<TData = UserResponse>(
+    id: string,
+    updateUserBody: UpdateUser,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.put<TData>(`/api/v1/users/${id}`, updateUserBody, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      });
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.put<TData>(`/api/v1/users/${id}`, updateUserBody, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      });
+    }
+
+    return this.http.put<TData>(`/api/v1/users/${id}`, updateUserBody, {
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+    });
+  }
+  /**
    * @summary Lista os usuários (só administradores)
    */
   listUsers<TData = UserResponse[]>(options?: HttpClientBodyOptions): Observable<TData>;
@@ -81,6 +130,156 @@ export class UsersService {
     }
 
     return this.http.get<TData>(`/api/v1/users`, {
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+    });
+  }
+  /**
+   * @summary Cadastra um usuário
+   */
+  createUser<TData = UserResponse>(
+    createUserBody: CreateUser,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  createUser<TData = UserResponse>(
+    createUserBody: CreateUser,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  createUser<TData = UserResponse>(
+    createUserBody: CreateUser,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  createUser<TData = UserResponse>(
+    createUserBody: CreateUser,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(`/api/v1/users`, createUserBody, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      });
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(`/api/v1/users`, createUserBody, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      });
+    }
+
+    return this.http.post<TData>(`/api/v1/users`, createUserBody, {
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+    });
+  }
+  /**
+   * @summary Define uma nova senha para o usuário
+   */
+  resetUserPassword<TData = void>(
+    id: string,
+    resetPassword: ResetPassword,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  resetUserPassword<TData = void>(
+    id: string,
+    resetPassword: ResetPassword,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  resetUserPassword<TData = void>(
+    id: string,
+    resetPassword: ResetPassword,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  resetUserPassword<TData = void>(
+    id: string,
+    resetPassword: ResetPassword,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(`/api/v1/users/${id}/password`, resetPassword, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      });
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(`/api/v1/users/${id}/password`, resetPassword, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      });
+    }
+
+    return this.http.post<TData>(`/api/v1/users/${id}/password`, resetPassword, {
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+    });
+  }
+  /**
+   * @summary Troca a própria senha
+   */
+  changeOwnPassword<TData = void>(
+    changeOwnPasswordBody: ChangeOwnPassword,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  changeOwnPassword<TData = void>(
+    changeOwnPasswordBody: ChangeOwnPassword,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  changeOwnPassword<TData = void>(
+    changeOwnPasswordBody: ChangeOwnPassword,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  changeOwnPassword<TData = void>(
+    changeOwnPasswordBody: ChangeOwnPassword,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(`/api/v1/me/password`, changeOwnPasswordBody, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      });
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(`/api/v1/me/password`, changeOwnPasswordBody, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      });
+    }
+
+    return this.http.post<TData>(`/api/v1/me/password`, changeOwnPasswordBody, {
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+    });
+  }
+  /**
+   * @summary Usuários ativos, para escolher responsável
+   */
+  listUserOptions<TData = UserOptionResponse[]>(options?: HttpClientBodyOptions): Observable<TData>;
+  listUserOptions<TData = UserOptionResponse[]>(
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  listUserOptions<TData = UserOptionResponse[]>(
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  listUserOptions<TData = UserOptionResponse[]>(
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(`/api/v1/users/options`, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      });
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(`/api/v1/users/options`, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      });
+    }
+
+    return this.http.get<TData>(`/api/v1/users/options`, {
       ...(options as Omit<NonNullable<typeof options>, 'observe'>),
       observe: 'body',
     });
@@ -119,5 +318,10 @@ export class UsersService {
   }
 }
 
+export type UpdateUserClientResult = NonNullable<UserResponse>;
 export type ListUsersClientResult = NonNullable<UserResponse[]>;
+export type CreateUserClientResult = NonNullable<UserResponse>;
+export type ResetUserPasswordClientResult = NonNullable<void>;
+export type ChangeOwnPasswordClientResult = NonNullable<void>;
+export type ListUserOptionsClientResult = NonNullable<UserOptionResponse[]>;
 export type GetCurrentUserClientResult = NonNullable<UserResponse>;

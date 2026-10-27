@@ -4,79 +4,84 @@
     <p class="sub">{{ greeting() }} · {{ now | date: "EEEE, d 'de' MMMM" }}</p>
   </div>
   <div class="page-actions">
-    <a class="btn" routerLink="/importacao"
-      ><app-icon name="imports" [size]="16" />Importar planilha</a
-    >
-    <a class="btn primary" routerLink="/licitacoes"
-      ><app-icon name="plus" [size]="16" />Nova licitação</a
+    <a class="btn" routerLink="/licitacoes" [queryParams]="{ aba: 'disputa' }"
+      ><app-icon name="calendar-clock" [size]="16" />Sessões em disputa</a
     >
   </div>
 </div>
 
+@if (summary.error()) {
+  <div class="card empty" role="alert">
+    <strong>Não foi possível carregar os números.</strong>
+    <button type="button" class="btn sm" (click)="summary.reload()">Tentar de novo</button>
+  </div>
+}
+
 <section class="kpis" aria-label="Indicadores">
-  <article class="card kpi">
+  <a class="card kpi" routerLink="/licitacoes" [queryParams]="{ aba: 'assinados' }">
     <div class="kpi-top">
       <span class="kpi-label">Valor em carteira</span>
       <span class="kpi-icon blue"><app-icon name="wallet" /></span>
     </div>
-    <p class="kpi-value num">{{ portfolio | currency: 'BRL' : 'symbol' : '1.0-0' }}</p>
-    <p class="kpi-foot">Contratos assinados e em andamento</p>
-  </article>
+    <p class="kpi-value num">{{ portfolio().value | currency: 'BRL' : 'symbol' : '1.0-0' }}</p>
+    <p class="kpi-foot">{{ portfolio().count }} contratos assinados ou em andamento</p>
+  </a>
 
-  <article class="card kpi">
-    <div class="kpi-top">
-      <span class="kpi-label">Saldo a pedir</span>
-      <span class="kpi-icon green"><app-icon name="piggy" /></span>
-    </div>
-    <p class="kpi-value num">{{ toOrder | currency: 'BRL' : 'symbol' : '1.0-0' }}</p>
-    <div class="kpi-progress">
-      <div class="progress"><span [style.width.%]="orderedShare"></span></div>
-      <span>{{ orderedShare }}% já pedido</span>
-    </div>
-  </article>
-
-  <article class="card kpi">
+  <a class="card kpi" routerLink="/licitacoes" [queryParams]="{ aba: 'vencidas' }">
     <div class="kpi-top">
       <span class="kpi-label">Vencidas sem contrato</span>
       <span class="kpi-icon amber"><app-icon name="hourglass" /></span>
     </div>
-    <p class="kpi-value num">{{ wonCount }}</p>
+    <p class="kpi-value num">{{ awaiting().count }}</p>
     <p class="kpi-foot num">
-      {{ wonValue | currency: 'BRL' : 'symbol' : '1.0-0' }} aguardando assinatura
+      {{ awaiting().value | currency: 'BRL' : 'symbol' : '1.0-0' }} esperando assinatura
     </p>
-  </article>
+  </a>
 
-  <article class="card kpi">
+  <a class="card kpi" routerLink="/licitacoes" [queryParams]="{ aba: 'disputa' }">
     <div class="kpi-top">
-      <span class="kpi-label">Atas vigentes</span>
-      <span class="kpi-icon violet"><app-icon name="records" /></span>
+      <span class="kpi-label">Em disputa</span>
+      <span class="kpi-icon violet"><app-icon name="calendar-clock" /></span>
     </div>
-    <p class="kpi-value num">{{ validRecords.length }}</p>
-    <p class="kpi-foot">{{ expiringRecords }} vencem nos próximos 120 dias</p>
-  </article>
+    <p class="kpi-value num">{{ dispute().count }}</p>
+    <p class="kpi-foot num">{{ dispute().value | currency: 'BRL' : 'symbol' : '1.0-0' }} em jogo</p>
+  </a>
+
+  <a class="card kpi" routerLink="/licitacoes" [queryParams]="{ aba: 'andamento' }">
+    <div class="kpi-top">
+      <span class="kpi-label">Em andamento</span>
+      <span class="kpi-icon green"><app-icon name="trend" /></span>
+    </div>
+    <p class="kpi-value num">{{ running().count }}</p>
+    <p class="kpi-foot">Saldo a pedir aparece com os pedidos (Fase 2)</p>
+  </a>
 </section>
 
-@if (stale.length) {
+@if (stale.value()?.items?.length) {
   <section class="attention" aria-labelledby="attention-title">
     <span class="attention-icon"><app-icon name="alert" /></span>
     <div class="attention-text">
       <h2 id="attention-title">
-        {{ stale.length }} {{ stale.length === 1 ? 'contrato assinado' : 'contratos assinados' }} há
-        mais de 30 dias sem pedido
+        {{ stale.value()!.totalItems }}
+        {{ stale.value()!.totalItems === 1 ? 'contrato assinado' : 'contratos assinados' }} há mais
+        de 30 dias sem pedido
       </h2>
-      @for (item of stale; track item.id) {
+      @for (t of stale.value()!.items; track t.id) {
         <p>
-          <strong>{{ item.agency }}</strong> assinou em {{ item.signedAt | date: 'dd/MM/yyyy' }} ({{
-            item.days
-          }}
-          dias) ·
-          {{ item.value | currency: 'BRL' }}
+          <a [routerLink]="['/licitacoes', t.id]"
+            ><strong>{{ t.agency.name }}</strong></a
+          >
+          assinou em {{ t.signedAt | date: 'dd/MM/yyyy' }} ({{ days(t.signedAt) }} dias) ·
+          {{ t.totalValue | currency: 'BRL' }}
         </p>
       }
     </div>
-    <button type="button" class="btn">
-      <app-icon name="mail" [size]="16" />Gerar e-mail de follow-up
-    </button>
+    <a
+      class="btn"
+      routerLink="/licitacoes"
+      [queryParams]="{ aba: 'assinados', ordem: 'signedAt', direcao: 'asc' }"
+      >Ver contratos</a
+    >
   </section>
 }
 
@@ -89,79 +94,107 @@
       /></a>
     </header>
     <div class="card-body status-bars">
-      @for (row of byStatus; track row.status) {
-        <div class="status-row">
+      @for (row of byTab(); track row.tab.id) {
+        <a class="status-row" routerLink="/licitacoes" [queryParams]="{ aba: row.tab.id }">
           <div class="status-label">
-            <span class="badge" [class]="row.tone"><span class="dot"></span>{{ row.label }}</span>
-            <span class="status-count">{{ row.count }}</span>
+            <span class="badge" [class]="tabTone[row.tab.id]"
+              ><span class="dot"></span>{{ row.tab.label }}</span
+            >
+            <span class="status-count num">{{ row.count }}</span>
           </div>
           <div class="status-track">
             <span
               class="status-fill"
-              [class]="row.tone"
-              [style.width.%]="barWidth(row.value)"
+              [class]="tabTone[row.tab.id]"
+              [style.width.%]="row.width"
             ></span>
           </div>
           <span class="money num">{{ row.value | currency: 'BRL' : 'symbol' : '1.0-0' }}</span>
-        </div>
+        </a>
       }
     </div>
   </section>
 
-  <section class="card" aria-labelledby="tasks-title">
+  <section class="card" aria-labelledby="upcoming-title">
     <header class="card-head">
-      <h2 id="tasks-title">Tarefas atrasadas</h2>
-      <a class="link" routerLink="/tarefas">Ver todas</a>
+      <h2 id="upcoming-title">Próximas sessões</h2>
+      <a
+        class="link"
+        routerLink="/licitacoes"
+        [queryParams]="{ aba: 'disputa', ordem: 'sessionAt', direcao: 'asc' }"
+        >Ver todas</a
+      >
     </header>
-    <ul class="task-list">
-      @for (task of overdue; track task.id) {
+    <ul class="list">
+      @for (t of upcoming.value()?.items ?? []; track t.id) {
         <li>
-          <app-avatar [name]="task.owner" [size]="30" />
-          <div class="task-text">
-            <span class="cell-main">{{ task.title }}</span>
-            <span class="cell-sub">{{ task.dueAt | date: "dd/MM 'às' HH:mm" }}</span>
-          </div>
-          <span class="badge red">Atrasada</span>
+          <a [routerLink]="['/licitacoes', t.id]" class="list-row">
+            <span class="date-chip">
+              @if (t.sessionAt) {
+                <strong class="num">{{ t.sessionAt | date: 'dd' }}</strong>
+                <span>{{ t.sessionAt | date: 'MMM' }}</span>
+              } @else {
+                <span>—</span>
+              }
+            </span>
+            <span class="list-text">
+              <span class="cell-main">{{ t.agency.name }}</span>
+              <span class="cell-sub"
+                >{{ t.sessionAt ? (t.sessionAt | date: 'HH:mm') + ' · ' : ''
+                }}{{ t.portal ?? t.reference }}</span
+              >
+            </span>
+          </a>
         </li>
       } @empty {
-        <li class="empty"><strong>Nada atrasado.</strong></li>
+        <li class="empty">
+          <strong>Nenhuma sessão marcada.</strong
+          ><span>Cadastre licitações em disputa para vê-las aqui.</span>
+        </li>
       }
     </ul>
   </section>
 
-  <section class="card span-2" aria-labelledby="balance-title">
+  <section class="card span-2" aria-labelledby="largest-title">
     <header class="card-head">
-      <h2 id="balance-title">Saldo a pedir por contrato</h2>
-      <span class="meta">{{ balances.length }} em andamento</span>
+      <h2 id="largest-title">Maiores contratos ativos</h2>
+      <a class="link" routerLink="/licitacoes" [queryParams]="{ aba: 'andamento' }"
+        >Ver em andamento</a
+      >
     </header>
     <div class="table-wrap">
       <table class="data">
         <thead>
           <tr>
             <th scope="col">Órgão</th>
-            <th scope="col" class="hide-sm">Pedido</th>
-            <th scope="col" class="n hide-sm">Contrato</th>
-            <th scope="col" class="n">Falta pedir</th>
+            <th scope="col">Situação</th>
+            <th scope="col" class="hide-sm">Responsável</th>
+            <th scope="col" class="n">Valor</th>
           </tr>
         </thead>
         <tbody>
-          @for (row of balances; track row.id) {
+          @for (t of largest.value()?.items ?? []; track t.id) {
             <tr>
               <td>
-                <div class="entity">
-                  <app-avatar [name]="row.agency" [size]="32" [square]="true" />
+                <a class="entity" [routerLink]="['/licitacoes', t.id]">
+                  <app-avatar [name]="t.agency.name" [size]="32" [square]="true" />
                   <div>
-                    <div class="cell-main">{{ row.agency }}</div>
-                    <div class="cell-sub">{{ row.material }}</div>
+                    <div class="cell-main">{{ t.agency.name }}</div>
+                    <div class="cell-sub">{{ t.materialType }}</div>
                   </div>
-                </div>
+                </a>
               </td>
-              <td class="progress-cell hide-sm">
-                <div class="progress"><span [style.width.%]="row.share"></span></div>
-                <span class="cell-sub">{{ row.share }}%</span>
+              <td>
+                <span class="badge" [class]="tone(t.status)">{{ t.statusLabel }}</span>
               </td>
-              <td class="n num hide-sm">{{ row.value | currency: 'BRL' }}</td>
-              <td class="n money num">{{ row.left | currency: 'BRL' }}</td>
+              <td class="hide-sm">{{ t.owner?.name ?? '—' }}</td>
+              <td class="n money num">{{ t.totalValue | currency: 'BRL' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4">
+                <div class="empty"><strong>Nenhum contrato ativo.</strong></div>
+              </td>
             </tr>
           }
         </tbody>
@@ -169,17 +202,13 @@
     </div>
   </section>
 
-  <section class="card pipeline" aria-labelledby="pipeline-title">
-    <header class="card-head">
-      <h2 id="pipeline-title">Funil de caronas</h2>
-      <a class="link" routerLink="/negociacoes">Abrir</a>
-    </header>
-    <div class="card-body">
-      <p class="pipeline-value num">{{ pipelineValue | currency: 'BRL' : 'symbol' : '1.0-0' }}</p>
-      <p class="cell-sub">{{ pipelineCount }} negociações em andamento</p>
-      <a class="btn pipeline-btn" routerLink="/atas"
-        ><app-icon name="records" [size]="16" />Ver atas para oferecer</a
-      >
-    </div>
+  <section class="card" aria-labelledby="next-title">
+    <header class="card-head"><h2 id="next-title">Chegando nas próximas fases</h2></header>
+    <ul class="roadmap">
+      <li><span class="badge">Fase 2</span>Itens, pedidos e saldo a pedir</li>
+      <li><span class="badge">Fase 3</span>Atas, anexos e caronas</li>
+      <li><span class="badge">Fase 4</span>Kanban e tarefas gravados</li>
+      <li><span class="badge">Fase 5</span>Alertas por e-mail</li>
+    </ul>
   </section>
 </div>

@@ -1,6 +1,9 @@
 <div class="page-head">
   <div>
-    <h1>Tarefas</h1>
+    <div class="title-line">
+      <h1>Tarefas</h1>
+      <app-demo-badge [phase]="4" />
+    </div>
     <p class="sub">
       <span class="num">{{ openCount() }}</span> abertas ·
       <span class="overdue-text num">{{ overdueCount() }} atrasadas</span>

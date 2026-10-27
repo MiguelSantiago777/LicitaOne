@@ -28,7 +28,8 @@ import org.springframework.web.client.RestClient;
             "shema.bootstrap-admin.email=admin@test.local",
             "shema.bootstrap-admin.password=Senha-forte-123",
             "shema.auth.login-attempts-per-minute=1000",
-            "shema.auth.max-failed-attempts=3"
+            "shema.auth.max-failed-attempts=3",
+            "shema.auth.refresh-reuse-grace=0s"
         })
 class AuthFlowTests {
 
@@ -128,6 +129,20 @@ class AuthFlowTests {
         // Reapresentar o token já usado derruba todas as sessões, inclusive a nova
         assertThat(refresh(firstCookie).getBody()).containsEntry("code", "INVALID_REFRESH_TOKEN");
         assertThat(refresh(secondCookie).getStatusCode().value()).isEqualTo(401);
+    }
+
+    @Test
+    void refreshAfterLogoutIsInvalidButDoesNotKillOtherSessions() {
+        String sessionA = cookieValue(login("admin@test.local", "Senha-forte-123"));
+        String sessionB = cookieValue(login("admin@test.local", "Senha-forte-123"));
+        http.post()
+                .uri("/api/v1/auth/logout")
+                .header(HttpHeaders.COOKIE, "shema_refresh=" + sessionA)
+                .retrieve()
+                .toBodilessEntity();
+
+        assertThat(refresh(sessionA).getBody()).containsEntry("code", "INVALID_REFRESH_TOKEN");
+        assertThat(refresh(sessionB).getStatusCode().value()).isEqualTo(200);
     }
 
     @Test

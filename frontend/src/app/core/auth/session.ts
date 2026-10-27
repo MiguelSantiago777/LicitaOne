@@ -53,9 +53,12 @@ export class Session {
     return firstValueFrom(this.refresh());
   }
 
+  /** Espera o servidor encerrar a sessão (e apagar o cookie) antes de voltar ao login. */
   logout(): void {
-    this.api.logout(authCallOptions()).subscribe({ error: () => undefined });
-    this.endSession();
+    this.api
+      .logout(authCallOptions())
+      .pipe(finalize(() => this.endSession()))
+      .subscribe({ error: () => undefined });
   }
 
   /** Sessão perdida (refresh recusado): limpa o estado e volta ao login. */

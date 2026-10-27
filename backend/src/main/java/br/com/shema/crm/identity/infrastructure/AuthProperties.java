@@ -16,6 +16,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param secureCookie marca o cookie de refresh como Secure (desligar só em dev sem HTTPS)
  * @param issuer valor do claim iss
  * @param corsOrigins origens do front autorizadas a chamar a API
+ * @param refreshReuseGrace janela em que reapresentar um refresh token recém-trocado não conta como roubo
  */
 @ConfigurationProperties("shema.auth")
 public record AuthProperties(
@@ -26,4 +27,5 @@ public record AuthProperties(
         @DefaultValue("10") int loginAttemptsPerMinute,
         @DefaultValue("true") boolean secureCookie,
         @DefaultValue("shemacrm") String issuer,
-        @DefaultValue("http://localhost:4300") List<String> corsOrigins) {}
+        @DefaultValue("http://localhost:4300") List<String> corsOrigins,
+        @DefaultValue("30s") Duration refreshReuseGrace) {}

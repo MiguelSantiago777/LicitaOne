@@ -1,0 +1,212 @@
+<app-panel
+  [open]="open()"
+  [title]="isEdit() ? 'Editar licitação' : 'Nova licitação'"
+  [subtitle]="
+    isEdit()
+      ? (tender()?.agency?.name ?? null)
+      : 'Cadastre antes do resultado (em disputa) ou já vencida.'
+  "
+  [width]="620"
+  (closed)="closed.emit()"
+>
+  <form id="tender-form" [formGroup]="form" (ngSubmit)="submit()" novalidate class="form">
+    @if (error(); as message) {
+      <div class="alert" role="alert">{{ message }}</div>
+    }
+
+    @if (!isEdit()) {
+      <fieldset class="status-choice">
+        <legend>Situação</legend>
+        <label class="choice" [class.on]="form.controls.initialStatus.value === 'EM_DISPUTA'">
+          <input type="radio" formControlName="initialStatus" value="EM_DISPUTA" />
+          <span><strong>Em disputa</strong><small>A sessão ainda vai acontecer</small></span>
+        </label>
+        <label class="choice" [class.on]="form.controls.initialStatus.value === 'VENCIDA'">
+          <input type="radio" formControlName="initialStatus" value="VENCIDA" />
+          <span><strong>Vencida</strong><small>Ganhamos, falta o contrato</small></span>
+        </label>
+      </fieldset>
+      @if (form.controls.initialStatus.value === 'VENCIDA') {
+        <div class="field narrow">
+          <label for="wonAt">Data da vitória</label>
+          <input
+            id="wonAt"
+            type="date"
+            class="input"
+            formControlName="wonAt"
+            [max]="today"
+            [attr.aria-invalid]="showError('wonAt')"
+          />
+          @if (fieldError('wonAt')) {
+            <p class="error">{{ fieldError('wonAt') }}</p>
+          }
+        </div>
+      }
+    }
+
+    <div class="field">
+      <label for="agency">Órgão</label>
+      <app-agency-picker
+        id="agency"
+        [value]="agency()"
+        (valueChange)="agency.set($event)"
+        [invalid]="!!fieldError('agencyId')"
+      />
+      @if (fieldError('agencyId')) {
+        <p class="error">{{ fieldError('agencyId') }}</p>
+      }
+    </div>
+
+    <div class="grid-3">
+      <div class="field">
+        <label for="modality">Modalidade</label>
+        <select id="modality" class="input" formControlName="modality">
+          @for (m of modalities; track m.value) {
+            <option [value]="m.value">{{ m.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="uasg">UASG</label>
+        <input
+          id="uasg"
+          class="input"
+          formControlName="uasg"
+          inputmode="numeric"
+          placeholder="123456"
+          [attr.aria-invalid]="showError('uasg')"
+        />
+        @if (fieldError('uasg')) {
+          <p class="error">{{ fieldError('uasg') }}</p>
+        }
+      </div>
+      <div class="field">
+        <label for="processNumber">Nº do pregão / processo</label>
+        <input
+          id="processNumber"
+          class="input"
+          formControlName="processNumber"
+          placeholder="039/2026"
+          [attr.aria-invalid]="showError('processNumber')"
+        />
+      </div>
+    </div>
+    @if (fieldError('processNumber')) {
+      <p class="error">{{ fieldError('processNumber') }}</p>
+    }
+
+    <div class="grid-2">
+      <div class="field">
+        <label for="portal">Portal</label>
+        <input
+          id="portal"
+          class="input"
+          formControlName="portal"
+          list="portal-options"
+          placeholder="Compras.gov.br"
+        />
+        <datalist id="portal-options">
+          @for (p of suggestions.value()?.portals ?? []; track p) {
+            <option [value]="p"></option>
+          }
+          <option value="Compras.gov.br"></option>
+          <option value="BLL Compras"></option>
+          <option value="Licitanet"></option>
+          <option value="Portal de Compras Públicas"></option>
+        </datalist>
+      </div>
+      <div class="field">
+        <label for="sessionAt">Data e hora da sessão</label>
+        <input id="sessionAt" type="datetime-local" class="input" formControlName="sessionAt" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="object">Objeto (descritivo da licitação)</label>
+      <textarea
+        id="object"
+        class="input textarea"
+        rows="3"
+        formControlName="object"
+        [attr.aria-invalid]="showError('object')"
+      ></textarea>
+      @if (showError('object')) {
+        <p class="error">Descreva o objeto da licitação.</p>
+      }
+    </div>
+
+    <div class="grid-3">
+      <div class="field span-2">
+        <label for="materialType">Tipo de material</label>
+        <input
+          id="materialType"
+          class="input"
+          formControlName="materialType"
+          list="material-options"
+          placeholder="Material gráfico"
+          [attr.aria-invalid]="showError('materialType')"
+        />
+        <datalist id="material-options">
+          @for (m of suggestions.value()?.materialTypes ?? []; track m) {
+            <option [value]="m"></option>
+          }
+        </datalist>
+        @if (showError('materialType')) {
+          <p class="error">Informe o tipo de material.</p>
+        }
+      </div>
+      <div class="field">
+        <label for="itemsQuantity">Quantidade de itens</label>
+        <input
+          id="itemsQuantity"
+          type="number"
+          min="0"
+          class="input"
+          formControlName="itemsQuantity"
+        />
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="field">
+        <label for="totalValue">Valor total</label>
+        <div class="money-input">
+          <span>R$</span>
+          <input
+            id="totalValue"
+            class="input"
+            formControlName="totalValue"
+            inputmode="decimal"
+            placeholder="0,00"
+            (blur)="formatValue()"
+            [attr.aria-invalid]="showError('totalValue')"
+          />
+        </div>
+        @if (showError('totalValue')) {
+          <p class="error">{{ fieldError('totalValue') ?? 'Informe o valor.' }}</p>
+        }
+      </div>
+      <div class="field">
+        <label for="ownerId">Responsável</label>
+        <select id="ownerId" class="input" formControlName="ownerId">
+          <option value="">Eu mesmo</option>
+          @for (o of owners.value() ?? []; track o.id) {
+            <option [value]="o.id">{{ o.name }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="notes">Observações</label>
+      <textarea id="notes" class="input textarea" rows="2" formControlName="notes"></textarea>
+    </div>
+  </form>
+
+  <ng-container panel-footer>
+    <button type="button" class="btn" (click)="closed.emit()">Cancelar</button>
+    <button type="submit" form="tender-form" class="btn primary" [disabled]="saving()">
+      {{ saving() ? 'Salvando…' : isEdit() ? 'Salvar alterações' : 'Cadastrar licitação' }}
+    </button>
+  </ng-container>
+</app-panel>

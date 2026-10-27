@@ -28,4 +28,20 @@ class RefreshTokenTest {
         assertThat(token.isActive(NOW.plusSeconds(30))).isFalse();
         assertThat(token.getRevokedAt()).isEqualTo(NOW.plusSeconds(10));
     }
+
+    @Test
+    void rotationHasAShortGraceWindowButLogoutDoesNot() {
+        RefreshToken rotated = new RefreshToken(UUID.randomUUID(), "b".repeat(64), NOW, Duration.ofDays(7));
+        rotated.rotate(NOW);
+        assertThat(rotated.isRevoked()).isTrue();
+        assertThat(rotated.wasRotatedWithin(NOW.plusSeconds(20), Duration.ofSeconds(30)))
+                .isTrue();
+        assertThat(rotated.wasRotatedWithin(NOW.plusSeconds(31), Duration.ofSeconds(30)))
+                .isFalse();
+
+        RefreshToken loggedOut = new RefreshToken(UUID.randomUUID(), "c".repeat(64), NOW, Duration.ofDays(7));
+        loggedOut.revoke(NOW);
+        assertThat(loggedOut.wasRotatedWithin(NOW.plusSeconds(1), Duration.ofSeconds(30)))
+                .isFalse();
+    }
 }

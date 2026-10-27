@@ -19,7 +19,12 @@
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
-    "strictTemplates": true
+    "strictTemplates": true,
+    // O OpenAPI ainda não marca campos anuláveis (uasg, portal, datas...): os tipos gerados dizem "string" mas o
+    // valor pode vir null, e os templates tratam isso com ?? e ?. de propósito. Pendência registrada no ADR 0011.
+    "extendedDiagnostics": {
+      "checks": { "nullishCoalescingNotNullable": "suppress", "optionalChainNotNullable": "suppress" }
+    }
   },
   "files": [],
   "references": [
