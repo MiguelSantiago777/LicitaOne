@@ -1,55 +1,185 @@
-<div class="title-row">
+<div class="page-head">
   <div>
     <h1>Painel</h1>
-    <p class="sub">
-      Nenhum contrato cadastrado ainda. Os números aparecem conforme as licitações forem entrando.
-    </p>
+    <p class="sub">{{ greeting() }} · {{ now | date: "EEEE, d 'de' MMMM" }}</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn" routerLink="/importacao"
+      ><app-icon name="imports" [size]="16" />Importar planilha</a
+    >
+    <a class="btn primary" routerLink="/licitacoes"
+      ><app-icon name="plus" [size]="16" />Nova licitação</a
+    >
   </div>
 </div>
 
-<section class="kpis" aria-label="Carteira">
-  <div class="kpi">
-    <p class="kpi-label">Valor em carteira</p>
-    <p class="kpi-value money zero">R$ 0,00</p>
-    <p class="kpi-note">Contratos assinados e em andamento</p>
-  </div>
-  <div class="kpi">
-    <p class="kpi-label">Saldo a pedir</p>
-    <p class="kpi-value money zero">R$ 0,00</p>
-    <p class="kpi-note">Contratado menos o que já foi pedido</p>
-  </div>
-  <div class="kpi">
-    <p class="kpi-label">Sem pedido após 30 dias</p>
-    <p class="kpi-value zero">0</p>
-    <p class="kpi-note">Contratos assinados que pedem follow-up</p>
-  </div>
-  <div class="kpi">
-    <p class="kpi-label">Atas vencendo em 90 dias</p>
-    <p class="kpi-value zero">0</p>
-    <p class="kpi-note">Oportunidades de carona</p>
-  </div>
+<section class="kpis" aria-label="Indicadores">
+  <article class="card kpi">
+    <div class="kpi-top">
+      <span class="kpi-label">Valor em carteira</span>
+      <span class="kpi-icon blue"><app-icon name="wallet" /></span>
+    </div>
+    <p class="kpi-value num">{{ portfolio | currency: 'BRL' : 'symbol' : '1.0-0' }}</p>
+    <p class="kpi-foot">Contratos assinados e em andamento</p>
+  </article>
+
+  <article class="card kpi">
+    <div class="kpi-top">
+      <span class="kpi-label">Saldo a pedir</span>
+      <span class="kpi-icon green"><app-icon name="piggy" /></span>
+    </div>
+    <p class="kpi-value num">{{ toOrder | currency: 'BRL' : 'symbol' : '1.0-0' }}</p>
+    <div class="kpi-progress">
+      <div class="progress"><span [style.width.%]="orderedShare"></span></div>
+      <span>{{ orderedShare }}% já pedido</span>
+    </div>
+  </article>
+
+  <article class="card kpi">
+    <div class="kpi-top">
+      <span class="kpi-label">Vencidas sem contrato</span>
+      <span class="kpi-icon amber"><app-icon name="hourglass" /></span>
+    </div>
+    <p class="kpi-value num">{{ wonCount }}</p>
+    <p class="kpi-foot num">
+      {{ wonValue | currency: 'BRL' : 'symbol' : '1.0-0' }} aguardando assinatura
+    </p>
+  </article>
+
+  <article class="card kpi">
+    <div class="kpi-top">
+      <span class="kpi-label">Atas vigentes</span>
+      <span class="kpi-icon violet"><app-icon name="records" /></span>
+    </div>
+    <p class="kpi-value num">{{ validRecords.length }}</p>
+    <p class="kpi-foot">{{ expiringRecords }} vencem nos próximos 120 dias</p>
+  </article>
 </section>
 
-<div class="pair">
-  <section class="panel" aria-labelledby="overdue-title">
-    <header>
-      <h2 id="overdue-title">Tarefas atrasadas</h2>
-      <span class="meta">0 tarefas</span>
+@if (stale.length) {
+  <section class="attention" aria-labelledby="attention-title">
+    <span class="attention-icon"><app-icon name="alert" /></span>
+    <div class="attention-text">
+      <h2 id="attention-title">
+        {{ stale.length }} {{ stale.length === 1 ? 'contrato assinado' : 'contratos assinados' }} há
+        mais de 30 dias sem pedido
+      </h2>
+      @for (item of stale; track item.id) {
+        <p>
+          <strong>{{ item.agency }}</strong> assinou em {{ item.signedAt | date: 'dd/MM/yyyy' }} ({{
+            item.days
+          }}
+          dias) ·
+          {{ item.value | currency: 'BRL' }}
+        </p>
+      }
+    </div>
+    <button type="button" class="btn">
+      <app-icon name="mail" [size]="16" />Gerar e-mail de follow-up
+    </button>
+  </section>
+}
+
+<div class="grid">
+  <section class="card span-2" aria-labelledby="status-title">
+    <header class="card-head">
+      <h2 id="status-title">Carteira por situação</h2>
+      <a class="link" routerLink="/licitacoes"
+        >Ver licitações <app-icon name="chevron-right" [size]="16"
+      /></a>
     </header>
-    <div class="empty">
-      <strong>Nenhuma tarefa atrasada.</strong>
-      <span>Os follow-ups gerados pelos alertas aparecem aqui.</span>
+    <div class="card-body status-bars">
+      @for (row of byStatus; track row.status) {
+        <div class="status-row">
+          <div class="status-label">
+            <span class="badge" [class]="row.tone"><span class="dot"></span>{{ row.label }}</span>
+            <span class="status-count">{{ row.count }}</span>
+          </div>
+          <div class="status-track">
+            <span
+              class="status-fill"
+              [class]="row.tone"
+              [style.width.%]="barWidth(row.value)"
+            ></span>
+          </div>
+          <span class="money num">{{ row.value | currency: 'BRL' : 'symbol' : '1.0-0' }}</span>
+        </div>
+      }
     </div>
   </section>
 
-  <section class="panel" aria-labelledby="records-title">
-    <header>
-      <h2 id="records-title">Atas vigentes</h2>
-      <span class="meta">0 atas</span>
+  <section class="card" aria-labelledby="tasks-title">
+    <header class="card-head">
+      <h2 id="tasks-title">Tarefas atrasadas</h2>
+      <a class="link" routerLink="/tarefas">Ver todas</a>
     </header>
-    <div class="empty">
-      <strong>Nenhuma ata cadastrada.</strong>
-      <span>Cada ata vigente é uma chance de oferecer carona a outro município.</span>
+    <ul class="task-list">
+      @for (task of overdue; track task.id) {
+        <li>
+          <app-avatar [name]="task.owner" [size]="30" />
+          <div class="task-text">
+            <span class="cell-main">{{ task.title }}</span>
+            <span class="cell-sub">{{ task.dueAt | date: "dd/MM 'às' HH:mm" }}</span>
+          </div>
+          <span class="badge red">Atrasada</span>
+        </li>
+      } @empty {
+        <li class="empty"><strong>Nada atrasado.</strong></li>
+      }
+    </ul>
+  </section>
+
+  <section class="card span-2" aria-labelledby="balance-title">
+    <header class="card-head">
+      <h2 id="balance-title">Saldo a pedir por contrato</h2>
+      <span class="meta">{{ balances.length }} em andamento</span>
+    </header>
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th scope="col">Órgão</th>
+            <th scope="col" class="hide-sm">Pedido</th>
+            <th scope="col" class="n hide-sm">Contrato</th>
+            <th scope="col" class="n">Falta pedir</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of balances; track row.id) {
+            <tr>
+              <td>
+                <div class="entity">
+                  <app-avatar [name]="row.agency" [size]="32" [square]="true" />
+                  <div>
+                    <div class="cell-main">{{ row.agency }}</div>
+                    <div class="cell-sub">{{ row.material }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="progress-cell hide-sm">
+                <div class="progress"><span [style.width.%]="row.share"></span></div>
+                <span class="cell-sub">{{ row.share }}%</span>
+              </td>
+              <td class="n num hide-sm">{{ row.value | currency: 'BRL' }}</td>
+              <td class="n money num">{{ row.left | currency: 'BRL' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card pipeline" aria-labelledby="pipeline-title">
+    <header class="card-head">
+      <h2 id="pipeline-title">Funil de caronas</h2>
+      <a class="link" routerLink="/negociacoes">Abrir</a>
+    </header>
+    <div class="card-body">
+      <p class="pipeline-value num">{{ pipelineValue | currency: 'BRL' : 'symbol' : '1.0-0' }}</p>
+      <p class="cell-sub">{{ pipelineCount }} negociações em andamento</p>
+      <a class="btn pipeline-btn" routerLink="/atas"
+        ><app-icon name="records" [size]="16" />Ver atas para oferecer</a
+      >
     </div>
   </section>
 </div>

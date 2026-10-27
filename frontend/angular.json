@@ -33,11 +33,7 @@
               }
             ],
             "styles": [
-              "@fontsource/geist/400.css",
-              "@fontsource/geist/500.css",
-              "@fontsource/geist/600.css",
-              "@fontsource/geist/700.css",
-              "@fontsource/geist-mono/400.css",
+              "@fontsource-variable/inter/index.css",
               "src/styles.scss"
             ]
           },
@@ -51,11 +47,19 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "6kB",
+                  "maximumError": "12kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": true
+              }
             },
             "development": {
               "optimization": false,

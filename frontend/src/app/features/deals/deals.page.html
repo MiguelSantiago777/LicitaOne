@@ -1,25 +1,124 @@
-<div class="title-row">
+<div class="page-head">
   <div>
     <h1>Negociações</h1>
-    <p class="sub">Funil de vendas e caronas em atas vigentes.</p>
+    <p class="sub">
+      <span class="num">{{ deals().length }}</span> negociações ·
+      <strong class="num">{{ total() | currency: 'BRL' }}</strong> no funil
+    </p>
+  </div>
+  <div class="page-actions">
+    <div class="segmented" role="group" aria-label="Visualização">
+      <button type="button" [attr.aria-pressed]="view() === 'kanban'" (click)="view.set('kanban')">
+        <app-icon name="columns" [size]="16" />Kanban
+      </button>
+      <button type="button" [attr.aria-pressed]="view() === 'list'" (click)="view.set('list')">
+        <app-icon name="list" [size]="16" />Lista
+      </button>
+    </div>
+    <button type="button" class="btn primary">
+      <app-icon name="plus" [size]="16" />Nova negociação
+    </button>
   </div>
 </div>
 
-<div class="board" role="list" aria-label="Etapas do funil">
-  @for (stage of stages; track stage) {
-    <section class="column" role="listitem" [attr.aria-label]="stage">
-      <header>
-        <h2>{{ stage }}</h2>
-        <p class="column-figure">0 · R$ 0,00</p>
-      </header>
-      <div class="column-body">
-        @if ($first) {
-          <div class="empty">
-            <strong>Nenhuma negociação.</strong>
-            <span>O kanban chega na Fase 4.</span>
-          </div>
-        }
-      </div>
-    </section>
-  }
+<div class="filters">
+  <label class="search filter-search">
+    <span class="visually-hidden">Buscar negociações</span>
+    <app-icon name="search" [size]="16" />
+    <input class="input" type="search" placeholder="Buscar negociação ou órgão" />
+  </label>
+  <button type="button" class="btn">Minhas negociações</button>
+  <span class="filter-chip">Status: Em andamento <app-icon name="x" [size]="14" /></span>
 </div>
+
+@if (view() === 'kanban') {
+  <div class="board" cdkDropListGroup>
+    @for (col of columns(); track col.stage.id) {
+      <section class="column" [style.--stage]="col.stage.color" [attr.aria-label]="col.stage.name">
+        <header class="column-head">
+          <div class="column-title">
+            <h2>{{ col.stage.name }}</h2>
+            <span class="count">{{ col.items.length }}</span>
+          </div>
+          <p class="column-value num">{{ col.value | currency: 'BRL' : 'symbol' : '1.0-0' }}</p>
+        </header>
+
+        <div
+          class="column-body"
+          cdkDropList
+          [cdkDropListData]="col.stage.id"
+          (cdkDropListDropped)="drop($event)"
+        >
+          @for (deal of col.items; track deal.id) {
+            <article class="deal" cdkDrag [cdkDragData]="deal" tabindex="0">
+              <div class="deal-top">
+                <span class="badge" [class.blue]="deal.isNew" [class.green]="!deal.isNew">
+                  {{ deal.isNew ? 'Nova' : 'Em andamento' }}
+                </span>
+                <span class="stars" [attr.aria-label]="'Prioridade ' + deal.priority + ' de 3'">
+                  @for (on of stars(deal.priority); track $index) {
+                    <app-icon name="star" [size]="14" [class.on]="on" />
+                  }
+                </span>
+              </div>
+              <h3>{{ deal.title }}</h3>
+              <p class="company"><app-icon name="building" [size]="14" />{{ deal.company }}</p>
+              <div class="deal-foot">
+                <app-avatar [name]="deal.owner" [size]="24" />
+                <strong class="num">{{ deal.value | currency: 'BRL' : 'symbol' : '1.0-0' }}</strong>
+              </div>
+              @if (deal.overdueTask) {
+                <p class="overdue"><app-icon name="clock" [size]="14" />{{ deal.overdueTask }}</p>
+              } @else {
+                <button type="button" class="create-task">
+                  <app-icon name="plus" [size]="14" />Criar tarefa
+                </button>
+              }
+            </article>
+          } @empty {
+            <p class="column-empty">Arraste uma negociação para cá</p>
+          }
+        </div>
+      </section>
+    }
+  </div>
+} @else {
+  <section class="card table-wrap">
+    <table class="data">
+      <caption class="visually-hidden">
+        Negociações
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Negociação</th>
+          <th scope="col">Etapa</th>
+          <th scope="col">Responsável</th>
+          <th scope="col" class="n">Valor</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (col of columns(); track col.stage.id) {
+          @for (deal of col.items; track deal.id) {
+            <tr>
+              <td>
+                <div class="cell-main">{{ deal.title }}</div>
+                <div class="cell-sub">{{ deal.company }}</div>
+              </td>
+              <td>
+                <span class="stage-pill" [style.--stage]="col.stage.color">{{
+                  col.stage.name
+                }}</span>
+              </td>
+              <td>
+                <div class="owner">
+                  <app-avatar [name]="deal.owner" [size]="24" />{{ deal.owner }}
+                </div>
+              </td>
+              <td class="n money num">{{ deal.value | currency: 'BRL' }}</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </section>
+}

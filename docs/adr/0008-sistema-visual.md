@@ -1,6 +1,6 @@
 # 0008 — Sistema visual e componentes do front
 
-**Status:** Aceito · 27/10/2026
+**Status:** Substituído por [0010](0010-redesign-crm-moderno.md) · 27/10/2026
 
 ## Contexto
 A equipe passa o dia em tabelas e listas. A especificação pede um visual sóbrio e com personalidade (1 cor de marca, neutros e cores semânticas), números tabulares e acessibilidade AA. Pede também que o visual seja definido com as skills Taste e Awesome Design.

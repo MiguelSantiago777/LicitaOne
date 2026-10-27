@@ -11,10 +11,10 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       aria-hidden="true"
       focusable="false"
     >
-      <rect width="32" height="32" rx="7" fill="var(--brand)" />
-      <rect x="7" y="9" width="18" height="3" rx="1.5" fill="#fff" />
-      <rect x="7" y="14.5" width="13" height="3" rx="1.5" fill="#fff" opacity=".8" />
-      <rect x="7" y="20" width="7" height="3" rx="1.5" fill="#fff" opacity=".6" />
+      <rect width="32" height="32" rx="8" fill="#2563eb" />
+      <rect x="7" y="9" width="18" height="3.2" rx="1.6" fill="#fff" />
+      <rect x="7" y="14.4" width="13" height="3.2" rx="1.6" fill="#fff" opacity=".85" />
+      <rect x="7" y="19.8" width="7" height="3.2" rx="1.6" fill="#fff" opacity=".7" />
     </svg>
   `,
   styles: `
@@ -26,5 +26,5 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BrandMark {
-  readonly size = input(28);
+  readonly size = input(32);
 }

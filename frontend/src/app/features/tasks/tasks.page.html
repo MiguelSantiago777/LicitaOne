@@ -1,0 +1,72 @@
+<div class="page-head">
+  <div>
+    <h1>Tarefas</h1>
+    <p class="sub">
+      <span class="num">{{ openCount() }}</span> abertas ·
+      <span class="overdue-text num">{{ overdueCount() }} atrasadas</span>
+    </p>
+  </div>
+  <div class="page-actions">
+    @if (selected().size) {
+      <button type="button" class="btn" (click)="completeSelected()">
+        <app-icon name="circle-check" [size]="16" />Concluir {{ selected().size }}
+      </button>
+    }
+    <button type="button" class="btn primary">
+      <app-icon name="plus" [size]="16" />Nova tarefa
+    </button>
+  </div>
+</div>
+
+<section class="card table-wrap">
+  <table class="data">
+    <caption class="visually-hidden">
+      Tarefas
+    </caption>
+    <thead>
+      <tr>
+        <th scope="col" class="check"><span class="visually-hidden">Selecionar</span></th>
+        <th scope="col">Tarefa</th>
+        <th scope="col">Status</th>
+        <th scope="col">Data e hora</th>
+        <th scope="col">Responsável</th>
+        <th scope="col">Negociação</th>
+        <th scope="col" class="n">Valor total</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (task of tasks(); track task.id) {
+        <tr [class.done]="task.done">
+          <td class="check">
+            <input
+              type="checkbox"
+              [checked]="selected().has(task.id)"
+              [disabled]="task.done"
+              (change)="toggle(task.id)"
+              [attr.aria-label]="'Selecionar ' + task.title"
+            />
+          </td>
+          <td class="cell-main title">{{ task.title }}</td>
+          <td>
+            @if (task.done) {
+              <span class="badge green"><span class="dot"></span>Concluída</span>
+            } @else if (isOverdue(task)) {
+              <span class="badge red"><span class="dot"></span>Atrasada</span>
+            } @else {
+              <span class="badge"><span class="dot"></span>Aberta em dia</span>
+            }
+          </td>
+          <td class="num nowrap">{{ task.dueAt | date: "dd/MM/yyyy 'às' HH:mm" }}</td>
+          <td>
+            <div class="owner"><app-avatar [name]="task.owner" [size]="26" />{{ task.owner }}</div>
+          </td>
+          <td class="deal">
+            <a class="link deal-link">{{ task.deal }}</a>
+            <div class="cell-sub">{{ task.company }}</div>
+          </td>
+          <td class="n money num">{{ task.value | currency: 'BRL' }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</section>

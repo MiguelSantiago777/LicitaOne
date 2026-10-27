@@ -11,5 +11,6 @@ Cada decisão relevante tem um arquivo `NNNN-titulo.md` com contexto, decisão e
 | [0005](0005-modelo-de-dominio.md) | Ajustes no modelo de domínio a partir das respostas do cliente | Proposto (pontos a confirmar) |
 | [0006](0006-alertas-por-email.md) | Alertas internos por e-mail | Aceito |
 | [0007](0007-armazenamento-s3.md) | Armazenamento S3 com SeaweedFS no lugar do MinIO | Aceito |
-| [0008](0008-sistema-visual.md) | Sistema visual e componentes do front | Aceito |
+| [0008](0008-sistema-visual.md) | Sistema visual e componentes do front | Substituído por 0010 |
 | [0009](0009-arquitetura-do-frontend.md) | Arquitetura do frontend: Signals, cliente gerado, sessão em memória | Aceito |
+| [0010](0010-redesign-crm-moderno.md) | Redesign: visual de CRM moderno | Aceito |

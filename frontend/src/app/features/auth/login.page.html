@@ -1,66 +1,105 @@
 <main class="login">
-  <section class="card" aria-labelledby="login-title">
-    <div class="product">
-      <app-brand-mark [size]="32" />
-      <div>
-        <p class="product-name">ShemaCRM</p>
-        <p class="scope">Shema Suprimentos e Serviços</p>
-      </div>
+  <section class="hero" aria-hidden="true">
+    <div class="hero-brand">
+      <app-brand-mark [size]="36" />
+      <span>ShemaCRM</span>
     </div>
 
-    <h1 id="login-title">Entrar</h1>
-    <p class="sub">Use o e-mail e a senha que o administrador cadastrou para você.</p>
+    <div class="hero-copy">
+      <h2>Cada licitação ganha, do contrato ao último pedido.</h2>
+      <p>Acompanhe saldo, atas e caronas sem planilha paralela.</p>
+    </div>
 
-    @if (error(); as message) {
-      <div class="alert" role="alert">
-        <app-icon name="alert" />
-        <p>{{ message }}</p>
+    <div class="preview">
+      <div class="preview-head">
+        <span class="preview-title">Prefeitura Municipal de Mesquita</span>
+        <span class="badge green"><span class="dot"></span>Em andamento</span>
       </div>
-    }
-
-    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-      <div class="field">
-        <label for="email">E-mail</label>
-        <input
-          id="email"
-          class="input"
-          type="email"
-          formControlName="email"
-          autocomplete="username"
-          inputmode="email"
-          [attr.aria-invalid]="showError('email')"
-          [attr.aria-describedby]="showError('email') ? 'email-error' : null"
-        />
-        @if (showError('email')) {
-          <p id="email-error" class="error">
-            {{
-              form.controls.email.hasError('required')
-                ? 'Informe o e-mail.'
-                : 'Este e-mail não parece válido.'
-            }}
-          </p>
-        }
+      <div class="preview-figures">
+        <div>
+          <span class="preview-label">Contrato</span>
+          <strong class="num">R$ 310.000,00</strong>
+        </div>
+        <div>
+          <span class="preview-label">Saldo a pedir</span>
+          <strong class="num">R$ 186.000,00</strong>
+        </div>
       </div>
+      <div class="progress"><span style="width: 40%"></span></div>
+      <span class="preview-label">40% pedido · exemplo</span>
+    </div>
 
-      <div class="field">
-        <label for="password">Senha</label>
-        <input
-          id="password"
-          class="input"
-          type="password"
-          formControlName="password"
-          autocomplete="current-password"
-          [attr.aria-invalid]="showError('password')"
-          [attr.aria-describedby]="showError('password') ? 'password-error' : null"
-        />
-        @if (showError('password')) {
-          <p id="password-error" class="error">Informe a senha.</p>
-        }
+    <ul class="hero-points">
+      <li><app-icon name="wallet" />Saldo por item e por valor</li>
+      <li><app-icon name="records" />Ata vigente vira oportunidade de carona</li>
+      <li><app-icon name="bell" />Alerta de contrato assinado sem pedido</li>
+    </ul>
+  </section>
+
+  <section class="form-side" aria-labelledby="login-title">
+    <div class="form-wrap">
+      <div class="mobile-brand">
+        <app-brand-mark [size]="32" />
+        <span>ShemaCRM</span>
       </div>
 
-      <button type="submit" class="btn primary submit" [disabled]="submitting()">
-        {{ submitting() ? 'Entrando…' : 'Entrar' }}
-      </button>
-    </form>
+      <h1 id="login-title">Entrar</h1>
+      <p class="sub">Bem-vindo de volta. Use o e-mail e a senha cadastrados pelo administrador.</p>
+
+      @if (error(); as message) {
+        <div class="alert" role="alert">
+          <app-icon name="circle-alert" [size]="18" />
+          <p>{{ message }}</p>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input
+            id="email"
+            class="input"
+            type="email"
+            formControlName="email"
+            autocomplete="username"
+            inputmode="email"
+            placeholder="voce@shema.com.br"
+            [attr.aria-invalid]="showError('email')"
+            [attr.aria-describedby]="showError('email') ? 'email-error' : null"
+          />
+          @if (showError('email')) {
+            <p id="email-error" class="error">
+              {{
+                form.controls.email.hasError('required')
+                  ? 'Informe o e-mail.'
+                  : 'Este e-mail não parece válido.'
+              }}
+            </p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="password">Senha</label>
+          <input
+            id="password"
+            class="input"
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+            [attr.aria-invalid]="showError('password')"
+            [attr.aria-describedby]="showError('password') ? 'password-error' : null"
+          />
+          @if (showError('password')) {
+            <p id="password-error" class="error">Informe a senha.</p>
+          }
+        </div>
+
+        <button type="submit" class="btn primary submit" [disabled]="submitting()">
+          {{ submitting() ? 'Entrando…' : 'Entrar' }}
+        </button>
+      </form>
+
+      <p class="foot">Shema Suprimentos e Serviços LTDA</p>
+    </div>
   </section>
 </main>

@@ -1,65 +1,173 @@
-<div class="title-row">
+<div class="page-head">
   <div>
     <h1>Licitações</h1>
     <p class="sub">Da vitória ao encerramento do contrato.</p>
   </div>
-  <button type="button" class="btn primary" disabled title="O cadastro chega na próxima entrega">
-    <app-icon name="plus" />
-    Cadastrar licitação
-  </button>
-</div>
-
-<div class="tabs" role="tablist" aria-label="Situação">
-  @for (tab of tabs; track tab.id) {
-    <button
-      type="button"
-      role="tab"
-      [id]="'tab-' + tab.id"
-      [attr.aria-selected]="selected() === tab"
-      aria-controls="tenders-panel"
-      (click)="selected.set(tab)"
-    >
-      <span>{{ tab.label }}</span>
-      <span class="tab-figure">0 · R$ 0,00</span>
+  <div class="page-actions">
+    <button type="button" class="btn"><app-icon name="download" [size]="16" />Exportar</button>
+    <button type="button" class="btn primary">
+      <app-icon name="plus" [size]="16" />Nova licitação
     </button>
-  }
+  </div>
 </div>
 
-<section id="tenders-panel" role="tabpanel" [attr.aria-labelledby]="'tab-' + selected().id">
-  <div class="toolbar">
-    <label class="search">
-      <span class="visually-hidden">Buscar licitações</span>
-      <app-icon name="search" />
-      <input class="input" type="search" placeholder="Órgão, UASG ou pregão" disabled />
-    </label>
-    <span class="count">0 licitações</span>
+<section class="card">
+  <div class="tabs" role="tablist" aria-label="Situação">
+    @for (tab of tabs; track tab.status) {
+      <button
+        type="button"
+        role="tab"
+        [id]="'tab-' + tab.status"
+        [attr.aria-selected]="selected() === tab.status"
+        aria-controls="tenders-panel"
+        (click)="selected.set(tab.status)"
+      >
+        {{ tab.label }}
+        <span class="count">{{ tab.count }}</span>
+      </button>
+    }
   </div>
 
-  <div class="table-wrap">
-    <table>
+  <div class="toolbar">
+    <label class="search toolbar-search">
+      <span class="visually-hidden">Buscar licitações</span>
+      <app-icon name="search" [size]="16" />
+      <input
+        class="input"
+        type="search"
+        placeholder="Buscar por órgão, UASG, pregão ou material"
+        (input)="onSearch($event)"
+      />
+    </label>
+    <button type="button" class="btn"><app-icon name="filter" [size]="16" />Filtros</button>
+    <button type="button" class="btn hide-sm">
+      Responsável <app-icon name="chevron-down" [size]="16" />
+    </button>
+    <span class="toolbar-total">
+      <span class="num">{{ rows().length }}</span>
+      {{ rows().length === 1 ? 'registro' : 'registros' }} ·
+      <strong class="num">{{ total() | currency: 'BRL' }}</strong>
+    </span>
+  </div>
+
+  <div
+    id="tenders-panel"
+    role="tabpanel"
+    [attr.aria-labelledby]="'tab-' + selected()"
+    class="table-wrap"
+  >
+    <table class="data">
       <caption class="visually-hidden">
         {{
-          selected().label
+          meta[selected()].tab
         }}
       </caption>
       <thead>
         <tr>
           <th scope="col">Órgão</th>
           <th scope="col">UASG / Pregão</th>
-          <th scope="col">Tipo de material</th>
+          <th scope="col">Material</th>
           <th scope="col">Responsável</th>
+          @switch (selected()) {
+            @case ('VENCIDA') {
+              <th scope="col">Vencida em</th>
+            }
+            @case ('ASSINADO') {
+              <th scope="col">Assinado em</th>
+            }
+            @case ('EM_ANDAMENTO') {
+              <th scope="col">Pedido</th>
+            }
+            @case ('ENCERRADO') {
+              <th scope="col">Ata</th>
+            }
+          }
           <th scope="col" class="n">Valor</th>
+          <th scope="col"><span class="visually-hidden">Ações</span></th>
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td colspan="5">
-            <div class="empty">
-              <strong>{{ selected().empty }}</strong>
-              <span>O cadastro de licitações chega na próxima entrega.</span>
-            </div>
-          </td>
-        </tr>
+        @for (t of rows(); track t.id) {
+          <tr>
+            <td>
+              <div class="entity">
+                <app-avatar [name]="t.agency" [size]="36" [square]="true" />
+                <div>
+                  <div class="cell-main">{{ t.agency }}</div>
+                  <div class="cell-sub">{{ t.city }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="ref">{{ t.uasgPregao }}</td>
+            <td>
+              <span class="chip">{{ t.material }}</span>
+            </td>
+            <td>
+              <div class="owner">
+                <app-avatar [name]="t.owner" [size]="26" />
+                <span>{{ t.owner }}</span>
+              </div>
+            </td>
+            @switch (selected()) {
+              @case ('VENCIDA') {
+                <td>
+                  <div class="cell-main num">{{ t.wonAt | date: 'dd/MM/yyyy' }}</div>
+                  <div class="cell-sub">há {{ days(t.wonAt) }} dias</div>
+                </td>
+              }
+              @case ('ASSINADO') {
+                <td>
+                  <div class="cell-main num">{{ t.signedAt | date: 'dd/MM/yyyy' }}</div>
+                  @if (days(t.signedAt!) > 30) {
+                    <span class="badge red">Sem pedido há {{ days(t.signedAt!) }} dias</span>
+                  } @else {
+                    <div class="cell-sub">há {{ days(t.signedAt!) }} dias</div>
+                  }
+                </td>
+              }
+              @case ('EM_ANDAMENTO') {
+                <td class="progress-cell">
+                  <div class="progress-line">
+                    <div class="progress"><span [style.width.%]="share(t)"></span></div>
+                    <span class="num">{{ share(t) }}%</span>
+                  </div>
+                  <div class="cell-sub num">Falta {{ t.value - t.ordered | currency: 'BRL' }}</div>
+                </td>
+              }
+              @case ('ENCERRADO') {
+                <td>
+                  @if (ataValid(t)) {
+                    <span class="badge violet"
+                      >Ata válida até {{ t.ataUntil | date: 'MM/yyyy' }}</span
+                    >
+                    <div class="cell-sub">Oportunidade de carona</div>
+                  } @else {
+                    <span class="cell-sub">Sem ata vigente</span>
+                  }
+                </td>
+              }
+            }
+            <td class="n money num">{{ t.value | currency: 'BRL' }}</td>
+            <td class="actions">
+              <button
+                type="button"
+                class="btn ghost icon"
+                [attr.aria-label]="'Ações de ' + t.agency"
+              >
+                <app-icon name="more" />
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7">
+              <div class="empty">
+                <strong>Nenhum resultado para “{{ query() }}”.</strong>
+                <span>Tente o nome do órgão, a UASG ou o número do pregão.</span>
+              </div>
+            </td>
+          </tr>
+        }
       </tbody>
     </table>
   </div>

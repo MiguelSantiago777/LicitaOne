@@ -1,12 +1,231 @@
-.pair {
+.kpis {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--gap);
-  margin-top: var(--gap);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+.kpi {
+  padding: 18px 20px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.kpi-label {
+  color: var(--text-2);
+  font-weight: 550;
+}
+.kpi-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+.kpi-icon.blue {
+  background: var(--blue-bg);
+  color: var(--blue);
+}
+.kpi-icon.green {
+  background: var(--green-bg);
+  color: var(--green);
+}
+.kpi-icon.amber {
+  background: var(--amber-bg);
+  color: var(--amber);
+}
+.kpi-icon.violet {
+  background: var(--violet-bg);
+  color: var(--violet);
+}
+.kpi-value {
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.kpi-foot {
+  color: var(--text-3);
+  font-size: 13px;
+}
+.kpi-progress {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-3);
+  font-size: 13px;
+}
+.kpi-progress .progress > span {
+  background: var(--green);
+}
+
+.attention {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 16px 20px;
+  border-radius: var(--radius);
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+.attention-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--amber-bg);
+  color: var(--amber);
+}
+.attention-text {
+  flex: 1;
+  min-width: 0;
+  color: #78350f;
+}
+.attention-text h2 {
+  font-size: 15px;
+  font-weight: 650;
+  color: #78350f;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
   align-items: start;
 }
-@media (max-width: 860px) {
-  .pair {
+.span-2 {
+  grid-column: span 2;
+}
+
+.status-bars {
+  display: grid;
+  gap: 16px;
+}
+.status-row {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr) 140px;
+  align-items: center;
+  gap: 16px;
+}
+.status-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.status-count {
+  color: var(--text-3);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.status-track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--hover);
+  overflow: hidden;
+}
+.status-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #94a3b8;
+}
+.status-fill.amber {
+  background: #f59e0b;
+}
+.status-fill.blue {
+  background: #3b82f6;
+}
+.status-fill.green {
+  background: #22c55e;
+}
+.status-row .money {
+  text-align: right;
+}
+
+.task-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.task-list li:last-child {
+  border-bottom: 0;
+}
+.task-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.task-text .cell-main {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.progress-cell {
+  min-width: 140px;
+}
+.progress-cell .progress {
+  margin-bottom: 4px;
+}
+
+.pipeline-value {
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.pipeline-btn {
+  margin-top: 16px;
+  width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .span-2 {
+    grid-column: auto;
+  }
+}
+@media (max-width: 640px) {
+  .kpis {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .attention {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+  }
+  .attention .btn {
+    grid-column: 1 / -1;
+  }
+  .hide-sm {
+    display: none;
+  }
+  .status-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .status-track {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .page-actions .btn:first-child {
+    display: none;
   }
 }

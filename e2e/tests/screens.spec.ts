@@ -22,7 +22,10 @@ test('@screens telas principais', async ({ page, isMobile }, info) => {
     if (isMobile) {
       await page.goto(screen.path);
     } else {
-      await page.getByRole('link', { name: screen.title }).click();
+      await page
+        .getByRole('navigation', { name: 'Navegação principal' })
+        .getByRole('link', { name: screen.title })
+        .click();
     }
     await expect(page.getByRole('heading', { level: 1, name: screen.title })).toBeVisible();
     const name = `${String(index + 1).padStart(2, '0')}-${screen.path.slice(1)}`;
@@ -31,7 +34,7 @@ test('@screens telas principais', async ({ page, isMobile }, info) => {
   if (isMobile) {
     await page.getByRole('button', { name: 'Abrir menu' }).click();
     const nav = page.getByRole('navigation', { name: 'Navegação principal' });
-    await expect(nav).toHaveCSS('opacity', '1');
+    await expect(nav).toHaveCSS('transform', 'none');
     await page.screenshot({ path: `screenshots/${info.project.name}/99-menu.png` });
   }
 });

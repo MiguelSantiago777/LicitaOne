@@ -1,19 +1,86 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import {
+  ArrowUpRight,
+  Bell,
+  Building2,
+  CalendarClock,
+  ChevronDown,
+  ChevronRight,
+  CircleAlert,
+  CircleCheck,
+  CircleHelp,
+  Clock,
+  Columns3,
+  Download,
+  Ellipsis,
+  FileSignature,
+  FileSpreadsheet,
+  FileText,
+  Handshake,
+  Hourglass,
+  Landmark,
+  LayoutDashboard,
+  List,
+  ListChecks,
+  ListFilter,
+  LogOut,
+  Mail,
+  Menu,
+  PiggyBank,
+  Plus,
+  ScrollText,
+  Search,
+  Settings,
+  SquareKanban,
+  Star,
+  TrendingUp,
+  TriangleAlert,
+  Upload,
+  Wallet,
+  X,
+  type IconNode,
+} from 'lucide';
 
-/** Ícones de traço (16px, 1.5px), desenhados para o ShemaCRM. Sempre decorativos: o rótulo vem do texto ao lado. */
-const PATHS: Record<string, string> = {
-  dashboard: 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z',
-  tenders: 'M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6',
-  records: 'M5 4h14v16H5zM9 4v16M12 9h4M12 13h4',
-  deals: 'M4 5h4v14H4zM10 5h4v9h-4zM16 5h4v5h-4z',
-  tasks: 'M4 6l2 2 3-3M12 7h8M4 13l2 2 3-3M12 14h8M12 20h8',
-  imports: 'M12 3v12M7 10l5 5 5-5M4 19h16',
-  logout: 'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10',
-  menu: 'M4 7h16M4 12h16M4 17h16',
-  x: 'M6 6l12 12M18 6L6 18',
-  search: 'M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14zM20 20l-4-4',
-  plus: 'M12 5v14M5 12h14',
-  alert: 'M12 4l9 16H3zM12 10v4M12 17v.5',
+/** Ícones Lucide (ISC). Sempre decorativos: o nome acessível vem do texto ou do aria-label do botão. */
+const ICONS: Record<string, IconNode> = {
+  'arrow-up-right': ArrowUpRight,
+  bell: Bell,
+  building: Building2,
+  'calendar-clock': CalendarClock,
+  'chevron-down': ChevronDown,
+  'chevron-right': ChevronRight,
+  'circle-alert': CircleAlert,
+  'circle-check': CircleCheck,
+  help: CircleHelp,
+  clock: Clock,
+  columns: Columns3,
+  download: Download,
+  more: Ellipsis,
+  signature: FileSignature,
+  spreadsheet: FileSpreadsheet,
+  tenders: FileText,
+  handshake: Handshake,
+  hourglass: Hourglass,
+  landmark: Landmark,
+  dashboard: LayoutDashboard,
+  list: List,
+  tasks: ListChecks,
+  filter: ListFilter,
+  logout: LogOut,
+  mail: Mail,
+  menu: Menu,
+  piggy: PiggyBank,
+  plus: Plus,
+  records: ScrollText,
+  search: Search,
+  settings: Settings,
+  deals: SquareKanban,
+  star: Star,
+  trend: TrendingUp,
+  alert: TriangleAlert,
+  imports: Upload,
+  wallet: Wallet,
+  x: X,
 };
 
 @Component({
@@ -23,10 +90,56 @@ const PATHS: Record<string, string> = {
       viewBox="0 0 24 24"
       [attr.width]="size()"
       [attr.height]="size()"
+      [attr.stroke-width]="stroke()"
       aria-hidden="true"
       focusable="false"
     >
-      <path [attr.d]="path()" />
+      @for (node of nodes(); track $index) {
+        @switch (node[0]) {
+          @case ('path') {
+            <svg:path [attr.d]="node[1]['d']" />
+          }
+          @case ('circle') {
+            <svg:circle
+              [attr.cx]="node[1]['cx']"
+              [attr.cy]="node[1]['cy']"
+              [attr.r]="node[1]['r']"
+            />
+          }
+          @case ('rect') {
+            <svg:rect
+              [attr.x]="node[1]['x']"
+              [attr.y]="node[1]['y']"
+              [attr.width]="node[1]['width']"
+              [attr.height]="node[1]['height']"
+              [attr.rx]="node[1]['rx']"
+              [attr.ry]="node[1]['ry']"
+            />
+          }
+          @case ('line') {
+            <svg:line
+              [attr.x1]="node[1]['x1']"
+              [attr.y1]="node[1]['y1']"
+              [attr.x2]="node[1]['x2']"
+              [attr.y2]="node[1]['y2']"
+            />
+          }
+          @case ('polyline') {
+            <svg:polyline [attr.points]="node[1]['points']" />
+          }
+          @case ('polygon') {
+            <svg:polygon [attr.points]="node[1]['points']" />
+          }
+          @case ('ellipse') {
+            <svg:ellipse
+              [attr.cx]="node[1]['cx']"
+              [attr.cy]="node[1]['cy']"
+              [attr.rx]="node[1]['rx']"
+              [attr.ry]="node[1]['ry']"
+            />
+          }
+        }
+      }
     </svg>
   `,
   styles: `
@@ -37,7 +150,6 @@ const PATHS: Record<string, string> = {
     svg {
       fill: none;
       stroke: currentColor;
-      stroke-width: 1.5;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
@@ -46,6 +158,7 @@ const PATHS: Record<string, string> = {
 })
 export class Icon {
   readonly name = input.required<string>();
-  readonly size = input(16);
-  protected readonly path = computed(() => PATHS[this.name()] ?? '');
+  readonly size = input(18);
+  readonly stroke = input(1.75);
+  protected readonly nodes = computed(() => ICONS[this.name()] ?? []);
 }

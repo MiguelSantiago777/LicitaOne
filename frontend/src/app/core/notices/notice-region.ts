@@ -37,7 +37,7 @@ import { Notices } from './notices';
       align-items: flex-start;
       gap: 8px;
       padding: 12px 8px 12px 14px;
-      border-radius: var(--radius-card);
+      border-radius: var(--radius-sm);
       background: var(--primary);
       color: var(--primary-ink);
       box-shadow: 0 8px 24px rgb(0 0 0 / 0.16);
