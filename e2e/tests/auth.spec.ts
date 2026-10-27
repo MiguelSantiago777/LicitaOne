@@ -27,3 +27,12 @@ test('login, sessão sobrevive ao recarregar e logout', async ({ page, isMobile 
   await expect(page).toHaveURL(/\/login$/);
   expect(admin.email).toContain('@');
 });
+
+test('login funciona por 127.0.0.1 além de localhost', async ({ page, baseURL }) => {
+  test.skip(!baseURL?.includes('localhost'), 'só faz sentido quando o endereço base é localhost');
+  await page.goto(baseURL!.replace('localhost', '127.0.0.1') + '/login');
+  await page.getByLabel('E-mail').fill(admin.email);
+  await page.getByLabel('Senha').fill(admin.password);
+  await page.getByRole('button', { name: 'Entrar' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Painel' })).toBeVisible();
+});
