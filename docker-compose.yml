@@ -1,0 +1,129 @@
+# Sobe o ShemaCRM completo: `docker compose up -d --build`
+# Só a infraestrutura (para rodar backend/frontend na máquina): `docker compose up -d postgres rabbitmq s3 mailpit`
+# Observabilidade (Prometheus + Grafana): `docker compose --profile observability up -d`
+name: ${COMPOSE_PROJECT_NAME:-shemacrm}
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-shemacrm}
+      POSTGRES_USER: ${POSTGRES_USER:-shemacrm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      TZ: America/Sao_Paulo
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-15432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:4.3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-shemacrm}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?defina RABBITMQ_PASSWORD no .env}
+    ports:
+      - "127.0.0.1:${RABBITMQ_PORT:-15682}:5672"
+      - "127.0.0.1:${RABBITMQ_UI_PORT:-15683}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  # Armazenamento compatível com S3 (ADR 0007: a imagem oficial do MinIO foi descontinuada)
+  s3:
+    image: chrislusf/seaweedfs:4.51
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        sed -e "s|\$${S3_ACCESS_KEY}|$$S3_ACCESS_KEY|" -e "s|\$${S3_SECRET_KEY}|$$S3_SECRET_KEY|"
+        /etc/seaweedfs/s3.json.tmpl > /tmp/s3.json &&
+        exec weed server -dir=/data -s3 -s3.port=8333 -s3.config=/tmp/s3.json
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-shemacrm}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?defina S3_SECRET_KEY no .env}
+    ports:
+      - "127.0.0.1:${S3_PORT:-18333}:8333"
+    volumes:
+      - s3-data:/data
+      - ./deploy/seaweedfs/s3.json.tmpl:/etc/seaweedfs/s3.json.tmpl:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9333/cluster/status || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:v1.32
+    ports:
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-11025}:1025"
+      - "127.0.0.1:${MAILPIT_UI_PORT:-18025}:8025"
+
+  backend:
+    build: ./backend
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-shemacrm}
+      DB_USER: ${POSTGRES_USER:-shemacrm}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-shemacrm}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      SHEMA_ADMIN_EMAIL: ${SHEMA_ADMIN_EMAIL}
+      SHEMA_ADMIN_PASSWORD: ${SHEMA_ADMIN_PASSWORD}
+      SHEMA_JWT_PRIVATE_KEY: ${SHEMA_JWT_PRIVATE_KEY:-}
+      SHEMA_JWT_KEY_ID: ${SHEMA_JWT_KEY_ID:-dev-1}
+      SHEMA_CORS_ORIGINS: http://localhost:${FRONTEND_PORT:-14200}
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-18080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8081/actuator/health/readiness || exit 1"]
+      interval: 10s
+      timeout: 5s
+      start_period: 40s
+      retries: 20
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-14200}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v3.15.1
+    profiles: [observability]
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-19090}:9090"
+
+  grafana:
+    image: grafana/grafana:13.2
+    profiles: [observability]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-13000}:3000"
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
+  s3-data:

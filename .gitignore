@@ -1,5 +1,7 @@
+# Referências de design de terceiros (clone com .git próprio; ver docs/decisoes.md)
 .claude/design-refs/
-.agents/
-node_modules/
-target/
 .env
+*.log
+.idea/
+.vscode/
+node_modules/
