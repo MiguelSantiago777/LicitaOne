@@ -331,4 +331,48 @@ class TenderFlowTests {
                 .contains("Edwin Lima")
                 .doesNotContain("Nova Vendedora");
     }
+
+    @Test
+    void agencyContactsAreNormalizedAndVersioned() {
+        String token = admin();
+        String agencyId = createAgency(token, "Prefeitura de Japeri " + UUID.randomUUID());
+        Map<String, Object> current = get(token, "/api/v1/agencies/" + agencyId + "/contacts", Map.class)
+                .getBody();
+        assertThat((List<?>) current.get("contacts")).isEmpty();
+
+        ResponseEntity<Map> saved = put(
+                token,
+                "/api/v1/agencies/" + agencyId + "/contacts",
+                Map.of(
+                        "version",
+                        current.get("agencyVersion"),
+                        "contacts",
+                        List.of(Map.of(
+                                "name", "Ana Paula",
+                                "role", "Pregoeira",
+                                "email", "Ana.Paula@Japeri.RJ.gov.br",
+                                "phone", "+55 (21) 98765-4321"))));
+        assertThat(saved.getStatusCode().value()).isEqualTo(200);
+        assertThat((List<Map>) saved.getBody().get("contacts")).singleElement().satisfies(c -> {
+            assertThat(c.get("email")).isEqualTo("ana.paula@japeri.rj.gov.br");
+            assertThat(c.get("phone")).isEqualTo("21987654321");
+        });
+
+        ResponseEntity<Map> stale = put(
+                token,
+                "/api/v1/agencies/" + agencyId + "/contacts",
+                Map.of("version", current.get("agencyVersion"), "contacts", List.of()));
+        assertThat(stale.getStatusCode().value()).isEqualTo(409);
+
+        ResponseEntity<Map> badEmail = put(
+                token,
+                "/api/v1/agencies/" + agencyId + "/contacts",
+                Map.of(
+                        "version",
+                        saved.getBody().get("agencyVersion"),
+                        "contacts",
+                        List.of(Map.of("name", "João", "email", "joao-sem-arroba"))));
+        assertThat(badEmail.getStatusCode().value()).isEqualTo(422);
+        assertThat(badEmail.getBody()).containsEntry("rule", "EMAIL_INVALID");
+    }
 }

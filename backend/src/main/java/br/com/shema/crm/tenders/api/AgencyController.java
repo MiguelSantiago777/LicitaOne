@@ -3,6 +3,7 @@ package br.com.shema.crm.tenders.api;
 import br.com.shema.crm.shared.web.PageResponse;
 import br.com.shema.crm.tenders.application.AgencyService;
 import br.com.shema.crm.tenders.domain.Agency;
+import br.com.shema.crm.tenders.domain.AgencyContact;
 import br.com.shema.crm.tenders.domain.Sphere;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,6 +12,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -80,6 +82,30 @@ class AgencyController {
         }
     }
 
+    record ContactRequest(
+            @NotBlank(message = "Informe o nome do contato") @Size(max = 120)
+            String name,
+
+            @Size(max = 80) String role,
+            @Size(max = 160) String email,
+            @Size(max = 25) String phone,
+            @Size(max = 500) String notes) {}
+
+    record ReplaceContactsRequest(
+            @NotNull(message = "Versão obrigatória") @PositiveOrZero
+            Long version,
+
+            @NotNull @Valid @Size(max = 20) List<ContactRequest> contacts) {}
+
+    record ContactResponse(UUID id, String name, String role, String email, String phone, String notes) {
+        static ContactResponse from(AgencyContact c) {
+            return new ContactResponse(c.getId(), c.getName(), c.getRole(), c.getEmail(), c.getPhone(), c.getNotes());
+        }
+    }
+
+    /** @param agencyVersion versão do órgão depois da alteração, para a próxima edição */
+    record ContactsResponse(long agencyVersion, List<ContactResponse> contacts) {}
+
     private final AgencyService service;
 
     AgencyController(AgencyService service) {
@@ -116,5 +142,29 @@ class AgencyController {
     AgencyResponse update(@PathVariable UUID id, @Valid @RequestBody AgencyRequest request) {
         long version = request.version() == null ? -1 : request.version();
         return AgencyResponse.from(service.update(id, version, request.toInput()));
+    }
+
+    @GetMapping("/{id}/contacts")
+    @Operation(summary = "Contatos do órgão", operationId = "agencyContacts")
+    ContactsResponse contacts(@PathVariable UUID id) {
+        Agency agency = service.get(id);
+        return new ContactsResponse(
+                agency.getVersion() == null ? 0 : agency.getVersion(),
+                service.contacts(id).stream().map(ContactResponse::from).toList());
+    }
+
+    @PutMapping("/{id}/contacts")
+    @PreAuthorize("hasAnyRole('ADMIN','SALES')")
+    @Operation(summary = "Substitui os contatos do órgão", operationId = "replaceAgencyContacts")
+    ContactsResponse replaceContacts(@PathVariable UUID id, @Valid @RequestBody ReplaceContactsRequest request) {
+        Agency agency = service.replaceContacts(
+                id,
+                request.version(),
+                request.contacts().stream()
+                        .map(c -> new AgencyService.ContactInput(c.name(), c.role(), c.email(), c.phone(), c.notes()))
+                        .toList());
+        return new ContactsResponse(
+                agency.getVersion() == null ? 0 : agency.getVersion(),
+                service.contacts(id).stream().map(ContactResponse::from).toList());
     }
 }
