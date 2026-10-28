@@ -62,6 +62,7 @@ export class Shell {
       {
         label: 'Comercial',
         items: [
+          { path: '/quadros', label: 'Quadros', icon: 'columns' },
           { path: '/negociacoes', label: 'Negociações', icon: 'deals' },
           { path: '/tarefas', label: 'Tarefas', icon: 'tasks' },
         ],

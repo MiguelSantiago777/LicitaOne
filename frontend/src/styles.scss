@@ -63,6 +63,9 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Um excesso passageiro (animação, re-render) não pode alargar o viewport do celular: a página nunca rola de
+     lado; quem precisa rolar (quadros, abas, tabelas) rola dentro de si. clip não quebra o position: sticky. */
+  overflow-x: clip;
 }
 body {
   margin: 0;
@@ -375,6 +378,8 @@ a {
 
 /* ---------- tabelas ---------- */
 .table-wrap {
+  /* position: contém textos só para leitor de tela (absolute), que senão escapam da rolagem e alargam a página */
+  position: relative;
   overflow-x: auto;
 }
 table.data {
@@ -435,6 +440,7 @@ table.data .n {
 
 /* ---------- abas ---------- */
 .tabs {
+  position: relative;
   display: flex;
   gap: 4px;
   border-bottom: 1px solid var(--border);

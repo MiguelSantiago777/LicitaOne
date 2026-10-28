@@ -49,6 +49,11 @@ export const routes: Routes = [
           import('./features/price-records/price-records.page').then((m) => m.PriceRecordsPage),
       },
       {
+        path: 'quadros',
+        title: 'Quadros · ShemaCRM',
+        loadComponent: () => import('./features/boards/boards.page').then((m) => m.BoardsPage),
+      },
+      {
         path: 'negociacoes',
         title: 'Negociações · ShemaCRM',
         loadComponent: () => import('./features/deals/deals.page').then((m) => m.DealsPage),

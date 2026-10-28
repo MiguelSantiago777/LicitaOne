@@ -1,0 +1,298 @@
+<div class="page-head">
+  <div>
+    <h1>Quadros</h1>
+    <p class="sub">Organize o trabalho da equipe do seu jeito: colunas e cards são livres.</p>
+  </div>
+  @if (board.value()?.canEdit) {
+    <div class="page-actions">
+      @if (creatingBoard()) {
+        <form class="inline-form" (ngSubmit)="createBoard()">
+          <input
+            class="input"
+            name="newBoard"
+            [(ngModel)]="boardName"
+            placeholder="Nome do quadro"
+            aria-label="Nome do novo quadro"
+            maxlength="80"
+            (keydown.escape)="creatingBoard.set(false)"
+          />
+          <button type="submit" class="btn primary" [disabled]="busy()">Criar</button>
+          <button type="button" class="btn ghost" (click)="creatingBoard.set(false)">
+            Cancelar
+          </button>
+        </form>
+      } @else {
+        <button type="button" class="btn" (click)="boardName = ''; creatingBoard.set(true)">
+          <app-icon name="plus" [size]="16" />Novo quadro
+        </button>
+      }
+    </div>
+  }
+</div>
+
+<div class="tabs board-tabs" role="tablist" aria-label="Quadros">
+  @for (b of boards.value() ?? []; track b.id) {
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="selectedId() === b.id"
+      (click)="open(b.id)"
+    >
+      {{ b.name }} <span class="count">{{ b.cards }}</span>
+    </button>
+  }
+</div>
+
+@if (error(); as message) {
+  <div class="alert" role="alert">
+    {{ message }}
+    <button
+      type="button"
+      class="btn ghost icon"
+      (click)="error.set(null)"
+      aria-label="Fechar aviso"
+    >
+      <app-icon name="x" [size]="16" />
+    </button>
+  </div>
+}
+
+@if (board.isLoading() && !board.hasValue()) {
+  <div class="card empty" aria-busy="true">Carregando o quadro…</div>
+} @else if (board.error()) {
+  <div class="card empty" role="alert">
+    <strong>Não foi possível carregar o quadro.</strong>
+    <button type="button" class="btn sm" (click)="board.reload()">Tentar de novo</button>
+  </div>
+} @else if (board.value(); as b) {
+  <div class="board-bar">
+    @if (renamingBoard()) {
+      <form class="inline-form" (ngSubmit)="renameBoard(b)">
+        <input
+          class="input"
+          name="boardName"
+          [(ngModel)]="boardName"
+          aria-label="Nome do quadro"
+          maxlength="80"
+          (keydown.escape)="renamingBoard.set(false)"
+        />
+        <button type="submit" class="btn sm primary">Salvar</button>
+        <button type="button" class="btn sm ghost" (click)="renamingBoard.set(false)">
+          Cancelar
+        </button>
+      </form>
+    } @else {
+      <span class="cell-sub">{{ b.columns.length }} colunas · {{ totalCards() }} cards</span>
+      @if (b.canEdit) {
+        <button type="button" class="btn sm ghost" (click)="startRenameBoard(b)">Renomear</button>
+        @if (totalCards() === 0) {
+          <button type="button" class="btn sm ghost danger-text" (click)="deleteBoard(b)">
+            Apagar quadro
+          </button>
+        }
+      }
+    }
+  </div>
+
+  <div class="board" cdkDropListGroup>
+    @for (col of b.columns; track col.id; let first = $first; let last = $last) {
+      <section class="column" [attr.aria-label]="col.name">
+        <header class="column-head">
+          @if (renamingColumn() === col.id) {
+            <form class="inline-form" (ngSubmit)="renameColumn(b, col)">
+              <input
+                class="input"
+                name="columnName"
+                [(ngModel)]="columnName"
+                aria-label="Nome da coluna"
+                maxlength="60"
+                (keydown.escape)="renamingColumn.set(null)"
+              />
+              <button type="submit" class="btn sm primary">OK</button>
+            </form>
+          } @else {
+            <div class="column-title">
+              <h2>{{ col.name }}</h2>
+              <span class="count">{{ col.cardCount }}</span>
+            </div>
+            @if (col.totalValue > 0) {
+              <p class="column-value num">
+                {{ col.totalValue | currency: 'BRL' : 'symbol' : '1.0-0' }}
+              </p>
+            }
+            @if (b.canEdit) {
+              <div class="column-tools">
+                <button
+                  type="button"
+                  class="tool"
+                  (click)="moveColumn(b, col, -1)"
+                  [disabled]="first || busy()"
+                  [attr.aria-label]="'Mover ' + col.name + ' para a esquerda'"
+                  title="Mover para a esquerda"
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  class="tool"
+                  (click)="moveColumn(b, col, 1)"
+                  [disabled]="last || busy()"
+                  [attr.aria-label]="'Mover ' + col.name + ' para a direita'"
+                  title="Mover para a direita"
+                >
+                  →
+                </button>
+                <button type="button" class="tool text" (click)="startRenameColumn(col)">
+                  Renomear
+                </button>
+                @if (confirmingColumnRemoval() === col.id) {
+                  <button
+                    type="button"
+                    class="tool text danger-text"
+                    (click)="removeColumn(b, col)"
+                  >
+                    Confirmar exclusão
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="tool text"
+                    (click)="confirmingColumnRemoval.set(col.id)"
+                    [attr.aria-label]="'Excluir a coluna ' + col.name"
+                  >
+                    Excluir
+                  </button>
+                }
+              </div>
+            }
+          }
+        </header>
+
+        <div
+          class="column-body"
+          cdkDropList
+          [cdkDropListData]="col.id"
+          [cdkDropListDisabled]="!b.canEdit"
+          (cdkDropListDropped)="drop($event)"
+        >
+          @for (card of col.cards; track card.id) {
+            <article class="board-card" cdkDrag [cdkDragData]="card" [class.late]="card.overdue">
+              <button
+                type="button"
+                class="card-open"
+                [attr.data-card]="card.id"
+                (click)="editingCard.set(card)"
+              >
+                <span class="card-title">{{ card.title }}</span>
+                @if (card.tender) {
+                  <span class="card-tender">
+                    <app-icon name="tenders" [size]="14" />
+                    <span>{{ card.tender.agencyName }}</span>
+                  </span>
+                  <span class="cell-sub num">{{ card.tender.totalValue | currency: 'BRL' }}</span>
+                }
+                @if (card.notes) {
+                  <span class="card-notes">{{ card.notes }}</span>
+                }
+                @if (card.owner || card.dueDate) {
+                  <span class="card-foot">
+                    @if (card.owner) {
+                      <app-avatar [name]="card.owner.name" [size]="22" />
+                    }
+                    @if (card.dueDate) {
+                      <span class="due num" [class.overdue]="card.overdue">
+                        <app-icon name="clock" [size]="13" />{{ card.dueDate | date: 'dd/MM' }}
+                        @if (card.overdue) {
+                          <span class="visually-hidden">(atrasado)</span>
+                        }
+                      </span>
+                    }
+                  </span>
+                }
+              </button>
+            </article>
+          } @empty {
+            <p class="column-empty">Sem cards</p>
+          }
+        </div>
+
+        @if (b.canEdit) {
+          @if (addingCardTo() === col.id) {
+            <form class="add-card" (ngSubmit)="addCard(b, col.id)">
+              <input
+                class="input"
+                name="newCard"
+                [(ngModel)]="newCardTitle"
+                placeholder="Título do card"
+                [attr.aria-label]="'Novo card em ' + col.name"
+                maxlength="200"
+                (keydown.escape)="addingCardTo.set(null)"
+                autocomplete="off"
+              />
+              <div class="add-card-actions">
+                <button type="submit" class="btn sm primary" [disabled]="busy()">Adicionar</button>
+                <button type="button" class="btn sm ghost" (click)="addingCardTo.set(null)">
+                  Fechar
+                </button>
+              </div>
+            </form>
+          } @else {
+            <button type="button" class="add-card-btn" (click)="startAddCard(col.id)">
+              <app-icon name="plus" [size]="14" />Adicionar card
+            </button>
+          }
+        }
+      </section>
+    }
+
+    @if (b.canEdit) {
+      <section class="column new-column" aria-label="Nova coluna">
+        @if (addingColumn() || !b.columns.length) {
+          <form class="add-card" (ngSubmit)="addColumn(b)">
+            <label for="new-column" class="new-column-label">
+              {{ b.columns.length ? 'Nova coluna' : 'Comece criando a primeira coluna' }}
+            </label>
+            <input
+              id="new-column"
+              class="input"
+              name="newColumn"
+              [(ngModel)]="newColumnName"
+              placeholder="Ex.: Novembro, A fazer, Aguardando contrato"
+              maxlength="60"
+              (keydown.escape)="addingColumn.set(false)"
+              autocomplete="off"
+            />
+            <div class="add-card-actions">
+              <button type="submit" class="btn sm primary" [disabled]="busy()">Criar coluna</button>
+              @if (b.columns.length) {
+                <button type="button" class="btn sm ghost" (click)="addingColumn.set(false)">
+                  Fechar
+                </button>
+              }
+            </div>
+          </form>
+        } @else {
+          <button
+            type="button"
+            class="add-card-btn"
+            (click)="newColumnName = ''; addingColumn.set(true)"
+          >
+            <app-icon name="plus" [size]="14" />Nova coluna
+          </button>
+        }
+      </section>
+    } @else if (!b.columns.length) {
+      <div class="card empty">
+        <strong>Este quadro ainda não tem colunas.</strong>
+        <span>Quem tem perfil Comercial ou Administrador pode montar o quadro.</span>
+      </div>
+    }
+  </div>
+
+  <app-card-dialog
+    [board]="b"
+    [card]="editingCard()"
+    (closed)="editingCard.set(null)"
+    (saved)="onCardSaved($event)"
+  />
+}

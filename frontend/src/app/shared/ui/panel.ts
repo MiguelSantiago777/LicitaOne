@@ -92,11 +92,15 @@ let nextId = 0;
     }
     .panel-body {
       flex: 1;
+      /* sem isto o corpo cresce com o conteúdo e empurra o rodapé para fora da tela */
+      min-height: 0;
       overflow-y: auto;
       padding: 20px 24px;
     }
     .panel-foot {
       display: flex;
+      flex-wrap: wrap;
+      align-items: center;
       justify-content: flex-end;
       gap: 8px;
       padding: 14px 24px;

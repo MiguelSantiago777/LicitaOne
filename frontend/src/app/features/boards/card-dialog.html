@@ -1,0 +1,122 @@
+<app-panel
+  [open]="!!card()"
+  title="Card"
+  [subtitle]="board()?.name ?? null"
+  [width]="520"
+  (closed)="closed.emit()"
+>
+  @if (card()) {
+    <form id="card-form" class="form" (ngSubmit)="save()" novalidate>
+      @if (error(); as message) {
+        <div class="alert" role="alert">{{ message }}</div>
+      }
+      <div class="field">
+        <label for="card-title">Título</label>
+        <input
+          id="card-title"
+          class="input"
+          name="title"
+          [(ngModel)]="title"
+          maxlength="200"
+          required
+          autocomplete="off"
+        />
+      </div>
+      <div class="field">
+        <label for="card-notes">Observações</label>
+        <textarea
+          id="card-notes"
+          class="input textarea"
+          name="notes"
+          rows="4"
+          maxlength="2000"
+          [(ngModel)]="notes"
+        ></textarea>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="card-owner">Responsável</label>
+          <select id="card-owner" class="input" name="ownerId" [(ngModel)]="ownerId">
+            <option value="">Ninguém</option>
+            @for (o of owners.value() ?? []; track o.id) {
+              <option [value]="o.id">{{ o.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label for="card-due">Prazo</label>
+          <input id="card-due" type="date" class="input" name="dueDate" [(ngModel)]="dueDate" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="card-column">Coluna</label>
+        <select id="card-column" class="input" name="columnId" [(ngModel)]="columnId">
+          @for (col of board()?.columns ?? []; track col.id) {
+            <option [value]="col.id">{{ col.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="card-tender">Licitação ligada</label>
+        @if (tender(); as t) {
+          <div class="linked">
+            <div>
+              <span class="cell-main">{{ t.agencyName }}</span>
+              <span class="cell-sub num"
+                >{{ t.identification }} · {{ t.totalValue | currency: 'BRL' }}</span
+              >
+            </div>
+            <button
+              type="button"
+              class="btn ghost icon"
+              (click)="tender.set(null)"
+              aria-label="Desligar a licitação"
+            >
+              <app-icon name="x" [size]="16" />
+            </button>
+          </div>
+        } @else {
+          <input
+            id="card-tender"
+            class="input"
+            name="tenderSearch"
+            [(ngModel)]="tenderSearch"
+            (ngModelChange)="tenderQuery$.next($event)"
+            placeholder="Opcional: busque por órgão, UASG ou pregão"
+            autocomplete="off"
+          />
+          @if (tenderResults().length) {
+            <ul class="results" aria-label="Licitações encontradas">
+              @for (t of tenderResults(); track t.id) {
+                <li>
+                  <button type="button" (click)="pickTender(t)">
+                    <span class="cell-main">{{ t.agency.name }}</span>
+                    <span class="cell-sub num">{{ t.reference }} · {{ t.statusLabel }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        }
+      </div>
+    </form>
+  }
+  <ng-container panel-footer>
+    @if (confirmingDelete()) {
+      <span class="confirm-text">Apagar este card?</span>
+      <button type="button" class="btn danger" (click)="remove()" [disabled]="saving()">
+        Apagar
+      </button>
+      <button type="button" class="btn" (click)="confirmingDelete.set(false)">Manter</button>
+    } @else {
+      <button type="button" class="btn ghost delete" (click)="confirmingDelete.set(true)">
+        Apagar
+      </button>
+      <button type="button" class="btn" (click)="closed.emit()">Cancelar</button>
+      <button type="submit" form="card-form" class="btn primary" [disabled]="saving()">
+        {{ saving() ? 'Salvando…' : 'Salvar' }}
+      </button>
+    }
+  </ng-container>
+</app-panel>
