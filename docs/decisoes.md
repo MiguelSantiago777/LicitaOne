@@ -57,6 +57,8 @@ As dúvidas da seção 11(c) da [especificação](especificacao.md) foram enviad
 3. O quadro *Organização mensal* organiza o quê: as licitações do mês (sessões marcadas), as tarefas ou as entregas?
 4. O limite de 200% vale por item ou pelo valor total da ata?
 5. Quem recebe os e-mails de alerta: o responsável, todos ou uma lista configurável?
+6. (Fase 2, 28/10/2026) A aba GERAL da planilha não tem UASG, número do pregão nem data da vitória e da assinatura. Dá para incluir essas colunas na planilha, para importar as licitações de uma vez? Sem elas, cada licitação é cadastrada na tela e só os itens e pedidos (abas de cada órgão) são importados.
+7. (Fase 2) Pedido acima do saldo do contrato é recusado. Existe aditivo (por exemplo, até 25% a mais) que precise ser registrado no sistema?
 
 ### Respostas assumidas para começar a Fase 1 (27/10/2026)
 O usuário autorizou seguir sem esperar o cliente. Assumimos o seguinte; tudo pode mudar quando o cliente confirmar:

@@ -34,9 +34,9 @@ Itens, pedidos, saldo, datas de assinatura e encerramento, importação de plani
 2. ✅ Outbox + RabbitMQ: `event_publication` (registro JDBC do Modulith, esquema v2 copiado no Flyway), topologia, DLQ, `processed_messages`, API de reprocessamento.
 3. ✅ `FileStorage` local + importação assíncrona + relatório CSV.
 4. ✅ Contatos do órgão.
-5. Frontend: aba "Itens e pedidos" no detalhe, registrar contrato/pedido, saldo nas listas, tela de importação real, painel com saldo a pedir.
-6. E2E: assinatura → pedido → saldo; importação com linhas válidas e inválidas. Screenshots 1440/390, checklist da Web Design Guidelines.
-7. ADR 0012, relatório `docs/fases/fase-2.md`.
+5. ✅ Frontend: aba "Itens e pedidos" no detalhe, registrar contrato/pedido, saldo nas listas, tela de importação real, painel com saldo a pedir.
+6. ✅ E2E: assinatura → pedido → saldo; importação com linhas válidas e inválidas. Screenshots 1440/390, checklist da Web Design Guidelines.
+7. ✅ ADR 0012, relatório `docs/fases/fase-2.md`.
 
 ## Decisões tomadas durante a execução (entram no ADR 0012)
 - **Importação desta fase = itens e pedidos de um contrato**, a partir da aba do órgão.

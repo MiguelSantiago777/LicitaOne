@@ -1,6 +1,6 @@
 # 0003 — Eventos entre módulos e outbox transacional
 
-**Status:** Aceito · implementação na Fase 2
+**Status:** Aceito · implementado na Fase 2, com o registro em JDBC em vez de JPA (ver [0012](0012-contratos-pedidos-e-importacao.md))
 
 ## Contexto
 Alertas, importação e notificações precisam reagir a fatos de outros módulos (`ContratoAssinado`, `PedidoRegistrado`, ...) sem acoplar módulos e sem publicar um evento cuja transação depois falhou.
