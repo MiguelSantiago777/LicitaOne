@@ -27,6 +27,22 @@ spring:
     port: ${RABBITMQ_PORT:15682}
     username: ${RABBITMQ_USER:shemacrm}
     password: ${RABBITMQ_PASSWORD:}
+    # Confirmação do broker: o outbox só marca o evento como publicado depois do "ok" do RabbitMQ
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: 10
+        default-requeue-rejected: false
+  modulith:
+    events:
+      jdbc:
+        # A tabela event_publication vem do Flyway (V6__outbox.sql)
+        schema-initialization:
+          enabled: false
+      # Eventos que não chegaram ao fim (ex.: queda antes do RabbitMQ confirmar) são reenviados na subida
+      republish-outstanding-events-on-restart: true
   mvc:
     problemdetails:
       enabled: true

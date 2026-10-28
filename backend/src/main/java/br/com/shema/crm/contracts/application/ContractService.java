@@ -12,6 +12,7 @@ import br.com.shema.crm.contracts.domain.OrderDraft;
 import br.com.shema.crm.contracts.infrastructure.ContractEventRepository;
 import br.com.shema.crm.contracts.infrastructure.ContractRepository;
 import br.com.shema.crm.shared.domain.DomainRuleViolation;
+import br.com.shema.crm.shared.messaging.EventMetadata;
 import br.com.shema.crm.shared.persistence.IdempotencyKeys;
 import br.com.shema.crm.shared.security.CurrentUser;
 import br.com.shema.crm.shared.web.ApiException;
@@ -113,8 +114,8 @@ public class ContractService {
         contracts.save(contract);
         tenders.contractSigned(tenderId, contract.getSignedAt());
         record(contract, ContractEvent.Type.SIGNED, contract.getSignedAt(), signedSummary(contract), null, user);
-        publisher.publishEvent(
-                new ContractSigned(contract.getId(), tenderId, contract.getSignedAt(), contract.getValue()));
+        publisher.publishEvent(new ContractSigned(
+                EventMetadata.create(clock), contract.getId(), tenderId, contract.getSignedAt(), contract.getValue()));
         contracts.flush();
         return ContractDetails.of(contract, true);
     }
@@ -169,6 +170,7 @@ public class ContractService {
         record(contract, ContractEvent.Type.ORDER_PLACED, order.getOrderedAt(), summary, null, user);
         idempotency.remember(ORDER_SCOPE, idempotencyKey, user.id(), order.getId());
         publisher.publishEvent(new OrderRegistered(
+                EventMetadata.create(clock),
                 contract.getId(),
                 contract.getTenderId(),
                 order.getId(),
@@ -214,6 +216,7 @@ public class ContractService {
             tenders.allContractsClosed(contract.getTenderId(), contracts.lastClosedAt(contract.getTenderId()));
         }
         publisher.publishEvent(new ContractClosed(
+                EventMetadata.create(clock),
                 contract.getId(),
                 contract.getTenderId(),
                 date,
