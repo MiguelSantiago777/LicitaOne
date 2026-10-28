@@ -6,6 +6,7 @@ const screens = [
   { path: '/licitacoes', title: 'Licitações' },
   { path: '/orgaos', title: 'Órgãos' },
   { path: '/atas', title: 'Atas' },
+  { path: '/quadros', title: 'Quadros' },
   { path: '/negociacoes', title: 'Negociações' },
   { path: '/tarefas', title: 'Tarefas' },
   { path: '/importacao', title: 'Importação' },

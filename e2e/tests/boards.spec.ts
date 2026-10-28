@@ -75,5 +75,6 @@ test('quadros do cliente existem e a equipe monta colunas e cards', async ({ pag
   await dialog.getByRole('button', { name: 'Apagar' }).click();
   await expect(dez.getByText('Sem cards')).toBeVisible();
   await page.getByRole('button', { name: 'Apagar quadro' }).click();
+  await page.getByRole('button', { name: 'Apagar', exact: true }).click();
   await expect(tabs.getByRole('tab', { name: new RegExp(name) })).toHaveCount(0);
 });

@@ -38,7 +38,10 @@
       [attr.aria-selected]="selectedId() === b.id"
       (click)="open(b.id)"
     >
-      {{ b.name }} <span class="count">{{ b.cards }}</span>
+      {{ b.name }}
+      <span class="count">{{
+        selectedId() === b.id && board.hasValue() ? totalCards() : b.cards
+      }}</span>
     </button>
   }
 </div>
@@ -86,9 +89,28 @@
       @if (b.canEdit) {
         <button type="button" class="btn sm ghost" (click)="startRenameBoard(b)">Renomear</button>
         @if (totalCards() === 0) {
-          <button type="button" class="btn sm ghost danger-text" (click)="deleteBoard(b)">
-            Apagar quadro
-          </button>
+          @if (confirmingBoardRemoval()) {
+            <span class="cell-sub">Apagar "{{ b.name }}"?</span>
+            <button
+              type="button"
+              class="btn sm danger"
+              (click)="deleteBoard(b)"
+              [disabled]="busy()"
+            >
+              Apagar
+            </button>
+            <button type="button" class="btn sm ghost" (click)="confirmingBoardRemoval.set(false)">
+              Manter
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="btn sm ghost danger-text"
+              (click)="confirmingBoardRemoval.set(true)"
+            >
+              Apagar quadro
+            </button>
+          }
         }
       }
     }

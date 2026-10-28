@@ -77,6 +77,7 @@ export class BoardsPage {
   protected readonly addingColumn = signal(false);
   protected readonly creatingBoard = signal(false);
   protected readonly renamingBoard = signal(false);
+  protected readonly confirmingBoardRemoval = signal(false);
   protected newCardTitle = '';
   protected newColumnName = '';
   protected columnName = '';
@@ -87,6 +88,7 @@ export class BoardsPage {
   );
 
   protected open(boardId: string): void {
+    this.confirmingBoardRemoval.set(false);
     this.router.navigate([], { queryParams: { quadro: boardId } });
   }
 
@@ -123,6 +125,7 @@ export class BoardsPage {
     this.api.deleteBoard(b.id, { version: b.version }).subscribe({
       next: () => {
         this.busy.set(false);
+        this.confirmingBoardRemoval.set(false);
         this.boards.reload();
         this.router.navigate([], { queryParams: { quadro: null } });
       },
