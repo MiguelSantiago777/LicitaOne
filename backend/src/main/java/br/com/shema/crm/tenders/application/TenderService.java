@@ -228,50 +228,29 @@ public class TenderService implements TenderLifecycle {
     }
 
     @Override
-    public void contractSigned(UUID tenderId, LocalDate signedAt) {
+    public void contractSigned(UUID tenderId, LocalDate signedAt, CurrentUser by) {
         Tender tender = get(tenderId);
         TenderStatus from = tender.getStatus();
         if (tender.onContractSigned(signedAt, today())) {
-            record(
-                    tender,
-                    TenderEvent.Type.STATUS_CHANGED,
-                    from,
-                    tender.getStatus(),
-                    signedAt,
-                    null,
-                    CurrentUser.get());
+            record(tender, TenderEvent.Type.STATUS_CHANGED, from, tender.getStatus(), signedAt, null, by);
         }
     }
 
     @Override
-    public void orderRegistered(UUID tenderId, LocalDate orderedAt) {
+    public void orderRegistered(UUID tenderId, LocalDate orderedAt, CurrentUser by) {
         Tender tender = get(tenderId);
         TenderStatus from = tender.getStatus();
         if (tender.onOrderRegistered(orderedAt, today())) {
-            record(
-                    tender,
-                    TenderEvent.Type.STATUS_CHANGED,
-                    from,
-                    tender.getStatus(),
-                    orderedAt,
-                    null,
-                    CurrentUser.get());
+            record(tender, TenderEvent.Type.STATUS_CHANGED, from, tender.getStatus(), orderedAt, null, by);
         }
     }
 
     @Override
-    public void allContractsClosed(UUID tenderId, LocalDate closedAt) {
+    public void allContractsClosed(UUID tenderId, LocalDate closedAt, CurrentUser by) {
         Tender tender = get(tenderId);
         TenderStatus from = tender.getStatus();
         if (tender.onAllContractsClosed(closedAt, today())) {
-            record(
-                    tender,
-                    TenderEvent.Type.STATUS_CHANGED,
-                    from,
-                    tender.getStatus(),
-                    closedAt,
-                    null,
-                    CurrentUser.get());
+            record(tender, TenderEvent.Type.STATUS_CHANGED, from, tender.getStatus(), closedAt, null, by);
         }
     }
 

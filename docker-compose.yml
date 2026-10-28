@@ -83,6 +83,10 @@ services:
       SHEMA_JWT_KEY_ID: ${SHEMA_JWT_KEY_ID:-dev-1}
       SHEMA_CORS_ORIGINS: http://localhost:${FRONTEND_PORT:-14200}
       SHEMA_AUTH_LOGINATTEMPTSPERMINUTE: ${SHEMA_LOGIN_ATTEMPTS_PER_MINUTE:-10}
+      SHEMA_STORAGE_DIR: /app/data/files
+    volumes:
+      # Planilhas importadas e relatórios (FileStorage local); a Fase 3 passa os documentos para o S3
+      - backend-files:/app/data
     ports:
       - "127.0.0.1:${BACKEND_PORT:-18080}:8080"
     depends_on:
@@ -125,6 +129,7 @@ services:
       - "127.0.0.1:${GRAFANA_PORT:-13000}:3000"
 
 volumes:
+  backend-files:
   postgres-data:
   rabbitmq-data:
   s3-data:

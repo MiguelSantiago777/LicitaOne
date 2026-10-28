@@ -46,6 +46,10 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
 
 server:
   # Local: a porta do .env (BACKEND_PORT); no container não há .env e fica 8080
@@ -80,6 +84,9 @@ logging:
     correlation: "[%X{correlationId:-}] "
 
 shema:
+  storage:
+    # Planilhas importadas e relatórios (FileStorage). No container, um volume montado nesta pasta.
+    local-dir: ${SHEMA_STORAGE_DIR:./data/files}
   auth:
     secure-cookie: false
     cors-origins: ${SHEMA_CORS_ORIGINS:http://localhost:4300}

@@ -6,8 +6,8 @@ import java.util.Map;
 import org.springframework.amqp.core.Declarables;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
-import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.amqp.autoconfigure.RabbitTemplateCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.retry.RetryPolicy;
@@ -43,9 +43,13 @@ public class MessagingConfig {
                 .build();
     }
 
+    /**
+     * JSON só na publicação (o envelope sai como JSON). Os consumidores recebem a mensagem crua e o
+     * {@link ReliableConsumer} lê o envelope: assim uma mensagem ilegível chega até ele e vai para a DLQ com log.
+     */
     @Bean
-    MessageConverter jsonMessageConverter(JsonMapper json) {
-        return new JacksonJsonMessageConverter(json);
+    RabbitTemplateCustomizer jsonOnPublish(JsonMapper json) {
+        return template -> template.setMessageConverter(new JacksonJsonMessageConverter(json));
     }
 
     @Bean

@@ -6,3 +6,6 @@
 .vscode/
 node_modules/
 .taste-skill/
+
+# Arquivos gravados pelo FileStorage local (planilhas importadas, relatórios)
+backend/data/

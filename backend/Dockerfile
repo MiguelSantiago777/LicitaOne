@@ -17,6 +17,8 @@ COPY --from=build /app/dependencies/ ./
 COPY --from=build /app/spring-boot-loader/ ./
 COPY --from=build /app/snapshot-dependencies/ ./
 COPY --from=build /app/application/ ./
+# Pasta do FileStorage local: existe na imagem já com o dono certo, para o volume herdar a permissão
+RUN mkdir -p /app/data/files && chown -R shema:shema /app/data
 USER shema
 EXPOSE 8080 8081
 ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]

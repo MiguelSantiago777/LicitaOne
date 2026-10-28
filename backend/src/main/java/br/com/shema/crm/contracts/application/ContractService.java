@@ -3,6 +3,7 @@ package br.com.shema.crm.contracts.application;
 import br.com.shema.crm.contracts.ContractEvents.ContractClosed;
 import br.com.shema.crm.contracts.ContractEvents.ContractSigned;
 import br.com.shema.crm.contracts.ContractEvents.OrderRegistered;
+import br.com.shema.crm.contracts.domain.BrFormat;
 import br.com.shema.crm.contracts.domain.Contract;
 import br.com.shema.crm.contracts.domain.ContractDraft;
 import br.com.shema.crm.contracts.domain.ContractEvent;
@@ -21,13 +22,10 @@ import br.com.shema.crm.tenders.TenderLifecycle;
 import br.com.shema.crm.tenders.TenderRef;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
-import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -112,7 +110,7 @@ public class ContractService {
             contract.replaceItems(items);
         }
         contracts.save(contract);
-        tenders.contractSigned(tenderId, contract.getSignedAt());
+        tenders.contractSigned(tenderId, contract.getSignedAt(), user);
         record(contract, ContractEvent.Type.SIGNED, contract.getSignedAt(), signedSummary(contract), null, user);
         publisher.publishEvent(new ContractSigned(
                 EventMetadata.create(clock), contract.getId(), tenderId, contract.getSignedAt(), contract.getValue()));
@@ -144,7 +142,8 @@ public class ContractService {
                 contract,
                 ContractEvent.Type.ITEMS_CHANGED,
                 null,
-                items.size() + (items.size() == 1 ? " item" : " itens") + " · total " + money(contract.itemsTotal()),
+                items.size() + (items.size() == 1 ? " item" : " itens") + " · total "
+                        + BrFormat.money(contract.itemsTotal()),
                 null,
                 user);
         contracts.flush();
@@ -164,8 +163,8 @@ public class ContractService {
         TenderRef tender = editable(contract, expectedVersion, user);
         forceNewVersion(contract);
         ContractOrder order = contract.placeOrder(draft, today(), clock.instant(), user.name());
-        tenders.orderRegistered(contract.getTenderId(), order.getOrderedAt());
-        String summary = "Pedido de " + money(order.getValue())
+        tenders.orderRegistered(contract.getTenderId(), order.getOrderedAt(), user);
+        String summary = "Pedido de " + BrFormat.money(order.getValue())
                 + (order.getReference() == null ? "" : " · " + order.getReference());
         record(contract, ContractEvent.Type.ORDER_PLACED, order.getOrderedAt(), summary, null, user);
         idempotency.remember(ORDER_SCOPE, idempotencyKey, user.id(), order.getId());
@@ -191,7 +190,7 @@ public class ContractService {
                 contract,
                 ContractEvent.Type.ORDER_REMOVED,
                 order.getOrderedAt(),
-                "Pedido de " + money(order.getValue()) + " apagado",
+                "Pedido de " + BrFormat.money(order.getValue()) + " apagado",
                 null,
                 user);
         contracts.flush();
@@ -208,12 +207,12 @@ public class ContractService {
                 contract,
                 ContractEvent.Type.CLOSED,
                 date,
-                "Encerrado com saldo de " + money(contract.balance().remaining()),
+                "Encerrado com saldo de " + BrFormat.money(contract.balance().remaining()),
                 null,
                 user);
         contracts.flush();
         if (!contracts.existsByTenderIdAndClosedAtIsNull(contract.getTenderId())) {
-            tenders.allContractsClosed(contract.getTenderId(), contracts.lastClosedAt(contract.getTenderId()));
+            tenders.allContractsClosed(contract.getTenderId(), contracts.lastClosedAt(contract.getTenderId()), user);
         }
         publisher.publishEvent(new ContractClosed(
                 EventMetadata.create(clock),
@@ -260,7 +259,8 @@ public class ContractService {
     }
 
     private String signedSummary(Contract c) {
-        return c.getKind().label() + (c.getNumber() == null ? "" : " " + c.getNumber()) + " de " + money(c.getValue());
+        return c.getKind().label() + (c.getNumber() == null ? "" : " " + c.getNumber()) + " de "
+                + BrFormat.money(c.getValue());
     }
 
     private List<FieldChange> diff(Map<String, String> before, Map<String, String> after) {
@@ -291,12 +291,6 @@ public class ContractService {
                 user.id(),
                 user.name(),
                 clock.instant()));
-    }
-
-    private static String money(BigDecimal value) {
-        return NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
-                .format(value)
-                .replace(' ', ' ');
     }
 
     private LocalDate today() {
