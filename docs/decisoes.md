@@ -75,3 +75,8 @@ O usuário autorizou seguir sem esperar o cliente. Assumimos o seguinte; tudo po
 - O *Funil de vendas* (Negociações) continua na Fase 4, porque depende das negociações reais.
 - A Fase 3 (atas e documentos) fica para depois dos quadros.
 
+### Nome do produto (28/10/2026)
+- O sistema passa a se chamar **LicitaOne** (pedido do usuário). Muda tudo o que aparece: telas, títulos das abas do navegador, login, documentação da API e README.
+- Os identificadores internos continuam `shema`/`shemacrm`: pacote Java `br.com.shema.crm`, banco, filas e exchanges `shemacrm.*`, nomes dos containers e da pasta. Trocar esses nomes exigiria migrar banco e mensageria, sem ganho visível. Fica para quando houver ambiente de produção, se for desejado.
+- "Shema Suprimentos" continua abaixo do logo: é o nome da empresa cliente.
+

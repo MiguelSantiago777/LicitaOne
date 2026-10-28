@@ -1,4 +1,4 @@
-# Sobe o ShemaCRM completo: `docker compose up -d --build`
+# Sobe o LicitaOne completo: `docker compose up -d --build`
 # Só a infraestrutura (para rodar backend/frontend na máquina): `docker compose up -d postgres rabbitmq s3 mailpit`
 # Observabilidade (Prometheus + Grafana): `docker compose --profile observability up -d`
 name: ${COMPOSE_PROJECT_NAME:-shemacrm}

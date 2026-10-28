@@ -10,7 +10,7 @@ export const routes: Routes = [
   {
     path: 'login',
     canMatch: [guestGuard],
-    title: 'Entrar · ShemaCRM',
+    title: 'Entrar · LicitaOne',
     loadComponent: () => import('./features/auth/login.page').then((m) => m.LoginPage),
   },
   {
@@ -21,57 +21,57 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'painel' },
       {
         path: 'painel',
-        title: 'Painel · ShemaCRM',
+        title: 'Painel · LicitaOne',
         loadComponent: () =>
           import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage),
       },
       {
         path: 'licitacoes',
-        title: 'Licitações · ShemaCRM',
+        title: 'Licitações · LicitaOne',
         loadComponent: () => import('./features/tenders/tenders.page').then((m) => m.TendersPage),
       },
       {
         path: 'licitacoes/:id',
-        title: 'Licitação · ShemaCRM',
+        title: 'Licitação · LicitaOne',
         loadComponent: () =>
           import('./features/tenders/tender-detail.page').then((m) => m.TenderDetailPage),
       },
       {
         path: 'orgaos',
-        title: 'Órgãos · ShemaCRM',
+        title: 'Órgãos · LicitaOne',
         loadComponent: () =>
           import('./features/agencies/agencies.page').then((m) => m.AgenciesPage),
       },
       {
         path: 'atas',
-        title: 'Atas · ShemaCRM',
+        title: 'Atas · LicitaOne',
         loadComponent: () =>
           import('./features/price-records/price-records.page').then((m) => m.PriceRecordsPage),
       },
       {
         path: 'quadros',
-        title: 'Quadros · ShemaCRM',
+        title: 'Quadros · LicitaOne',
         loadComponent: () => import('./features/boards/boards.page').then((m) => m.BoardsPage),
       },
       {
         path: 'negociacoes',
-        title: 'Negociações · ShemaCRM',
+        title: 'Negociações · LicitaOne',
         loadComponent: () => import('./features/deals/deals.page').then((m) => m.DealsPage),
       },
       {
         path: 'tarefas',
-        title: 'Tarefas · ShemaCRM',
+        title: 'Tarefas · LicitaOne',
         loadComponent: () => import('./features/tasks/tasks.page').then((m) => m.TasksPage),
       },
       {
         path: 'importacao',
-        title: 'Importação · ShemaCRM',
+        title: 'Importação · LicitaOne',
         loadComponent: () => import('./features/imports/imports.page').then((m) => m.ImportsPage),
       },
       {
         path: 'usuarios',
         canMatch: [adminGuard],
-        title: 'Usuários · ShemaCRM',
+        title: 'Usuários · LicitaOne',
         loadComponent: () => import('./features/users/users.page').then((m) => m.UsersPage),
       },
     ],

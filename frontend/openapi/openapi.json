@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "ShemaCRM API",
+    "title": "LicitaOne API",
     "description": "Gestão de licitações públicas",
     "version": "v1"
   },

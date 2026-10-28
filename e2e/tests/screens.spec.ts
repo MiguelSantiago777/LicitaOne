@@ -31,6 +31,7 @@ test('@screens telas principais', async ({ page, isMobile }, info) => {
         .click();
     }
     await expect(page.getByRole('heading', { level: 1, name: screen.title })).toBeVisible();
+    await page.waitForLoadState('networkidle'); // dados da tela carregados antes da captura
     const name = `${String(index + 1).padStart(2, '0')}-${screen.path.slice(1)}`;
     await page.screenshot({ path: `screenshots/${info.project.name}/${name}.png`, fullPage: true });
   }

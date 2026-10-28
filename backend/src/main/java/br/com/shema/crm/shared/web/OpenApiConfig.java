@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration(proxyBeanMethods = false)
 @OpenAPIDefinition(
-        info = @Info(title = "ShemaCRM API", version = "v1", description = "Gestão de licitações públicas"),
+        info = @Info(title = "LicitaOne API", version = "v1", description = "Gestão de licitações públicas"),
         security = @SecurityRequirement(name = "bearer"))
 @SecurityScheme(name = "bearer", type = SecuritySchemeType.HTTP, scheme = "bearer", bearerFormat = "JWT")
 public class OpenApiConfig {

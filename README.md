@@ -1,4 +1,4 @@
-# ShemaCRM
+# LicitaOne
 
 CRM de licitações públicas da Shema Suprimentos e Serviços: acompanha cada licitação ganha, da vitória ao encerramento do contrato (pedidos, saldo, atas e caronas).
 
