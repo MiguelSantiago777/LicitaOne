@@ -5,6 +5,7 @@ import br.com.shema.crm.identity.UserSummary;
 import br.com.shema.crm.identity.domain.User;
 import br.com.shema.crm.identity.infrastructure.UserRepository;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,7 +32,8 @@ class UserDirectoryService implements UserDirectory {
     @Override
     public Map<UUID, UserSummary> findAll(Collection<UUID> ids) {
         if (ids.isEmpty()) {
-            return Map.of();
+            // Vazio que aceita get(null): quem chama costuma consultar pelo responsável, que pode faltar
+            return Collections.emptyMap();
         }
         return users.findAllById(ids).stream()
                 .map(UserDirectoryService::summary)

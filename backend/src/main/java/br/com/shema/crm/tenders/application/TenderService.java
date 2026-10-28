@@ -31,6 +31,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -220,7 +221,8 @@ public class TenderService implements TenderLifecycle {
     @Transactional(readOnly = true)
     public Map<UUID, TenderRef> findAll(Collection<UUID> tenderIds) {
         if (tenderIds.isEmpty()) {
-            return Map.of();
+            // Vazio que aceita get(null): quem chama costuma consultar pelo responsável, que pode faltar
+            return Collections.emptyMap();
         }
         return tenders.findAllWithAgencyByIdIn(tenderIds).stream()
                 .map(TenderService::ref)
