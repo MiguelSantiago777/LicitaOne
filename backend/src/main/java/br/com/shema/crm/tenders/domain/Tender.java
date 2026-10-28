@@ -142,6 +142,55 @@ public class Tender extends AuditableEntity {
         status = target;
     }
 
+    /**
+     * Um contrato foi assinado. O primeiro move a licitação para "Contrato assinado"; os seguintes (outros
+     * contratos ou empenhos) não mudam nada. Devolve se o estado mudou.
+     */
+    public boolean onContractSigned(LocalDate date, LocalDate today) {
+        requireAcceptsContracts();
+        if (status == TenderStatus.CONTRATO_ASSINADO || status == TenderStatus.EM_ANDAMENTO) {
+            return false;
+        }
+        transitionTo(TenderStatus.CONTRATO_ASSINADO, date, today);
+        return true;
+    }
+
+    /** Um pedido foi registrado. O primeiro move a licitação para "Em andamento". Devolve se o estado mudou. */
+    public boolean onOrderRegistered(LocalDate date, LocalDate today) {
+        requireAcceptsContracts();
+        if (status != TenderStatus.CONTRATO_ASSINADO) {
+            return false;
+        }
+        transitionTo(TenderStatus.EM_ANDAMENTO, date, today);
+        return true;
+    }
+
+    /** O último contrato aberto foi encerrado: a licitação encerra junto. Devolve se o estado mudou. */
+    public boolean onAllContractsClosed(LocalDate date, LocalDate today) {
+        if (status != TenderStatus.CONTRATO_ASSINADO && status != TenderStatus.EM_ANDAMENTO) {
+            return false;
+        }
+        transitionTo(TenderStatus.ENCERRADO, date, today);
+        return true;
+    }
+
+    private void requireAcceptsContracts() {
+        if (!status.acceptsContracts()) {
+            throw new DomainRuleViolation(
+                    "TENDER_NOT_CONTRACTABLE",
+                    "Só uma licitação vencida e ainda não encerrada pode receber contratos e pedidos.");
+        }
+    }
+
+    /** "UASG 160221 / PE 039/2026", como o cliente escreve. */
+    public String reference() {
+        String process = processNumber == null ? null : modality.prefix() + " " + processNumber;
+        if (uasg != null && process != null) {
+            return "UASG " + uasg + " / " + process;
+        }
+        return uasg != null ? "UASG " + uasg : process;
+    }
+
     /** Fotografia dos campos editáveis, para o histórico mostrar o que mudou. */
     public Map<String, String> snapshot() {
         Map<String, String> s = new LinkedHashMap<>();

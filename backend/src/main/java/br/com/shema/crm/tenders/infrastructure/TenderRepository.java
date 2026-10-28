@@ -1,6 +1,7 @@
 package br.com.shema.crm.tenders.infrastructure;
 
 import br.com.shema.crm.tenders.domain.Tender;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,4 +32,7 @@ public interface TenderRepository extends JpaRepository<Tender, UUID>, JpaSpecif
     List<String> distinctPortals();
 
     long countByAgencyId(UUID agencyId);
+
+    @EntityGraph(attributePaths = "agency")
+    List<Tender> findAllWithAgencyByIdIn(Collection<UUID> ids);
 }

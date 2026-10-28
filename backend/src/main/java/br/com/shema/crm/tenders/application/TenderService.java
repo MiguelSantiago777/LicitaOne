@@ -6,6 +6,8 @@ import br.com.shema.crm.shared.domain.Money;
 import br.com.shema.crm.shared.security.CurrentUser;
 import br.com.shema.crm.shared.web.ApiException;
 import br.com.shema.crm.shared.web.ErrorCode;
+import br.com.shema.crm.tenders.TenderLifecycle;
+import br.com.shema.crm.tenders.TenderRef;
 import br.com.shema.crm.tenders.domain.Agency;
 import br.com.shema.crm.tenders.domain.Modality;
 import br.com.shema.crm.tenders.domain.ProcessNumber;
@@ -28,12 +30,16 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -42,7 +48,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 @Service
 @Transactional
-public class TenderService {
+public class TenderService implements TenderLifecycle {
 
     /** Dados de entrada já validados pelo controller (formato), antes das regras do domínio. */
     public record TenderInput(
@@ -189,11 +195,99 @@ public class TenderService {
         Tender tender = get(id);
         user.requireCanEditOwnedBy(tender.getOwnerId());
         checkVersion(tender, expectedVersion);
+        if (target != null && target.isManagedByContracts()) {
+            throw new DomainRuleViolation(
+                    "MANAGED_BY_CONTRACTS",
+                    "\"" + target.label() + "\" é registrado pelos contratos: assine, registre um pedido ou encerre"
+                            + " o contrato na aba Itens e pedidos.");
+        }
         TenderStatus from = tender.getStatus();
         tender.transitionTo(target, date, today());
         record(tender, TenderEvent.Type.STATUS_CHANGED, from, target, date, null, user);
         tenders.flush();
         return tender;
+    }
+
+    // ---- API pública para o módulo de contratos (TenderLifecycle) ----
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<TenderRef> find(UUID tenderId) {
+        return tenderId == null ? Optional.empty() : tenders.findById(tenderId).map(TenderService::ref);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<UUID, TenderRef> findAll(Collection<UUID> tenderIds) {
+        if (tenderIds.isEmpty()) {
+            return Map.of();
+        }
+        return tenders.findAllWithAgencyByIdIn(tenderIds).stream()
+                .map(TenderService::ref)
+                .collect(Collectors.toMap(TenderRef::id, Function.identity()));
+    }
+
+    @Override
+    public void contractSigned(UUID tenderId, LocalDate signedAt) {
+        Tender tender = get(tenderId);
+        TenderStatus from = tender.getStatus();
+        if (tender.onContractSigned(signedAt, today())) {
+            record(
+                    tender,
+                    TenderEvent.Type.STATUS_CHANGED,
+                    from,
+                    tender.getStatus(),
+                    signedAt,
+                    null,
+                    CurrentUser.get());
+        }
+    }
+
+    @Override
+    public void orderRegistered(UUID tenderId, LocalDate orderedAt) {
+        Tender tender = get(tenderId);
+        TenderStatus from = tender.getStatus();
+        if (tender.onOrderRegistered(orderedAt, today())) {
+            record(
+                    tender,
+                    TenderEvent.Type.STATUS_CHANGED,
+                    from,
+                    tender.getStatus(),
+                    orderedAt,
+                    null,
+                    CurrentUser.get());
+        }
+    }
+
+    @Override
+    public void allContractsClosed(UUID tenderId, LocalDate closedAt) {
+        Tender tender = get(tenderId);
+        TenderStatus from = tender.getStatus();
+        if (tender.onAllContractsClosed(closedAt, today())) {
+            record(
+                    tender,
+                    TenderEvent.Type.STATUS_CHANGED,
+                    from,
+                    tender.getStatus(),
+                    closedAt,
+                    null,
+                    CurrentUser.get());
+        }
+    }
+
+    private static TenderRef ref(Tender t) {
+        return new TenderRef(
+                t.getId(),
+                t.getAgency().getId(),
+                t.getAgency().getName(),
+                t.reference(),
+                t.getObject(),
+                t.getMaterialType(),
+                t.getTotalValue().amount(),
+                t.getStatus().name(),
+                t.getWonAt(),
+                t.getOwnerId(),
+                t.getStatus().acceptsContracts());
     }
 
     private TenderDraft draft(TenderInput input, UUID ownerId) {

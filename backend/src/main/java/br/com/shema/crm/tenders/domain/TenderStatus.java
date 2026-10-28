@@ -77,4 +77,14 @@ public enum TenderStatus {
     public boolean isInitial() {
         return this == EM_DISPUTA || this == VENCIDA;
     }
+
+    /** Estados alcançados pelos contratos (assinatura, primeiro pedido, encerramento), nunca à mão (ADR 0012). */
+    public boolean isManagedByContracts() {
+        return this == CONTRATO_ASSINADO || this == EM_ANDAMENTO || this == ENCERRADO;
+    }
+
+    /** Já vencida e ainda não encerrada: pode receber contratos e empenhos. */
+    public boolean acceptsContracts() {
+        return this == VENCIDA || this == AGUARDANDO_ASSINATURA || this == CONTRATO_ASSINADO || this == EM_ANDAMENTO;
+    }
 }

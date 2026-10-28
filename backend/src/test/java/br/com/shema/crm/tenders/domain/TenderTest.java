@@ -193,4 +193,43 @@ class TenderTest {
         assertThat(TenderStatus.ENCERRADO.isInitial()).isFalse();
         assertThat(TenderStatus.VENCIDA.label()).isEqualTo("Vencida");
     }
+
+    @Test
+    void contractsDriveTheLifecycleOnlyOnTheFirstOfEachFact() {
+        Tender t = Tender.register(draft(), TenderStatus.VENCIDA, LocalDate.of(2026, 5, 1), TODAY);
+
+        assertThat(t.onOrderRegistered(LocalDate.of(2026, 5, 20), TODAY)).isFalse();
+        assertThat(t.onContractSigned(LocalDate.of(2026, 5, 16), TODAY)).isTrue();
+        assertThat(t.getStatus()).isEqualTo(TenderStatus.CONTRATO_ASSINADO);
+        assertThat(t.getSignedAt()).isEqualTo(LocalDate.of(2026, 5, 16));
+
+        // um segundo empenho não muda a data da primeira assinatura
+        assertThat(t.onContractSigned(LocalDate.of(2026, 6, 1), TODAY)).isFalse();
+        assertThat(t.getSignedAt()).isEqualTo(LocalDate.of(2026, 5, 16));
+
+        assertThat(t.onOrderRegistered(LocalDate.of(2026, 6, 10), TODAY)).isTrue();
+        assertThat(t.getStatus()).isEqualTo(TenderStatus.EM_ANDAMENTO);
+        assertThat(t.onOrderRegistered(LocalDate.of(2026, 7, 10), TODAY)).isFalse();
+        assertThat(t.getOrdersStartedAt()).isEqualTo(LocalDate.of(2026, 6, 10));
+
+        assertThat(t.onAllContractsClosed(LocalDate.of(2026, 9, 30), TODAY)).isTrue();
+        assertThat(t.getStatus()).isEqualTo(TenderStatus.ENCERRADO);
+        assertThat(t.onAllContractsClosed(LocalDate.of(2026, 10, 1), TODAY)).isFalse();
+    }
+
+    @Test
+    void onlyWonAndOpenTendersReceiveContracts() {
+        Tender dispute = Tender.register(draft(), TenderStatus.EM_DISPUTA, null, TODAY);
+        assertRule(() -> dispute.onContractSigned(TODAY, TODAY), "TENDER_NOT_CONTRACTABLE");
+        assertRule(() -> dispute.onOrderRegistered(TODAY, TODAY), "TENDER_NOT_CONTRACTABLE");
+        assertThat(dispute.onAllContractsClosed(TODAY, TODAY)).isFalse();
+        assertThat(TenderStatus.CONTRATO_ASSINADO.isManagedByContracts()).isTrue();
+        assertThat(TenderStatus.PERDIDA.isManagedByContracts()).isFalse();
+    }
+
+    @Test
+    void referenceJoinsUasgAndProcess() {
+        Tender t = Tender.register(draft(), TenderStatus.EM_DISPUTA, null, TODAY);
+        assertThat(t.reference()).isEqualTo("PE 041/2026");
+    }
 }

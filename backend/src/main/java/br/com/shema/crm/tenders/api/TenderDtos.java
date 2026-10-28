@@ -122,6 +122,7 @@ final class TenderDtos {
 
         static TenderResponse from(Tender t, UserSummary owner, boolean canEdit) {
             List<NextStatusResponse> next = t.getStatus().next().stream()
+                    .filter(s -> !s.isManagedByContracts())
                     .sorted()
                     .map(s -> new NextStatusResponse(
                             s,
@@ -139,7 +140,7 @@ final class TenderDtos {
                     t.getModality().label(),
                     t.getUasg() == null ? null : t.getUasg().value(),
                     t.getProcessNumber() == null ? null : t.getProcessNumber().value(),
-                    reference(t),
+                    t.reference(),
                     t.getPortal(),
                     t.getSessionAt(),
                     t.getObject(),
@@ -159,17 +160,6 @@ final class TenderDtos {
                     t.getVersion() == null ? 0 : t.getVersion(),
                     t.getCreatedAt(),
                     t.getUpdatedAt());
-        }
-
-        /** "UASG 160221 / PE 039/2026", como o cliente escreve. */
-        static String reference(Tender t) {
-            String process = t.getProcessNumber() == null
-                    ? null
-                    : t.getModality().prefix() + " " + t.getProcessNumber().value();
-            if (t.getUasg() != null && process != null) {
-                return "UASG " + t.getUasg().value() + " / " + process;
-            }
-            return t.getUasg() != null ? "UASG " + t.getUasg().value() : process;
         }
     }
 

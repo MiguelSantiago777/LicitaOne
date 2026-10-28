@@ -170,7 +170,10 @@ class TenderFlowTests {
         assertThat(tender.get("status")).isEqualTo("VENCIDA");
         assertThat(tender.get("reference")).isEqualTo("PE 039/2026");
         assertThat(tender.get("canEdit")).isEqualTo(true);
-        assertThat((List<?>) tender.get("nextStatuses")).hasSize(2);
+        // "Contrato assinado" sai das ações da licitação: é registrado pelo contrato (ADR 0012)
+        assertThat((List<Map>) tender.get("nextStatuses"))
+                .extracting(s -> s.get("status"))
+                .containsExactly("AGUARDANDO_ASSINATURA");
 
         Map<String, Object> edited = tenderBody(agencyId, null);
         edited.put("totalValue", 320000.00);
@@ -184,21 +187,29 @@ class TenderFlowTests {
         assertThat(stale.getStatusCode().value()).isEqualTo(409);
         assertThat(stale.getBody()).containsEntry("code", "VERSION_CONFLICT");
 
-        // Assinar sem data: regra de negócio
+        // Assinar pela licitação não vale mais: a assinatura é o registro do contrato
         Object version = updated.getBody().get("version");
-        ResponseEntity<Map> noDate = post(
-                token,
-                "/api/v1/tenders/" + id + "/transitions",
-                Map.of("version", version, "target", "CONTRATO_ASSINADO"));
-        assertThat(noDate.getStatusCode().value()).isEqualTo(422);
-        assertThat(noDate.getBody()).containsEntry("code", "BUSINESS_RULE").containsEntry("rule", "DATE_REQUIRED");
-
-        ResponseEntity<Map> signed = post(
+        ResponseEntity<Map> manual = post(
                 token,
                 "/api/v1/tenders/" + id + "/transitions",
                 Map.of("version", version, "target", "CONTRATO_ASSINADO", "date", "2026-10-15"));
-        assertThat(signed.getStatusCode().value()).isEqualTo(200);
-        assertThat(signed.getBody())
+        assertThat(manual.getStatusCode().value()).isEqualTo(422);
+        assertThat(manual.getBody()).containsEntry("rule", "MANAGED_BY_CONTRACTS");
+
+        // Assinar sem data: o contrato recusa
+        ResponseEntity<Map> noDate = post(
+                token,
+                "/api/v1/tenders/" + id + "/contracts",
+                Map.of("contract", Map.of("kind", "CONTRATO", "value", 320000.00)));
+        assertThat(noDate.getStatusCode().value()).isEqualTo(400);
+        assertThat(noDate.getBody()).containsEntry("code", "VALIDATION_ERROR");
+
+        ResponseEntity<Map> contract = post(
+                token,
+                "/api/v1/tenders/" + id + "/contracts",
+                Map.of("contract", Map.of("kind", "CONTRATO", "signedAt", "2026-10-15", "value", 320000.00)));
+        assertThat(contract.getStatusCode().value()).isEqualTo(201);
+        assertThat(get(token, "/api/v1/tenders/" + id, Map.class).getBody())
                 .containsEntry("status", "CONTRATO_ASSINADO")
                 .containsEntry("signedAt", "2026-10-15");
 
