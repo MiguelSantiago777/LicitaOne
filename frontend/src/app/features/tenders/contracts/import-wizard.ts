@@ -70,6 +70,7 @@ export class ImportWizard {
   protected readonly preview = signal<PreviewResponse | null>(null);
   protected readonly job = signal<ImportJobResponse | null>(null);
   protected readonly onlyProblems = signal(false);
+  protected readonly fileName = signal<string | null>(null);
   protected orderDate = todayIso();
 
   private file: File | null = null;
@@ -108,6 +109,7 @@ export class ImportWizard {
   protected pick(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.file = input.files?.[0] ?? null;
+    this.fileName.set(this.file?.name ?? null);
     this.error.set(null);
   }
 
@@ -256,6 +258,7 @@ export class ImportWizard {
     this.preview.set(null);
     this.job.set(null);
     this.file = null;
+    this.fileName.set(null);
     this.orderDate = todayIso();
     this.confirmKey = crypto.randomUUID();
   }

@@ -32,10 +32,13 @@
         </p>
         <label class="drop">
           <app-icon name="spreadsheet" [size]="28" />
-          <span class="cell-main">Escolher arquivo</span>
-          <span class="cell-sub">.xlsx ou .csv, até 10 MB</span>
+          <span class="cell-main">{{ fileName() ?? 'Escolher arquivo' }}</span>
+          <span class="cell-sub">{{
+            fileName() ? 'Clique para trocar' : '.xlsx ou .csv, até 10 MB'
+          }}</span>
           <input
             type="file"
+            class="visually-hidden"
             accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
             (change)="pick($event)"
             data-testid="import-file"
