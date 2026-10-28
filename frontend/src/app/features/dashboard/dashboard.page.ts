@@ -2,6 +2,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { ContractsService } from '../../api/generated/contracts/contracts.service';
 import { TendersService } from '../../api/generated/tenders/tenders.service';
 import type { TenderResponseStatus } from '../../api/generated/model';
 import { Session } from '../../core/auth/session';
@@ -26,6 +27,7 @@ function isoDaysAgo(days: number): string {
 })
 export class DashboardPage {
   private readonly api = inject(TendersService);
+  private readonly contractsApi = inject(ContractsService);
   private readonly session = inject(Session);
   protected readonly now = new Date();
   protected readonly tone = statusTone;
@@ -38,6 +40,9 @@ export class DashboardPage {
   });
 
   protected readonly summary = rxResource({ stream: () => this.api.tenderSummary() });
+  protected readonly openContracts = rxResource({
+    stream: () => this.contractsApi.openContractsSummary(),
+  });
   protected readonly stale = rxResource({
     stream: () =>
       this.api.searchTenders({

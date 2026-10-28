@@ -2,10 +2,15 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { map } from 'rxjs';
+import { map, of } from 'rxjs';
+import { ContractsService } from '../../api/generated/contracts/contracts.service';
 import { TendersService } from '../../api/generated/tenders/tenders.service';
 import { UsersService } from '../../api/generated/users/users.service';
-import type { SearchTendersParams, TenderResponse } from '../../api/generated/model';
+import type {
+  SearchTendersParams,
+  TenderContractTotalsResponse,
+  TenderResponse,
+} from '../../api/generated/model';
 import { Session } from '../../core/auth/session';
 import { UFS, daysSince } from '../../shared/format';
 import { Avatar } from '../../shared/ui/avatar';
@@ -15,6 +20,9 @@ import { TenderForm } from './tender-form';
 import { DEFAULT_TAB, TENDER_TABS, statusTone } from './tender-meta';
 
 const PAGE_SIZE = 25;
+
+/** Abas em que a licitação já tem contrato: mostram quanto foi pedido e quanto falta. */
+const CONTRACT_TABS = ['assinados', 'andamento', 'encerrados'];
 
 /** Lista de licitações. Aba, busca, filtros, ordenação e página ficam na URL (dá para compartilhar e voltar). */
 @Component({
@@ -27,6 +35,7 @@ const PAGE_SIZE = 25;
 export class TendersPage {
   private readonly api = inject(TendersService);
   private readonly usersApi = inject(UsersService);
+  private readonly contractsApi = inject(ContractsService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   protected readonly session = inject(Session);
@@ -78,6 +87,22 @@ export class TendersPage {
       direction: this.direction(),
     })),
     stream: ({ params }) => this.api.searchTenders(params),
+  });
+
+  /** Pedido e saldo dos contratos das licitações da página, numa consulta só. */
+  protected readonly contractTotals = rxResource({
+    params: computed(() => {
+      if (!CONTRACT_TABS.includes(this.tabId())) return undefined;
+      const ids = (this.list.value()?.items ?? []).map((t) => t.id);
+      return ids.length ? ids : undefined;
+    }),
+    stream: ({ params }) =>
+      params ? this.contractsApi.contractTotalsByTender({ tenderIds: params }) : of([]),
+  });
+  protected readonly totalsByTender = computed(() => {
+    const byId = new Map<string, TenderContractTotalsResponse>();
+    for (const t of this.contractTotals.value() ?? []) byId.set(t.tenderId, t);
+    return byId;
   });
 
   protected readonly owners = rxResource({ stream: () => this.usersApi.listUserOptions() });

@@ -15,7 +15,9 @@ import type { Observable } from 'rxjs';
 import type {
   AgencyRequest,
   AgencyResponse,
+  ContactsResponse,
   PageResponseAgencyResponse,
+  ReplaceContactsRequest,
   SearchAgenciesParams,
 } from '../model';
 
@@ -209,6 +211,86 @@ export class AgenciesService {
     });
   }
   /**
+   * @summary Contatos do órgão
+   */
+  agencyContacts<TData = ContactsResponse>(
+    id: string,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  agencyContacts<TData = ContactsResponse>(
+    id: string,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  agencyContacts<TData = ContactsResponse>(
+    id: string,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  agencyContacts<TData = ContactsResponse>(
+    id: string,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(`/api/v1/agencies/${id}/contacts`, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      });
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(`/api/v1/agencies/${id}/contacts`, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      });
+    }
+
+    return this.http.get<TData>(`/api/v1/agencies/${id}/contacts`, {
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+    });
+  }
+  /**
+   * @summary Substitui os contatos do órgão
+   */
+  replaceAgencyContacts<TData = ContactsResponse>(
+    id: string,
+    replaceContactsRequest: ReplaceContactsRequest,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  replaceAgencyContacts<TData = ContactsResponse>(
+    id: string,
+    replaceContactsRequest: ReplaceContactsRequest,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  replaceAgencyContacts<TData = ContactsResponse>(
+    id: string,
+    replaceContactsRequest: ReplaceContactsRequest,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  replaceAgencyContacts<TData = ContactsResponse>(
+    id: string,
+    replaceContactsRequest: ReplaceContactsRequest,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.put<TData>(`/api/v1/agencies/${id}/contacts`, replaceContactsRequest, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      });
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.put<TData>(`/api/v1/agencies/${id}/contacts`, replaceContactsRequest, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      });
+    }
+
+    return this.http.put<TData>(`/api/v1/agencies/${id}/contacts`, replaceContactsRequest, {
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+    });
+  }
+  /**
    * @summary Busca órgãos por nome ou município
    */
   searchAgencies<TData = PageResponseAgencyResponse>(
@@ -293,5 +375,7 @@ export class AgenciesService {
 
 export type GetAgencyClientResult = NonNullable<AgencyResponse>;
 export type UpdateAgencyClientResult = NonNullable<AgencyResponse>;
+export type AgencyContactsClientResult = NonNullable<ContactsResponse>;
+export type ReplaceAgencyContactsClientResult = NonNullable<ContactsResponse>;
 export type SearchAgenciesClientResult = NonNullable<PageResponseAgencyResponse>;
 export type CreateAgencyClientResult = NonNullable<AgencyResponse>;

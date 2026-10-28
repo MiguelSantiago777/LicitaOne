@@ -156,6 +156,9 @@
       <p class="error" role="alert">{{ error() }}</p>
     }
   </form>
+  @if (editing(); as a) {
+    <app-agency-contacts [agencyId]="a.id" (versionChange)="form.version = $event" />
+  }
   <ng-container panel-footer>
     <button type="button" class="btn" (click)="formOpen.set(false)">Cancelar</button>
     <button type="submit" form="agency-form" class="btn primary" [disabled]="saving()">

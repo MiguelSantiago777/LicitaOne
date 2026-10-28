@@ -267,7 +267,21 @@
                   </td>
                 }
               }
-              <td class="n money num">{{ t.totalValue | currency: 'BRL' }}</td>
+              <td class="n money num">
+                {{ t.totalValue | currency: 'BRL' }}
+                @if (totalsByTender().get(t.id); as ct) {
+                  <div class="cell-sub balance-line">
+                    @if (t.status === 'ENCERRADO') {
+                      pedido {{ ct.ordered | currency: 'BRL' }}
+                    } @else {
+                      falta {{ ct.remaining | currency: 'BRL' }}
+                    }
+                  </div>
+                  <div class="progress mini" aria-hidden="true">
+                    <span [style.width.%]="ct.value ? (ct.ordered / ct.value) * 100 : 0"></span>
+                  </div>
+                }
+              </td>
             </tr>
           } @empty {
             <tr>

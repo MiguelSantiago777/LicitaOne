@@ -53,7 +53,14 @@
       <span class="kpi-icon green"><app-icon name="trend" /></span>
     </div>
     <p class="kpi-value num">{{ running().count }}</p>
-    <p class="kpi-foot">Saldo a pedir aparece com os pedidos (Fase 2)</p>
+    <p class="kpi-foot num">
+      @if (openContracts.value(); as oc) {
+        {{ oc.remaining | currency: 'BRL' : 'symbol' : '1.0-0' }} a pedir em {{ oc.contracts }}
+        {{ oc.contracts === 1 ? 'contrato aberto' : 'contratos abertos' }}
+      } @else {
+        Saldo a pedir…
+      }
+    </p>
   </a>
 </section>
 

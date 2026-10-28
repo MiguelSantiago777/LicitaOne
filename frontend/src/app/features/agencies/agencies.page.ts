@@ -12,10 +12,11 @@ import { Icon } from '../../shared/ui/icon';
 import { Pager } from '../../shared/ui/pager';
 import { Panel } from '../../shared/ui/panel';
 import { SPHERES } from '../tenders/tender-meta';
+import { AgencyContacts } from './agency-contacts';
 
 @Component({
   selector: 'app-agencies-page',
-  imports: [FormsModule, RouterLink, Avatar, Icon, Pager, Panel],
+  imports: [FormsModule, RouterLink, Avatar, Icon, Pager, Panel, AgencyContacts],
   templateUrl: './agencies.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `

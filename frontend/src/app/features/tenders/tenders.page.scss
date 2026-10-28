@@ -144,3 +144,14 @@ table.data td:first-child {
     padding-right: 12px;
   }
 }
+
+.balance-line {
+  margin-top: 2px;
+  white-space: nowrap;
+}
+.progress.mini {
+  height: 4px;
+  margin-top: 4px;
+  margin-left: auto;
+  max-width: 120px;
+}

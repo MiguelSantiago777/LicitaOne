@@ -1,0 +1,293 @@
+<app-panel
+  [open]="!!contract()"
+  title="Importar planilha"
+  [subtitle]="agencyName()"
+  [width]="step() === 'preview' ? 960 : 640"
+  (closed)="close()"
+>
+  <ol class="steps" aria-label="Etapas da importação">
+    <li [class.on]="step() === 'file'" [class.done]="step() !== 'file'">Arquivo</li>
+    <li
+      [class.on]="step() === 'columns'"
+      [class.done]="['preview', 'running', 'done'].includes(step())"
+    >
+      Colunas
+    </li>
+    <li [class.on]="step() === 'preview'" [class.done]="['running', 'done'].includes(step())">
+      Prévia
+    </li>
+    <li [class.on]="step() === 'running' || step() === 'done'">Resultado</li>
+  </ol>
+
+  @if (error(); as message) {
+    <div class="alert" role="alert">{{ message }}</div>
+  }
+
+  @switch (step()) {
+    @case ('file') {
+      <div class="form">
+        <p>
+          Envie a planilha de controle (.xlsx) ou um .csv com os itens do contrato. A aba de cada
+          órgão funciona como está: descrição, quantidade, V.U. e, se tiver, o que já foi pedido.
+        </p>
+        <label class="drop">
+          <app-icon name="spreadsheet" [size]="28" />
+          <span class="cell-main">Escolher arquivo</span>
+          <span class="cell-sub">.xlsx ou .csv, até 10 MB</span>
+          <input
+            type="file"
+            accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+            (change)="pick($event)"
+            data-testid="import-file"
+          />
+        </label>
+        <p class="note">
+          Importar de novo a mesma planilha não duplica nada: itens iguais são reconhecidos e só a
+          diferença do que foi pedido vira pedido novo.
+        </p>
+      </div>
+    }
+
+    @case ('columns') {
+      @if (upload(); as u) {
+        <div class="form">
+          <div class="grid-2">
+            <div class="field">
+              <label for="import-sheet">Aba</label>
+              <select
+                id="import-sheet"
+                class="input"
+                [ngModel]="sheetName()"
+                (ngModelChange)="selectSheet($event)"
+              >
+                @for (s of u.sheets; track s.name) {
+                  <option [value]="s.name">
+                    {{ s.name }}{{ s.headerRow ? '' : ' (sem cabeçalho reconhecido)' }}
+                  </option>
+                }
+              </select>
+            </div>
+            <div class="field">
+              <label for="import-header">Linha do cabeçalho</label>
+              <input
+                id="import-header"
+                type="number"
+                min="1"
+                class="input"
+                [ngModel]="headerRow()"
+                (ngModelChange)="headerRow.set($event)"
+              />
+            </div>
+          </div>
+
+          <fieldset class="mapping">
+            <legend>Que coluna é cada campo</legend>
+            @for (f of u.fields; track f.field) {
+              <div class="map-row">
+                <label [for]="'map-' + f.field">
+                  {{ f.label }}
+                  @if (f.required) {
+                    <span class="req" aria-hidden="true">*</span>
+                  } @else {
+                    <span class="cell-sub">(opcional)</span>
+                  }
+                </label>
+                <select
+                  [id]="'map-' + f.field"
+                  class="input"
+                  [ngModel]="mapping()[f.field] ?? ''"
+                  (ngModelChange)="setColumn(f.field, $event)"
+                  [required]="f.required"
+                >
+                  <option value="">— não importar —</option>
+                  @for (col of sheet()?.columns ?? []; track col.index) {
+                    <option [value]="col.index">
+                      {{ col.letter }} · {{ col.header ?? 'sem título'
+                      }}{{ col.sample ? ' (' + col.sample + ')' : '' }}
+                    </option>
+                  }
+                </select>
+              </div>
+            }
+          </fieldset>
+          <p class="hint">
+            Reconhecemos as colunas pelo título. Confira os exemplos entre parênteses antes de
+            seguir.
+          </p>
+        </div>
+      }
+    }
+
+    @case ('preview') {
+      @if (preview(); as p) {
+        <div class="form">
+          <div class="totals" role="status">
+            <span class="badge green"><span class="dot"></span>{{ total('CREATED') }} novos</span>
+            <span class="badge blue"
+              ><span class="dot"></span>{{ total('UPDATED') }} alterados</span
+            >
+            <span class="badge"><span class="dot"></span>{{ total('UNCHANGED') }} sem mudança</span>
+            <span class="badge amber"><span class="dot"></span>{{ total('WARNING') }} avisos</span>
+            <span class="badge red"><span class="dot"></span>{{ total('ERROR') }} com erro</span>
+            <label class="only">
+              <input
+                type="checkbox"
+                [ngModel]="onlyProblems()"
+                (ngModelChange)="onlyProblems.set($event)"
+              />
+              Só erros e avisos
+            </label>
+          </div>
+
+          <div class="table-wrap preview-table">
+            <table class="data">
+              <thead>
+                <tr>
+                  <th scope="col">Linha</th>
+                  <th scope="col">Situação</th>
+                  <th scope="col">Item</th>
+                  <th scope="col" class="r">Qtd.</th>
+                  <th scope="col" class="r">V.U.</th>
+                  <th scope="col" class="r">Pedido novo</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of rows(); track r.rowNumber) {
+                  <tr>
+                    <td class="num">{{ r.rowNumber }}</td>
+                    <td>
+                      <span class="badge" [class]="statusOf(r.status).tone"
+                        ><span class="dot"></span>{{ statusOf(r.status).label }}</span
+                      >
+                    </td>
+                    <td>
+                      <span class="cell-main">{{ r.description ?? '—' }}</span>
+                      @if (r.message) {
+                        <span class="cell-sub msg">{{ r.message }}</span>
+                      }
+                    </td>
+                    <td class="num r">
+                      {{ (r.quantity ?? null) !== null ? fq(r.quantity) : '—' }}
+                    </td>
+                    <td class="num r">
+                      {{
+                        (r.unitPrice ?? null) !== null
+                          ? (r.unitPrice | currency: 'BRL' : 'symbol' : '1.2-4')
+                          : '—'
+                      }}
+                    </td>
+                    <td class="num r">{{ r.newOrderQuantity ? fq(r.newOrderQuantity) : '—' }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="empty">Nenhuma linha para mostrar.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @if (total('ERROR')) {
+            <p class="note">
+              Linhas com erro ficam de fora; as outras entram. O relatório final lista todas.
+            </p>
+          }
+          <div class="grid-2 confirm-row">
+            <div class="total-line">
+              <span>Pedido a lançar</span>
+              <strong>{{ p.newOrderValue | currency: 'BRL' }}</strong>
+            </div>
+            <div class="field">
+              <label for="import-order-date">Data do pedido importado</label>
+              <input
+                id="import-order-date"
+                type="date"
+                class="input"
+                [(ngModel)]="orderDate"
+                [min]="contract()?.signedAt ?? null"
+                [max]="today"
+                [disabled]="!p.newOrderValue"
+              />
+            </div>
+          </div>
+        </div>
+      }
+    }
+
+    @case ('running') {
+      <div class="result" role="status" aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <strong>Importando…</strong>
+        <span class="cell-sub">A planilha está sendo processada. Pode levar alguns segundos.</span>
+      </div>
+    }
+
+    @case ('done') {
+      @if (job(); as j) {
+        <div class="result" role="status" aria-live="polite">
+          @if (j.status === 'DONE') {
+            <app-icon name="circle-check" [size]="32" class="ok" />
+            <strong>Importação concluída</strong>
+            <span class="cell-sub">
+              {{ j.importedRows }} de {{ j.totalRows }} linhas importadas
+              @if (j.warningRows) {
+                · {{ j.warningRows }} com aviso
+              }
+              @if (j.errorRows) {
+                · {{ j.errorRows }} com erro
+              }
+            </span>
+            @if (j.orderValue) {
+              <span class="cell-sub"
+                >Pedido lançado:
+                <strong class="num">{{ j.orderValue | currency: 'BRL' }}</strong></span
+              >
+            }
+            <button type="button" class="btn sm" (click)="downloadReport()">
+              <app-icon name="download" [size]="16" />Baixar relatório
+            </button>
+          } @else {
+            <app-icon name="circle-alert" [size]="32" class="bad" />
+            <strong>A importação não foi feita</strong>
+            <span class="cell-sub">{{ j.errorMessage }}</span>
+            <span class="cell-sub">Nada mudou no contrato.</span>
+          }
+        </div>
+      }
+    }
+  }
+
+  <ng-container panel-footer>
+    @switch (step()) {
+      @case ('file') {
+        <button type="button" class="btn" (click)="close()">Cancelar</button>
+        <button type="button" class="btn primary" (click)="send()" [disabled]="busy()">
+          {{ busy() ? 'Lendo planilha…' : 'Continuar' }}
+        </button>
+      }
+      @case ('columns') {
+        <button type="button" class="btn" (click)="back()">Voltar</button>
+        <button type="button" class="btn primary" (click)="runPreview()" [disabled]="busy()">
+          {{ busy() ? 'Conferindo…' : 'Ver prévia' }}
+        </button>
+      }
+      @case ('preview') {
+        <button type="button" class="btn" (click)="back()">Voltar</button>
+        <button
+          type="button"
+          class="btn primary"
+          (click)="confirm()"
+          [disabled]="busy() || !importable()"
+        >
+          {{ busy() ? 'Enviando…' : 'Importar ' + importable() + ' linhas' }}
+        </button>
+      }
+      @case ('running') {
+        <button type="button" class="btn" (click)="close()">Fechar e continuar depois</button>
+      }
+      @default {
+        <button type="button" class="btn primary" (click)="close()">Fechar</button>
+      }
+    }
+  </ng-container>
+</app-panel>

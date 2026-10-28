@@ -1,0 +1,292 @@
+@if (contracts.isLoading() && !contracts.hasValue()) {
+  <section class="card empty" aria-busy="true">
+    <span>Carregando contratos…</span>
+  </section>
+} @else if (contracts.error()) {
+  <section class="card empty" role="alert">
+    <strong>Não foi possível carregar os contratos.</strong>
+    <button type="button" class="btn sm" (click)="contracts.reload()">Tentar de novo</button>
+  </section>
+} @else {
+  @let list = contracts.value() ?? [];
+
+  @if (actionError(); as message) {
+    <div class="alert" role="alert">{{ message }}</div>
+  }
+
+  @if (list.length) {
+    <section class="card overview">
+      <div class="kpi">
+        <span class="cell-sub">{{
+          list.length === 1 ? 'Contrato' : list.length + ' contratos'
+        }}</span>
+        <strong class="num">{{ totals().value | currency: 'BRL' }}</strong>
+      </div>
+      <div class="kpi">
+        <span class="cell-sub">Já pedido</span>
+        <strong class="num">{{ totals().ordered | currency: 'BRL' }}</strong>
+      </div>
+      <div class="kpi accent">
+        <span class="cell-sub">Falta pedir</span>
+        <strong class="num">{{ totals().remaining | currency: 'BRL' }}</strong>
+      </div>
+      @if (canSign()) {
+        <button type="button" class="btn sm" (click)="signing.set(true)">
+          <app-icon name="plus" [size]="16" />Outro contrato ou empenho
+        </button>
+      }
+    </section>
+  }
+
+  @for (c of list; track c.id) {
+    <section class="card contract" [attr.aria-label]="c.kindLabel + ' ' + (c.number ?? '')">
+      <header class="contract-head">
+        <div class="contract-title">
+          <h2>
+            {{ c.kindLabel }}
+            @if (c.number) {
+              <span class="num">{{ c.number }}</span>
+            }
+          </h2>
+          @if (c.closedAt) {
+            <span class="badge"><span class="dot"></span>Encerrado</span>
+          } @else if (c.orders.length) {
+            <span class="badge green"><span class="dot"></span>Em andamento</span>
+          } @else {
+            <span class="badge blue"><span class="dot"></span>Assinado</span>
+          }
+        </div>
+        <p class="cell-sub num">
+          Assinado em {{ c.signedAt | date: 'dd/MM/yyyy' }}
+          @if (c.validUntil) {
+            · vigência até {{ c.validUntil | date: 'dd/MM/yyyy' }}
+          }
+          @if (c.closedAt) {
+            · encerrado em {{ c.closedAt | date: 'dd/MM/yyyy' }}
+          }
+        </p>
+        @if (c.canEdit && !c.closedAt) {
+          <div class="contract-actions">
+            <button type="button" class="btn sm primary" (click)="ordering.set(c)">
+              <app-icon name="plus" [size]="16" />Registrar pedido
+            </button>
+            <button type="button" class="btn sm" (click)="importing.set(c)">
+              <app-icon name="imports" [size]="16" />Importar planilha
+            </button>
+            <button type="button" class="btn sm" (click)="editingItems.set(c)">Itens</button>
+            <button type="button" class="btn sm ghost" (click)="editingContract.set(c)">
+              Editar
+            </button>
+            <button type="button" class="btn sm ghost" (click)="closing.set(c)">Encerrar</button>
+          </div>
+        }
+      </header>
+
+      @if (daysWithoutOrder(c) > 30) {
+        <p class="alert-line">
+          <app-icon name="alert" [size]="16" />Assinado há {{ daysWithoutOrder(c) }} dias e ainda
+          sem pedido. Vale perguntar ao órgão se há previsão.
+        </p>
+      }
+
+      <div class="balance">
+        <div class="balance-figures">
+          <div>
+            <span class="cell-sub">Valor</span>
+            <strong class="num">{{ c.value | currency: 'BRL' }}</strong>
+          </div>
+          <div>
+            <span class="cell-sub">Pedido</span>
+            <strong class="num">{{ c.ordered | currency: 'BRL' }}</strong>
+          </div>
+          <div>
+            <span class="cell-sub">Falta pedir</span>
+            <strong class="num remaining">{{ c.remaining | currency: 'BRL' }}</strong>
+          </div>
+        </div>
+        <div
+          class="progress"
+          role="progressbar"
+          [attr.aria-valuenow]="c.percentOrdered"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-label]="c.percentOrdered + '% pedido'"
+        >
+          <span [style.width.%]="c.percentOrdered"></span>
+        </div>
+        <span class="cell-sub num">{{ c.percentOrdered }}% pedido</span>
+      </div>
+
+      @if (c.notes) {
+        <p class="notes pre">{{ c.notes }}</p>
+      }
+
+      @if (c.items.length) {
+        <h3>Itens</h3>
+        <div class="table-wrap desktop-only">
+          <table class="data">
+            <thead>
+              <tr>
+                <th scope="col">Item</th>
+                <th scope="col" class="r">Contratado</th>
+                <th scope="col" class="r">V.U.</th>
+                <th scope="col" class="r">Pedido</th>
+                <th scope="col" class="r">Falta pedir</th>
+                <th scope="col" class="r">Valor restante</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of c.items; track item.id) {
+                <tr [class.done]="item.remaining <= 0">
+                  <td>
+                    <span class="cell-main">{{ item.description }}</span>
+                    @if (item.lot) {
+                      <span class="cell-sub">{{ item.lot }}</span>
+                    }
+                  </td>
+                  <td class="num r">{{ fq(item.quantity) }} {{ item.unit ?? '' }}</td>
+                  <td class="num r">
+                    {{ item.unitPrice | currency: 'BRL' : 'symbol' : '1.2-4' }}
+                  </td>
+                  <td class="num r">{{ fq(item.ordered) }}</td>
+                  <td class="num r strong">{{ fq(item.remaining) }}</td>
+                  <td class="num r">{{ item.remainingValue | currency: 'BRL' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <ul class="mobile-list mobile-only">
+          @for (item of c.items; track item.id) {
+            <li [class.done]="item.remaining <= 0">
+              <span class="cell-main">{{ item.description }}</span>
+              <span class="cell-sub num">
+                falta {{ fq(item.remaining) }} de {{ fq(item.quantity) }} ·
+                {{ item.remainingValue | currency: 'BRL' }}
+              </span>
+            </li>
+          }
+        </ul>
+      } @else if (c.canEdit && !c.closedAt) {
+        <div class="no-items">
+          <span>Sem itens cadastrados: os pedidos entram só pelo valor.</span>
+          <span>
+            <button type="button" class="link" (click)="importing.set(c)">
+              Importar da planilha
+            </button>
+            ou
+            <button type="button" class="link" (click)="editingItems.set(c)">cadastrar à mão</button
+            >.
+          </span>
+        </div>
+      }
+
+      <h3>Pedidos</h3>
+      @if (c.orders.length) {
+        <ul class="orders">
+          @for (o of c.orders; track o.id) {
+            <li>
+              <div class="order-main">
+                <span class="cell-main num">
+                  {{ o.orderedAt | date: 'dd/MM/yyyy' }}
+                  @if (o.reference) {
+                    · {{ o.reference }}
+                  }
+                </span>
+                @if (o.lines.length) {
+                  <span class="cell-sub">{{ linesSummary(o) }}</span>
+                }
+                @if (o.notes) {
+                  <span class="cell-sub">{{ o.notes }}</span>
+                }
+                <span class="cell-sub">por {{ o.createdByName ?? '—' }}</span>
+              </div>
+              <strong class="num">{{ o.value | currency: 'BRL' }}</strong>
+              @if (c.canEdit && !c.closedAt) {
+                @if (confirmingRemoval() === o.id) {
+                  <span class="confirm">
+                    <button type="button" class="btn sm danger" (click)="removeOrder(c, o.id)">
+                      Apagar
+                    </button>
+                    <button
+                      type="button"
+                      class="btn sm ghost"
+                      (click)="confirmingRemoval.set(null)"
+                    >
+                      Manter
+                    </button>
+                  </span>
+                } @else {
+                  <button
+                    type="button"
+                    class="btn ghost icon"
+                    (click)="confirmingRemoval.set(o.id)"
+                    aria-label="Apagar pedido lançado por engano"
+                    title="Apagar pedido lançado por engano"
+                  >
+                    <app-icon name="x" [size]="16" />
+                  </button>
+                }
+              }
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="cell-sub none">Nenhum pedido ainda.</p>
+      }
+    </section>
+  } @empty {
+    <section class="card empty">
+      @if (canSign()) {
+        <strong>Nenhum contrato registrado.</strong>
+        <span
+          >Quando o contrato (ou o empenho) for assinado, registre aqui. A licitação passa para
+          "Contrato assinado".</span
+        >
+        <button type="button" class="btn primary" (click)="signing.set(true)">
+          <app-icon name="signature" [size]="16" />Registrar contrato
+        </button>
+      } @else if (tender().status === 'EM_DISPUTA') {
+        <strong>A licitação ainda está em disputa.</strong>
+        <span>Contratos e pedidos entram depois da vitória.</span>
+      } @else if (tender().status === 'PERDIDA') {
+        <strong>Licitação perdida.</strong>
+        <span>Não há contratos.</span>
+      } @else {
+        <strong>Nenhum contrato registrado.</strong>
+      }
+    </section>
+  }
+}
+
+<app-sign-contract-dialog
+  [open]="signing() || !!editingContract()"
+  [tender]="tender()"
+  [contract]="editingContract()"
+  (closed)="signing.set(false); editingContract.set(null)"
+  (saved)="onContractSaved($event)"
+/>
+<app-order-dialog
+  [contract]="ordering()"
+  [agencyName]="tender().agency.name"
+  (closed)="ordering.set(null)"
+  (saved)="onContractSaved($event)"
+/>
+<app-close-contract-dialog
+  [contract]="closing()"
+  [agencyName]="tender().agency.name"
+  (closed)="closing.set(null)"
+  (saved)="onContractSaved($event)"
+/>
+<app-items-editor
+  [contract]="editingItems()"
+  [agencyName]="tender().agency.name"
+  (closed)="editingItems.set(null)"
+  (saved)="onContractSaved($event)"
+/>
+<app-import-wizard
+  [contract]="importing()"
+  [agencyName]="tender().agency.name"
+  (closed)="importing.set(null)"
+  (imported)="onImported()"
+/>

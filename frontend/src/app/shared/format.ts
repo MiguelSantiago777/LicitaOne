@@ -8,6 +8,27 @@ export function parseBrl(text: string | null | undefined): number | null {
   return Math.round(Number(normalized) * 100) / 100;
 }
 
+/** Quantidade digitada ("1.200", "2,5", "1200") → número com até 3 casas. Devolve null se não der. */
+export function parseQuantity(text: string | null | undefined): number | null {
+  if (text == null) return null;
+  const clean = String(text).replace(/\s/g, '');
+  if (!clean) return null;
+  const normalized = clean.includes(',')
+    ? clean.replace(/\./g, '').replace(',', '.')
+    : /^\d{1,3}(\.\d{3})+$/.test(clean)
+      ? clean.replace(/\./g, '')
+      : clean;
+  if (!/^\d+(\.\d{1,3})?$/.test(normalized)) return null;
+  return Number(normalized);
+}
+
+const qty = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 });
+
+/** 1200 → "1.200"; 2.5 → "2,5". */
+export function formatQuantity(value: number | null | undefined): string {
+  return value == null ? '' : qty.format(value);
+}
+
 const brl = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /** 174000 → "174.000,00" (para o campo de valor; o "R$" fica fora do campo). */

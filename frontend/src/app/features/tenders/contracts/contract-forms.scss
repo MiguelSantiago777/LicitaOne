@@ -1,0 +1,68 @@
+// Estilos comuns aos diálogos de contrato, pedido, itens e importação (mesmos padrões do formulário de licitação)
+.form {
+  display: grid;
+  gap: 16px;
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.textarea {
+  height: auto;
+  padding: 10px 12px;
+  resize: vertical;
+  line-height: 20px;
+}
+.alert {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--red-bg);
+  color: var(--red);
+  font-weight: 500;
+}
+.note {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 13px;
+}
+.money-input {
+  position: relative;
+}
+.money-input span {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  translate: 0 -50%;
+  color: var(--text-3);
+  font-weight: 550;
+}
+.money-input .input {
+  padding-left: 38px;
+  font-variant-numeric: tabular-nums;
+}
+.hint {
+  color: var(--text-3);
+  font-size: 12px;
+}
+.total-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+}
+.total-line strong {
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 560px) {
+  .grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -40,11 +40,16 @@
 
     @if (t.canEdit) {
       <div class="head-actions">
+        @if (awaitsContract()) {
+          <button type="button" class="btn primary" (click)="startContract()">
+            Registrar contrato
+          </button>
+        }
         @for (next of t.nextStatuses; track next.status) {
           <button
             type="button"
             class="btn"
-            [class.primary]="$first && next.status !== 'PERDIDA'"
+            [class.primary]="$first && next.status !== 'PERDIDA' && !awaitsContract()"
             (click)="transitionTarget.set(next)"
           >
             {{ actionLabels[next.status] }}
@@ -170,60 +175,125 @@
         </div>
       </div>
     }
+    @case ('itens') {
+      <app-contracts-tab
+        [tender]="t"
+        [signRequest]="signRequest()"
+        (changed)="onContractsChanged()"
+      />
+    }
     @case ('historico') {
       <section class="card">
-        @if (history.isLoading()) {
+        @if (history.isLoading() || contractHistory.isLoading()) {
           <div class="card-body"><span class="sk w-60"></span></div>
         } @else {
           <ol class="history">
-            @for (e of history.value() ?? []; track e.id) {
-              <li>
-                <span class="h-icon" [class]="e.type"
-                  ><app-icon
-                    [name]="
-                      e.type === 'STATUS_CHANGED'
-                        ? 'arrow-up-right'
-                        : e.type === 'CREATED'
-                          ? 'plus'
-                          : 'settings'
-                    "
-                    [size]="14"
-                /></span>
-                <div class="h-body">
-                  <p>
-                    <strong>{{ e.userName ?? 'Sistema' }}</strong>
-                    @switch (e.type) {
-                      @case ('CREATED') {
-                        cadastrou a licitação como <strong>{{ e.toLabel }}</strong>
+            @for (item of historyItems(); track item.at + item.source) {
+              @if (item.source === 'tender') {
+                @let e = item.tender;
+                <li>
+                  <span class="h-icon" [class]="e.type"
+                    ><app-icon
+                      [name]="
+                        e.type === 'STATUS_CHANGED'
+                          ? 'arrow-up-right'
+                          : e.type === 'CREATED'
+                            ? 'plus'
+                            : 'settings'
+                      "
+                      [size]="14"
+                  /></span>
+                  <div class="h-body">
+                    <p>
+                      <strong>{{ e.userName ?? 'Sistema' }}</strong>
+                      @switch (e.type) {
+                        @case ('CREATED') {
+                          cadastrou a licitação como <strong>{{ e.toLabel }}</strong>
+                        }
+                        @case ('STATUS_CHANGED') {
+                          mudou de <strong>{{ e.fromLabel }}</strong> para
+                          <strong>{{ e.toLabel }}</strong>
+                        }
+                        @default {
+                          alterou {{ e.changes.length }}
+                          {{ e.changes.length === 1 ? 'campo' : 'campos' }}
+                        }
                       }
-                      @case ('STATUS_CHANGED') {
-                        mudou de <strong>{{ e.fromLabel }}</strong> para
-                        <strong>{{ e.toLabel }}</strong>
+                      @if (e.eventDate && e.type !== 'UPDATED') {
+                        <span class="cell-sub">
+                          · data informada {{ e.eventDate | date: 'dd/MM/yyyy' }}</span
+                        >
                       }
-                      @default {
-                        alterou {{ e.changes.length }}
-                        {{ e.changes.length === 1 ? 'campo' : 'campos' }}
-                      }
+                    </p>
+                    @if (e.changes.length) {
+                      <ul class="changes">
+                        @for (c of e.changes; track c.field) {
+                          <li>
+                            <span class="c-field">{{ c.field }}</span> <s>{{ c.from ?? '—' }}</s> →
+                            {{ c.to ?? '—' }}
+                          </li>
+                        }
+                      </ul>
                     }
-                    @if (e.eventDate && e.type !== 'UPDATED') {
-                      <span class="cell-sub">
-                        · data informada {{ e.eventDate | date: 'dd/MM/yyyy' }}</span
-                      >
-                    }
-                  </p>
-                  @if (e.changes.length) {
-                    <ul class="changes">
-                      @for (c of e.changes; track c.field) {
-                        <li>
-                          <span class="c-field">{{ c.field }}</span> <s>{{ c.from ?? '—' }}</s> →
-                          {{ c.to ?? '—' }}
-                        </li>
+                    <p class="cell-sub num">{{ e.occurredAt | date: "dd/MM/yyyy 'às' HH:mm" }}</p>
+                  </div>
+                </li>
+              } @else {
+                @let e = item.contract;
+                <li>
+                  <span class="h-icon contract"
+                    ><app-icon
+                      [name]="
+                        e.type === 'ORDER_PLACED'
+                          ? 'wallet'
+                          : e.type === 'SIGNED'
+                            ? 'signature'
+                            : 'settings'
+                      "
+                      [size]="14"
+                  /></span>
+                  <div class="h-body">
+                    <p>
+                      <strong>{{ e.userName ?? 'Sistema' }}</strong>
+                      @switch (e.type) {
+                        @case ('SIGNED') {
+                          registrou o contrato:
+                        }
+                        @case ('ORDER_PLACED') {
+                          registrou um pedido:
+                        }
+                        @case ('ORDER_REMOVED') {
+                          apagou um pedido:
+                        }
+                        @case ('ITEMS_CHANGED') {
+                          alterou os itens:
+                        }
+                        @case ('CLOSED') {
+                          encerrou o contrato:
+                        }
+                        @default {
+                          alterou o contrato
+                        }
                       }
-                    </ul>
-                  }
-                  <p class="cell-sub num">{{ e.occurredAt | date: "dd/MM/yyyy 'às' HH:mm" }}</p>
-                </div>
-              </li>
+                      {{ e.summary }}
+                      @if (e.eventDate) {
+                        <span class="cell-sub"> · {{ e.eventDate | date: 'dd/MM/yyyy' }}</span>
+                      }
+                    </p>
+                    @if (e.changes.length) {
+                      <ul class="changes">
+                        @for (c of e.changes; track c.field) {
+                          <li>
+                            <span class="c-field">{{ c.field }}</span> <s>{{ c.from ?? '—' }}</s> →
+                            {{ c.to ?? '—' }}
+                          </li>
+                        }
+                      </ul>
+                    }
+                    <p class="cell-sub num">{{ e.occurredAt | date: "dd/MM/yyyy 'às' HH:mm" }}</p>
+                  </div>
+                </li>
+              }
             } @empty {
               <li class="empty">Sem registros.</li>
             }
@@ -235,9 +305,6 @@
       <section class="card empty upcoming">
         <strong>
           @switch (tab()) {
-            @case ('itens') {
-              Itens, pedidos e saldo chegam na Fase 2.
-            }
             @case ('documentos') {
               Anexo da ata e de outros documentos chega na Fase 3.
             }

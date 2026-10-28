@@ -12,8 +12,20 @@
   ],
   "tags": [
     {
+      "name": "contracts",
+      "description": "Contratos, itens, pedidos e saldo"
+    },
+    {
+      "name": "imports",
+      "description": "Importação de planilhas"
+    },
+    {
       "name": "tenders",
       "description": "Licitações"
+    },
+    {
+      "name": "admin",
+      "description": "Operação"
     },
     {
       "name": "auth",
@@ -143,6 +155,120 @@
         }
       }
     },
+    "/api/v1/contracts/{id}": {
+      "get": {
+        "tags": [
+          "contracts"
+        ],
+        "summary": "Um contrato",
+        "operationId": "getContract",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "contracts"
+        ],
+        "summary": "Altera os dados do contrato",
+        "operationId": "updateContract",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateContractRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contracts/{id}/items": {
+      "put": {
+        "tags": [
+          "contracts"
+        ],
+        "summary": "Substitui a lista de itens do contrato",
+        "operationId": "replaceContractItems",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceItemsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/agencies/{id}": {
       "get": {
         "tags": [
@@ -208,6 +334,78 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/AgencyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agencies/{id}/contacts": {
+      "get": {
+        "tags": [
+          "agencies"
+        ],
+        "summary": "Contatos do órgão",
+        "operationId": "agencyContacts",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "agencies"
+        ],
+        "summary": "Substitui os contatos do órgão",
+        "operationId": "replaceAgencyContacts",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceContactsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactsResponse"
                 }
               }
             }
@@ -507,6 +705,81 @@
         }
       }
     },
+    "/api/v1/tenders/{tenderId}/contracts": {
+      "get": {
+        "tags": [
+          "contracts"
+        ],
+        "summary": "Contratos de uma licitação, com itens, pedidos e saldo",
+        "operationId": "tenderContracts",
+        "parameters": [
+          {
+            "name": "tenderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContractResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "contracts"
+        ],
+        "summary": "Registra um contrato assinado (ou empenho, ou dispensa)",
+        "operationId": "signContract",
+        "parameters": [
+          {
+            "name": "tenderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignContractRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tenders/{id}/transitions": {
       "post": {
         "tags": [
@@ -569,6 +842,277 @@
         "responses": {
           "204": {
             "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/imports": {
+      "get": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Importações recentes de um contrato",
+        "operationId": "contractImports",
+        "parameters": [
+          {
+            "name": "contractId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportJobResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Envia uma planilha (.xlsx ou .csv) de itens e pedidos de um contrato",
+        "operationId": "uploadImport",
+        "parameters": [
+          {
+            "name": "contractId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/{id}/preview": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Prévia linha a linha com o mapeamento de colunas escolhido",
+        "operationId": "previewImport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/{id}/confirm": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Confirma a importação: processa em segundo plano (202) e o status é acompanhado por GET",
+        "operationId": "confirmImport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJobResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contracts/{id}/orders": {
+      "post": {
+        "tags": [
+          "contracts"
+        ],
+        "summary": "Registra um pedido (aceita Idempotency-Key para não lançar duas vezes)",
+        "operationId": "placeContractOrder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaceOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contracts/{id}/close": {
+      "post": {
+        "tags": [
+          "contracts"
+        ],
+        "summary": "Encerra o contrato",
+        "operationId": "closeContract",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseContractRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -742,6 +1286,47 @@
         }
       }
     },
+    "/api/v1/admin/dead-letters/{queue}/replay": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Devolve as mensagens da DLQ à fila de origem",
+        "operationId": "replayDeadLetters",
+        "parameters": [
+          {
+            "name": "queue",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "max",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/users/options": {
       "get": {
         "tags": [
@@ -758,6 +1343,41 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/UserOptionResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenders/{tenderId}/contracts/history": {
+      "get": {
+        "tags": [
+          "contracts"
+        ],
+        "summary": "Histórico dos contratos de uma licitação",
+        "operationId": "tenderContractsHistory",
+        "parameters": [
+          {
+            "name": "tenderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContractEventResponse"
                   }
                 }
               }
@@ -946,6 +1566,207 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/{id}": {
+      "get": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Status de uma importação",
+        "operationId": "getImport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJobResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/{id}/report": {
+      "get": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Relatório final, linha a linha (CSV)",
+        "operationId": "importReport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contracts/totals": {
+      "get": {
+        "tags": [
+          "contracts"
+        ],
+        "summary": "Valor, pedido e saldo dos contratos por licitação (para as listas)",
+        "operationId": "contractTotalsByTender",
+        "parameters": [
+          {
+            "name": "tenderIds",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "maxItems": 200,
+              "minItems": 0,
+              "uniqueItems": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TenderContractTotalsResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contracts/summary": {
+      "get": {
+        "tags": [
+          "contracts"
+        ],
+        "summary": "Totais dos contratos abertos (saldo a pedir), para o painel",
+        "operationId": "openContractsSummary",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenContractsSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/dead-letters": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Filas com DLQ e quantas mensagens estão paradas",
+        "operationId": "deadLetterQueues",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeadLetterQueueResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contracts/{id}/orders/{orderId}": {
+      "delete": {
+        "tags": [
+          "contracts"
+        ],
+        "summary": "Apaga um pedido lançado por engano",
+        "operationId": "removeContractOrder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractResponse"
                 }
               }
             }
@@ -1333,6 +2154,339 @@
           "wonAt"
         ]
       },
+      "ContractRequest": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "CONTRATO",
+              "EMPENHO",
+              "DISPENSA"
+            ]
+          },
+          "number": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 0
+          },
+          "signedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date"
+          },
+          "value": {
+            "type": "number",
+            "minimum": 0
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "signedAt",
+          "value"
+        ]
+      },
+      "UpdateContractRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "contract": {
+            "$ref": "#/components/schemas/ContractRequest"
+          }
+        },
+        "required": [
+          "contract",
+          "version"
+        ]
+      },
+      "ContractItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lot": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unitPrice": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "ordered": {
+            "type": "number"
+          },
+          "remaining": {
+            "type": "number"
+          },
+          "remainingValue": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "description",
+          "id",
+          "lot",
+          "ordered",
+          "quantity",
+          "remaining",
+          "remainingValue",
+          "total",
+          "unit",
+          "unitPrice"
+        ]
+      },
+      "ContractOrderLineResponse": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unitPrice": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "description",
+          "itemId",
+          "quantity",
+          "total",
+          "unitPrice"
+        ]
+      },
+      "ContractOrderResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractOrderLineResponse"
+            }
+          },
+          "createdByName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "createdAt",
+          "createdByName",
+          "id",
+          "lines",
+          "notes",
+          "orderedAt",
+          "reference",
+          "value"
+        ]
+      },
+      "ContractResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "CONTRATO",
+              "EMPENHO",
+              "DISPENSA"
+            ]
+          },
+          "kindLabel": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "signedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date"
+          },
+          "closedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "value": {
+            "type": "number"
+          },
+          "itemsTotal": {
+            "type": "number"
+          },
+          "ordered": {
+            "type": "number"
+          },
+          "remaining": {
+            "type": "number"
+          },
+          "percentOrdered": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractItemResponse"
+            }
+          },
+          "orders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractOrderResponse"
+            }
+          },
+          "canEdit": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "canEdit",
+          "closedAt",
+          "id",
+          "items",
+          "itemsTotal",
+          "kind",
+          "kindLabel",
+          "notes",
+          "number",
+          "ordered",
+          "orders",
+          "percentOrdered",
+          "remaining",
+          "signedAt",
+          "tenderId",
+          "validUntil",
+          "value",
+          "version"
+        ]
+      },
+      "ItemRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lot": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "quantity": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "unitPrice": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "description",
+          "quantity",
+          "unitPrice"
+        ]
+      },
+      "ReplaceItemsRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemRequest"
+            },
+            "maxItems": 500,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "items",
+          "version"
+        ]
+      },
       "AgencyRequest": {
         "type": "object",
         "properties": {
@@ -1443,6 +2597,112 @@
           "version"
         ]
       },
+      "ContactRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 0
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 0
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 25,
+            "minLength": 0
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ReplaceContactsRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "contacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactRequest"
+            },
+            "maxItems": 20,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "contacts",
+          "version"
+        ]
+      },
+      "ContactResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "id",
+          "name",
+          "notes",
+          "phone",
+          "role"
+        ]
+      },
+      "ContactsResponse": {
+        "type": "object",
+        "properties": {
+          "agencyVersion": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "contacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactResponse"
+            }
+          }
+        },
+        "required": [
+          "agencyVersion",
+          "contacts"
+        ]
+      },
       "CreateUser": {
         "type": "object",
         "properties": {
@@ -1519,6 +2779,25 @@
           "tender"
         ]
       },
+      "SignContractRequest": {
+        "type": "object",
+        "properties": {
+          "contract": {
+            "$ref": "#/components/schemas/ContractRequest"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemRequest"
+            },
+            "maxItems": 500,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "contract"
+        ]
+      },
       "TransitionRequest": {
         "type": "object",
         "properties": {
@@ -1567,6 +2846,406 @@
           "newPassword"
         ]
       },
+      "ColumnResponse": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "letter": {
+            "type": "string"
+          },
+          "header": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "header",
+          "index",
+          "letter",
+          "sample"
+        ]
+      },
+      "FieldOptionResponse": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "enum": [
+              "LOT",
+              "DESCRIPTION",
+              "UNIT",
+              "QUANTITY",
+              "UNIT_PRICE",
+              "ORDERED_QUANTITY"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "field",
+          "label",
+          "required"
+        ]
+      },
+      "ImportJobResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contractId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "UPLOADED",
+              "CONFIGURED",
+              "QUEUED",
+              "DONE",
+              "FAILED"
+            ]
+          },
+          "sheetName": {
+            "type": "string"
+          },
+          "headerRow": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "orderDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "totalRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "importedRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "errorRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "warningRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "orderValue": {
+            "type": "number"
+          },
+          "hasReport": {
+            "type": "boolean"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "createdByName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "contractId",
+          "createdAt",
+          "createdByName",
+          "errorMessage",
+          "errorRows",
+          "fileName",
+          "finishedAt",
+          "hasReport",
+          "headerRow",
+          "id",
+          "importedRows",
+          "orderDate",
+          "orderValue",
+          "sheetName",
+          "status",
+          "totalRows",
+          "warningRows"
+        ]
+      },
+      "SheetResponse": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "headerRow": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnResponse"
+            }
+          },
+          "suggestedMapping": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "rows": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "columns",
+          "headerRow",
+          "name",
+          "rows",
+          "suggestedMapping"
+        ]
+      },
+      "UploadResponse": {
+        "type": "object",
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/ImportJobResponse"
+          },
+          "contractLabel": {
+            "type": "string"
+          },
+          "sheets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SheetResponse"
+            }
+          },
+          "suggestedSheet": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldOptionResponse"
+            }
+          }
+        },
+        "required": [
+          "contractLabel",
+          "fields",
+          "job",
+          "sheets",
+          "suggestedSheet"
+        ]
+      },
+      "PreviewRequest": {
+        "type": "object",
+        "properties": {
+          "sheet": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "headerRow": {
+            "type": "integer",
+            "format": "int32",
+            "exclusiveMinimum": 0
+          },
+          "mapping": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        },
+        "required": [
+          "headerRow",
+          "mapping",
+          "sheet"
+        ]
+      },
+      "PreviewResponse": {
+        "type": "object",
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/ImportJobResponse"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreviewRowResponse"
+            }
+          },
+          "totals": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "newOrderValue": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "job",
+          "newOrderValue",
+          "rows",
+          "totals"
+        ]
+      },
+      "PreviewRowResponse": {
+        "type": "object",
+        "properties": {
+          "rowNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "lot": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unitPrice": {
+            "type": "number"
+          },
+          "orderedQuantity": {
+            "type": "number"
+          },
+          "newOrderQuantity": {
+            "type": "number"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "description",
+          "lot",
+          "message",
+          "newOrderQuantity",
+          "orderedQuantity",
+          "quantity",
+          "rowNumber",
+          "status",
+          "unitPrice"
+        ]
+      },
+      "ConfirmRequest": {
+        "type": "object",
+        "properties": {
+          "orderDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "orderDate"
+        ]
+      },
+      "OrderLineRequest": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "itemId",
+          "quantity"
+        ]
+      },
+      "PlaceOrderRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "orderedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "reference": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 0
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "value": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderLineRequest"
+            },
+            "maxItems": 500,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "orderedAt",
+          "version"
+        ]
+      },
+      "CloseContractRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "closedAt": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "closedAt",
+          "version"
+        ]
+      },
       "AccessTokenResponse": {
         "type": "object",
         "properties": {
@@ -1609,6 +3288,22 @@
         "required": [
           "email",
           "password"
+        ]
+      },
+      "ReplayResponse": {
+        "type": "object",
+        "properties": {
+          "queue": {
+            "type": "string"
+          },
+          "replayed": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "queue",
+          "replayed"
         ]
       },
       "UserOptionResponse": {
@@ -1663,6 +3358,60 @@
           "size",
           "totalItems",
           "totalPages"
+        ]
+      },
+      "ContractEventResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contractId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "SIGNED",
+              "UPDATED",
+              "ITEMS_CHANGED",
+              "ORDER_PLACED",
+              "ORDER_REMOVED",
+              "CLOSED"
+            ]
+          },
+          "eventDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldChangeResponse"
+            }
+          },
+          "userName": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "changes",
+          "contractId",
+          "eventDate",
+          "id",
+          "occurredAt",
+          "summary",
+          "type",
+          "userName"
         ]
       },
       "FieldChangeResponse": {
@@ -1814,6 +3563,69 @@
           "portals"
         ]
       },
+      "TenderContractTotalsResponse": {
+        "type": "object",
+        "properties": {
+          "tenderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contracts": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "openContracts": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "value": {
+            "type": "number"
+          },
+          "ordered": {
+            "type": "number"
+          },
+          "remaining": {
+            "type": "number"
+          },
+          "lastOrderAt": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "contracts",
+          "lastOrderAt",
+          "openContracts",
+          "ordered",
+          "remaining",
+          "tenderId",
+          "value"
+        ]
+      },
+      "OpenContractsSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "contracts": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "value": {
+            "type": "number"
+          },
+          "ordered": {
+            "type": "number"
+          },
+          "remaining": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "contracts",
+          "ordered",
+          "remaining",
+          "value"
+        ]
+      },
       "PageResponseAgencyResponse": {
         "type": "object",
         "properties": {
@@ -1846,6 +3658,26 @@
           "size",
           "totalItems",
           "totalPages"
+        ]
+      },
+      "DeadLetterQueueResponse": {
+        "type": "object",
+        "properties": {
+          "queue": {
+            "type": "string"
+          },
+          "deadLetterQueue": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "deadLetterQueue",
+          "messages",
+          "queue"
         ]
       }
     },
