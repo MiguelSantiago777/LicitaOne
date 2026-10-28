@@ -67,3 +67,11 @@ O usuário autorizou seguir sem esperar o cliente. Assumimos o seguinte; tudo po
 3. O quadro de organização mensal organiza as sessões de licitação do mês (Fase 4).
 4. Limite de carona configurável, começando em 200% por item (Fase 3).
 5. Alertas por e-mail para o responsável pela licitação (Fase 5).
+
+### Quadros kanban — decisão do usuário (28/10/2026)
+- O quadro *Organização mensal* **não tem estrutura fixa**: a equipe cria as colunas e os cards. O sistema entrega a página e o modelo genérico de quadro. Isso responde a dúvida 3.
+- Os quadros *Organização mensal* e *Licitações vencidas* entram já, adiantando parte da Fase 4. Os dois usam o mesmo modelo: colunas criadas, renomeadas, reordenadas e excluídas pelo usuário.
+- Cada card é livre (título, observações, responsável, prazo) e pode apontar para uma licitação. Nesse caso, mostra órgão, identificação e valor, e a coluna soma esses valores.
+- O *Funil de vendas* (Negociações) continua na Fase 4, porque depende das negociações reais.
+- A Fase 3 (atas e documentos) fica para depois dos quadros.
+
