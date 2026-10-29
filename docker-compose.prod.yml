@@ -1,0 +1,61 @@
+# Produção (Fase 6): por cima do docker-compose.yml.
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d --build --wait
+# Diferenças em relação ao dev:
+# - perfil prod no backend: sem seed, sem Swagger, cookie Secure e recusa subir sem SHEMA_JWT_PRIVATE_KEY;
+# - banco, RabbitMQ e S3 sem porta publicada (só a rede interna); a aplicação sai só pelo frontend;
+# - SMTP de verdade no lugar do Mailpit (que não sobe);
+# - todos os serviços reiniciam sozinhos.
+# O TLS fica no proxy da frente (Caddy, Traefik, nginx do servidor ou balanceador da nuvem). Ver docs/operacao/runbook.md.
+name: ${COMPOSE_PROJECT_NAME:-licitaone}
+
+services:
+  postgres:
+    restart: unless-stopped
+    ports: !reset []
+
+  rabbitmq:
+    restart: unless-stopped
+    ports: !reset []
+
+  s3:
+    restart: unless-stopped
+    ports: !reset []
+
+  mailpit:
+    # Só para dev: em produção não sobe
+    profiles: [dev-only]
+
+  backend:
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker,prod
+      SHEMA_JWT_PRIVATE_KEY: ${SHEMA_JWT_PRIVATE_KEY:?defina a chave RSA (PEM) no .env.prod}
+      SHEMA_JWT_KEY_ID: "${SHEMA_JWT_KEY_ID:?defina o id da chave, por exemplo prod-2026-10}"
+      SHEMA_CORS_ORIGINS: "${SHEMA_PUBLIC_URL:?defina o endereço público (https://...)}"
+      SHEMA_APP_URL: ${SHEMA_PUBLIC_URL}
+      MAIL_HOST: ${MAIL_HOST:?defina o servidor SMTP}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USER: ${MAIL_USER:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: ${MAIL_STARTTLS:-true}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED: ${MAIL_STARTTLS:-true}
+      SHEMA_ALERTS_MAIL_FROM: ${SHEMA_ALERTS_MAIL_FROM:?defina o remetente dos avisos}
+      # S3 externo (opcional): aponte para o provedor e deixe o serviço s3 local parado
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://s3:8333}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-shemacrm-files}
+    ports: !reset []
+    depends_on: !override
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      s3:
+        condition: service_healthy
+
+  frontend:
+    restart: unless-stopped
+    # Publicado só no localhost do servidor: o proxy com TLS encaminha para cá
+    ports: !override
+      - "127.0.0.1:${FRONTEND_PORT:-14200}:8080"
