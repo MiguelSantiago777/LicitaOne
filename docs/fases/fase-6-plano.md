@@ -19,9 +19,9 @@
 - **Subida do zero**: `docker compose down -v && docker compose up` com seed, seguido de todos os E2E.
 
 ## Etapas
-1. Acessibilidade: axe no E2E, correções, checklist.
-2. Performance: contador de consultas nos testes de integração, EXPLAIN com volume, índices (migração).
-3. Segurança: ASVS L1, cabeçalhos, cookies, perfil `prod`, correções.
-4. Backup e restore: scripts, teste e documentação.
-5. Runbook, README e configuração de produção.
-6. Subida do zero, E2E completo, relatório `docs/fases/fase-6.md` e checklist da definição de pronto.
+1. ✅ Acessibilidade: axe no E2E, correções, checklist.
+2. ✅ Performance: contador de consultas nos testes de integração, EXPLAIN com volume, índices (migração).
+3. ✅ Segurança: ASVS L1, cabeçalhos, cookies, perfil `prod`, correções.
+4. ✅ Backup e restore: scripts, teste e documentação.
+5. ✅ Runbook, README e configuração de produção.
+6. ✅ Subida do zero, E2E completo, relatório `docs/fases/fase-6.md` e checklist da definição de pronto.
