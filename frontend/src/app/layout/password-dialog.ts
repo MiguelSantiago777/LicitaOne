@@ -40,7 +40,10 @@ import { Panel } from '../shared/ui/panel';
             aria-describedby="p-hint"
             required
           />
-          <p id="p-hint" class="hint">Pelo menos 12 caracteres. Uma frase com algumas palavras é fácil de lembrar e difícil de adivinhar.</p>
+          <p id="p-hint" class="hint">
+            Pelo menos 12 caracteres. Uma frase com algumas palavras é fácil de lembrar e difícil de
+            adivinhar.
+          </p>
         </div>
         @if (error()) {
           <p class="error" role="alert">{{ error() }}</p>

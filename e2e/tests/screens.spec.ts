@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test';
 import { login } from './helpers';
 
+// Cada teste percorre várias telas tirando screenshot de página inteira: no celular passa dos 30 s padrão
+test.describe.configure({ timeout: 60_000 });
+
 /** ready: texto que só aparece depois que os dados da tela chegaram. */
 const screens: { path: string; title: string; ready?: string }[] = [
   { path: '/painel', title: 'Painel' },
