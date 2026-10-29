@@ -9,3 +9,4 @@ node_modules/
 
 # Arquivos gravados pelo FileStorage local (planilhas importadas, relatórios)
 backend/data/
+backups/
