@@ -1,6 +1,7 @@
 package br.com.shema.crm.tenders;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,4 +13,12 @@ public interface AgencyDirectory {
 
     /** Busca em lote, para listas não fazerem uma consulta por linha. */
     Map<UUID, AgencyRef> findAll(Collection<UUID> agencyIds);
+
+    /**
+     * Prefeituras sem nenhuma licitação vencida pela Shema (em disputa e perdida não contam), por nome: os municípios
+     * para prospectar caronas.
+     *
+     * @param state UF, ou nulo para todas
+     */
+    List<AgencyRef> municipalitiesWithoutWonTender(String state);
 }

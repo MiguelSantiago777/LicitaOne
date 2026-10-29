@@ -1,5 +1,7 @@
 package br.com.shema.crm.contracts.domain;
 
+import br.com.shema.crm.shared.domain.BrFormat;
+import br.com.shema.crm.shared.domain.Quantities;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.Normalizer;

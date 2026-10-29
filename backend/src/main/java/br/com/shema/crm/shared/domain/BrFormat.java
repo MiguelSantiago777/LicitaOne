@@ -1,4 +1,4 @@
-package br.com.shema.crm.contracts.domain;
+package br.com.shema.crm.shared.domain;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;

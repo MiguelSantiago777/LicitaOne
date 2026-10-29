@@ -1,7 +1,9 @@
 package br.com.shema.crm.contracts.domain;
 
+import br.com.shema.crm.shared.domain.BrFormat;
 import br.com.shema.crm.shared.domain.DomainRuleViolation;
 import br.com.shema.crm.shared.domain.Money;
+import br.com.shema.crm.shared.domain.Quantities;
 import br.com.shema.crm.shared.persistence.AuditableEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

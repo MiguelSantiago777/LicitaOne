@@ -2,7 +2,6 @@ package br.com.shema.crm.contracts.application;
 
 import br.com.shema.crm.contracts.ContractEvents.OrderRegistered;
 import br.com.shema.crm.contracts.ContractItemsImport;
-import br.com.shema.crm.contracts.domain.BrFormat;
 import br.com.shema.crm.contracts.domain.Contract;
 import br.com.shema.crm.contracts.domain.ContractEvent;
 import br.com.shema.crm.contracts.domain.ContractOrder;
@@ -10,6 +9,7 @@ import br.com.shema.crm.contracts.domain.ItemImportPlan;
 import br.com.shema.crm.contracts.domain.OrderDraft;
 import br.com.shema.crm.contracts.infrastructure.ContractEventRepository;
 import br.com.shema.crm.contracts.infrastructure.ContractRepository;
+import br.com.shema.crm.shared.domain.BrFormat;
 import br.com.shema.crm.shared.domain.DomainRuleViolation;
 import br.com.shema.crm.shared.messaging.EventMetadata;
 import br.com.shema.crm.shared.security.CurrentUser;

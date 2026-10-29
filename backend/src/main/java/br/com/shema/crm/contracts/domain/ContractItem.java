@@ -1,6 +1,7 @@
 package br.com.shema.crm.contracts.domain;
 
 import br.com.shema.crm.shared.domain.DomainRuleViolation;
+import br.com.shema.crm.shared.domain.Quantities;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

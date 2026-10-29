@@ -6,6 +6,7 @@ import br.com.shema.crm.tenders.domain.Agency;
 import br.com.shema.crm.tenders.infrastructure.AgencyRepository;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,6 +39,13 @@ class AgencyDirectoryService implements AgencyDirectory {
         return agencies.findAllById(agencyIds).stream()
                 .map(AgencyDirectoryService::ref)
                 .collect(Collectors.toMap(AgencyRef::id, Function.identity()));
+    }
+
+    @Override
+    public List<AgencyRef> municipalitiesWithoutWonTender(String state) {
+        return agencies.municipalitiesWithoutWonTender(state == null || state.isBlank() ? null : state.trim()).stream()
+                .map(AgencyDirectoryService::ref)
+                .toList();
     }
 
     private static AgencyRef ref(Agency a) {

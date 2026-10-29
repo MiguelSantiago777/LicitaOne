@@ -21,6 +21,7 @@
 		<bucket4j.version>8.21.0</bucket4j.version>
 		<poi.version>5.4.1</poi.version>
 		<commons-csv.version>1.14.0</commons-csv.version>
+		<awssdk.version>2.55.16</awssdk.version>
 		<jacoco.version>0.8.16</jacoco.version>
 		<spotless.version>3.10.4</spotless.version>
 		<!-- Quality gate: cobertura mínima de linhas nas classes de domínio -->
@@ -91,6 +92,26 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-csv</artifactId>
 			<version>${commons-csv.version}</version>
+		</dependency>
+
+		<!-- Documentos no S3 (SeaweedFS no compose, ADR 0007); o cliente HTTP é o da JDK, sem Netty -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>software.amazon.awssdk</groupId>
+					<artifactId>netty-nio-client</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>software.amazon.awssdk</groupId>
+					<artifactId>apache-client</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>url-connection-client</artifactId>
 		</dependency>
 
 		<dependency>
@@ -195,6 +216,13 @@
 				<groupId>org.springframework.modulith</groupId>
 				<artifactId>spring-modulith-bom</artifactId>
 				<version>${spring-modulith.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>software.amazon.awssdk</groupId>
+				<artifactId>bom</artifactId>
+				<version>${awssdk.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
