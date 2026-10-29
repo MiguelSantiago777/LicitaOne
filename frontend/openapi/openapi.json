@@ -12,6 +12,26 @@
   ],
   "tags": [
     {
+      "name": "alerts",
+      "description": "Alertas, tarefas automáticas e avisos por e-mail"
+    },
+    {
+      "name": "boards",
+      "description": "Quadros kanban"
+    },
+    {
+      "name": "agencies",
+      "description": "Órgãos"
+    },
+    {
+      "name": "deals",
+      "description": "Funil de vendas (negociações)"
+    },
+    {
+      "name": "price-records",
+      "description": "Atas de registro de preços e caronas"
+    },
+    {
       "name": "contracts",
       "description": "Contratos, itens, pedidos e saldo"
     },
@@ -32,16 +52,8 @@
       "description": "Operação"
     },
     {
-      "name": "boards",
-      "description": "Quadros kanban"
-    },
-    {
       "name": "auth",
       "description": "Autenticação"
-    },
-    {
-      "name": "agencies",
-      "description": "Órgãos"
     },
     {
       "name": "documents",
@@ -50,14 +62,6 @@
     {
       "name": "users",
       "description": "Usuários"
-    },
-    {
-      "name": "deals",
-      "description": "Funil de vendas (negociações)"
-    },
-    {
-      "name": "price-records",
-      "description": "Atas de registro de preços e caronas"
     }
   ],
   "paths": {
@@ -2941,6 +2945,27 @@
         "security": []
       }
     },
+    "/api/v1/alerts/run": {
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Verifica os alertas agora, sem esperar o horário do job",
+        "operationId": "runAlerts",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunAlertsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/agencies": {
       "get": {
         "tags": [
@@ -3148,6 +3173,42 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/TenderEventResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenders/top-agencies": {
+      "get": {
+        "tags": [
+          "tenders"
+        ],
+        "summary": "Órgãos pelo valor das licitações vencidas, do maior para o menor (painel)",
+        "operationId": "topAgencies",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 5
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgencyTotalResponse"
                   }
                 }
               }
@@ -3672,6 +3733,49 @@
         }
       }
     },
+    "/api/v1/contracts/without-orders": {
+      "get": {
+        "tags": [
+          "contracts"
+        ],
+        "summary": "Contratos assinados há mais de N dias sem nenhum pedido, dos mais antigos (painel)",
+        "operationId": "contractsWithoutOrder",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 30
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 5
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractsWithoutOrderResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/contracts/totals": {
       "get": {
         "tags": [
@@ -3727,6 +3831,83 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/OpenContractsSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Alertas gerados, dos mais recentes",
+        "operationId": "searchAlerts",
+        "parameters": [
+          {
+            "name": "rule",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CONTRATO_SEM_PEDIDO",
+                "ATA_VENCENDO",
+                "LICITACAO_SEM_CONTRATO"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseAlertResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/settings": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Prazos das regras, agenda do job e última verificação",
+        "operationId": "alertSettings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertSettingsResponse"
                 }
               }
             }
@@ -4314,6 +4495,25 @@
           "value"
         ]
       },
+      "TaskEmailDraftResponse": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body",
+          "subject",
+          "to"
+        ]
+      },
       "TaskOwnerResponse": {
         "type": "object",
         "properties": {
@@ -4378,9 +4578,15 @@
               "ALERTA"
             ]
           },
+          "emailDraft": {
+            "$ref": "#/components/schemas/TaskEmailDraftResponse"
+          },
           "completedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "completedBySystem": {
+            "type": "boolean"
           },
           "version": {
             "type": "integer",
@@ -4393,8 +4599,10 @@
         "required": [
           "canEdit",
           "completedAt",
+          "completedBySystem",
           "deal",
           "dueAt",
+          "emailDraft",
           "id",
           "notes",
           "origin",
@@ -7045,6 +7253,36 @@
           "password"
         ]
       },
+      "RunAlertsResponse": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "raised": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "byRule": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        },
+        "required": [
+          "at",
+          "byRule",
+          "day",
+          "raised"
+        ]
+      },
       "ReplayResponse": {
         "type": "object",
         "properties": {
@@ -7262,6 +7500,39 @@
           "toStatus",
           "type",
           "userName"
+        ]
+      },
+      "AgencyTotalResponse": {
+        "type": "object",
+        "properties": {
+          "agencyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "tenders": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "agencyId",
+          "city",
+          "name",
+          "state",
+          "tenders",
+          "value"
         ]
       },
       "StatusTotalResponse": {
@@ -7521,6 +7792,81 @@
           "validUntil"
         ]
       },
+      "ContractWithoutOrderResponse": {
+        "type": "object",
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "agencyName": {
+            "type": "string"
+          },
+          "identification": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "signedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "daysSinceSigned": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "agencyName",
+          "contractId",
+          "daysSinceSigned",
+          "identification",
+          "kind",
+          "number",
+          "signedAt",
+          "tenderId",
+          "value"
+        ]
+      },
+      "ContractsWithoutOrderResponse": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "value": {
+            "type": "number"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractWithoutOrderResponse"
+            }
+          }
+        },
+        "required": [
+          "days",
+          "items",
+          "total",
+          "value"
+        ]
+      },
       "TenderContractTotalsResponse": {
         "type": "object",
         "properties": {
@@ -7603,6 +7949,200 @@
           "cards",
           "id",
           "name"
+        ]
+      },
+      "AlertOwnerResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "initials": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "initials",
+          "name"
+        ]
+      },
+      "AlertResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rule": {
+            "type": "string",
+            "enum": [
+              "CONTRATO_SEM_PEDIDO",
+              "ATA_VENCENDO",
+              "LICITACAO_SEM_CONTRATO"
+            ]
+          },
+          "ruleLabel": {
+            "type": "string"
+          },
+          "tenderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "agencyName": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "dueOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/AlertOwnerResponse"
+          },
+          "raisedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "taskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taskOpenedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "notifiedTo": {
+            "type": "string"
+          },
+          "notifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "agencyName",
+          "dueOn",
+          "id",
+          "notifiedAt",
+          "notifiedTo",
+          "owner",
+          "raisedAt",
+          "rule",
+          "ruleLabel",
+          "taskId",
+          "taskOpenedAt",
+          "tenderId",
+          "title"
+        ]
+      },
+      "PageResponseAlertResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalItems",
+          "totalPages"
+        ]
+      },
+      "AlertRuleResponse": {
+        "type": "object",
+        "properties": {
+          "rule": {
+            "type": "string",
+            "enum": [
+              "CONTRATO_SEM_PEDIDO",
+              "ATA_VENCENDO",
+              "LICITACAO_SEM_CONTRATO"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "description",
+          "label",
+          "rule"
+        ]
+      },
+      "AlertSettingsResponse": {
+        "type": "object",
+        "properties": {
+          "contractWithoutOrderDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "priceRecordExpiringDays": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "tenderWithoutContractDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "schedule": {
+            "type": "string"
+          },
+          "mailEnabled": {
+            "type": "boolean"
+          },
+          "lastRunAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertRuleResponse"
+            }
+          }
+        },
+        "required": [
+          "contractWithoutOrderDays",
+          "lastRunAt",
+          "mailEnabled",
+          "priceRecordExpiringDays",
+          "rules",
+          "schedule",
+          "tenderWithoutContractDays"
         ]
       },
       "PageResponseAgencyResponse": {

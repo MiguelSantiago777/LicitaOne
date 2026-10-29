@@ -1,0 +1,211 @@
+<div class="page-head">
+  <div>
+    <h1>Alertas</h1>
+    <p class="sub">
+      O LicitaOne verifica os prazos todo dia e cria as tarefas de follow-up.
+      @if (settings.value(); as s) {
+        {{ s.schedule }}.
+      }
+    </p>
+  </div>
+  @if (isAdmin()) {
+    <div class="page-actions">
+      <button type="button" class="btn primary" (click)="run()" [disabled]="running()">
+        <app-icon name="refresh" [size]="16" />{{ running() ? 'Verificando…' : 'Verificar agora' }}
+      </button>
+    </div>
+  }
+</div>
+
+@if (error(); as message) {
+  <div class="alert" role="alert">{{ message }}</div>
+}
+<div role="status" class="status-region">
+  @if (result(); as message) {
+    <div class="notice">
+      <app-icon name="circle-check" [size]="16" />{{ message }}
+      <button type="button" class="btn sm ghost" (click)="result.set(null)">Fechar</button>
+    </div>
+  }
+</div>
+
+@if (settings.error()) {
+  <div class="card empty" role="alert">
+    <strong>Não foi possível carregar as regras.</strong>
+    <button type="button" class="btn sm" (click)="settings.reload()">Tentar de novo</button>
+  </div>
+}
+
+@if (settings.value(); as s) {
+  <section class="rules" aria-label="Regras dos alertas">
+    @for (r of s.rules; track r.rule) {
+      <article class="card rule">
+        <div class="rule-head">
+          <span class="badge" [class]="tone[r.rule]"><span class="dot"></span>{{ r.label }}</span>
+          @if (r.rule === 'LICITACAO_SEM_CONTRATO') {
+            <span class="flag" title="O prazo foi assumido e precisa de validação do cliente"
+              ><app-icon name="help" [size]="14" />Prazo a confirmar</span
+            >
+          }
+        </div>
+        <p>{{ r.description }}</p>
+      </article>
+    }
+    <article class="card rule meta">
+      <dl>
+        <div>
+          <dt>Última verificação</dt>
+          <dd class="num">
+            {{ s.lastRunAt ? (s.lastRunAt | date: 'dd/MM/yyyy HH:mm') : 'Ainda não rodou' }}
+          </dd>
+        </div>
+        <div>
+          <dt>Aviso por e-mail</dt>
+          <dd>
+            {{
+              s.mailEnabled
+                ? 'Para o responsável pela licitação (ou os administradores)'
+                : 'Desligado: só a tarefa'
+            }}
+          </dd>
+        </div>
+      </dl>
+    </article>
+  </section>
+}
+
+@if (isAdmin() && failed() > 0) {
+  <section class="card failures" aria-labelledby="failures-title">
+    <header class="card-head">
+      <h2 id="failures-title">
+        <app-icon name="alert" [size]="18" />Mensagens com falha
+        <span class="count red num">{{ failed() }}</span>
+      </h2>
+    </header>
+    <p class="failures-intro">
+      Estas mensagens esgotaram as tentativas (por exemplo, o servidor de e-mail estava fora).
+      Corrija a causa e reprocesse: nada é duplicado.
+    </p>
+    <ul class="queues">
+      @for (q of deadLetters.value() ?? []; track q.queue) {
+        @if (q.messages > 0) {
+          <li>
+            <span class="queue-name">{{ queueLabel(q.queue) }}</span>
+            <span class="num"
+              >{{ q.messages }} {{ q.messages === 1 ? 'mensagem' : 'mensagens' }}</span
+            >
+            <button
+              type="button"
+              class="btn sm"
+              (click)="replay(q)"
+              [disabled]="replaying() === q.queue"
+              [attr.aria-label]="'Reprocessar ' + queueLabel(q.queue)"
+            >
+              <app-icon name="refresh" [size]="16" />{{
+                replaying() === q.queue ? 'Reprocessando…' : 'Reprocessar'
+              }}
+            </button>
+          </li>
+        }
+      }
+    </ul>
+  </section>
+}
+
+<div class="tabs" role="tablist" aria-label="Regra">
+  @for (t of tabs; track t.id) {
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="tab() === t.id"
+      (click)="navigate({ regra: t.id === 'TODOS' ? null : t.id, pagina: null })"
+    >
+      {{ t.label }}
+    </button>
+  }
+</div>
+
+<section class="card" aria-labelledby="list-title">
+  <h2 id="list-title" class="visually-hidden">Alertas gerados</h2>
+  @if (alerts.error()) {
+    <div class="empty" role="alert">
+      <strong>Não foi possível carregar os alertas.</strong>
+      <button type="button" class="btn sm" (click)="alerts.reload()">Tentar de novo</button>
+    </div>
+  } @else if (alerts.isLoading() && !alerts.value()) {
+    <div class="empty"><span>Carregando…</span></div>
+  } @else {
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th scope="col">Alerta</th>
+            <th scope="col" class="hide-sm">Regra</th>
+            <th scope="col" class="hide-sm">Responsável</th>
+            <th scope="col" class="hide-sm">Gerado em</th>
+            <th scope="col">Tarefa e aviso</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (a of alerts.value()?.items ?? []; track a.id) {
+            <tr>
+              <td class="alert-cell">
+                <a class="row-link" [routerLink]="['/licitacoes', a.tenderId]">{{ a.title }}</a>
+                <span class="cell-sub show-sm num"
+                  >{{ a.ruleLabel }} · {{ a.raisedAt | date: 'dd/MM HH:mm' }}</span
+                >
+              </td>
+              <td class="hide-sm">
+                <span class="badge" [class]="tone[a.rule]"
+                  ><span class="dot"></span>{{ a.ruleLabel }}</span
+                >
+              </td>
+              <td class="hide-sm">
+                @if (a.owner; as o) {
+                  <div class="owner"><app-avatar [name]="o.name" [size]="26" />{{ o.name }}</div>
+                } @else {
+                  <span class="cell-sub">Sem responsável</span>
+                }
+              </td>
+              <td class="num nowrap hide-sm">{{ a.raisedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td class="delivery">
+                @if (a.taskId) {
+                  <a
+                    class="link"
+                    [routerLink]="['/licitacoes', a.tenderId]"
+                    [queryParams]="{ aba: 'tarefas' }"
+                    ><app-icon name="circle-check" [size]="14" />Tarefa criada</a
+                  >
+                } @else {
+                  <span class="cell-sub"><app-icon name="clock" [size]="14" />Tarefa na fila</span>
+                }
+                <span class="cell-sub" [class.sent]="a.notifiedAt"
+                  ><app-icon name="mail" [size]="14" />{{ notice(a) }}</span
+                >
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5">
+                <div class="empty">
+                  <strong>Nenhum alerta {{ tab() === 'TODOS' ? 'gerado' : 'desta regra' }}.</strong>
+                  <span
+                    >Quando um contrato passar do prazo sem pedido, uma ata estiver para vencer ou
+                    uma licitação vencida ficar sem contrato, o alerta aparece aqui e vira
+                    tarefa.</span
+                  >
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-pager
+      [page]="page()"
+      [size]="pageSize"
+      [total]="alerts.value()?.totalItems ?? 0"
+      (pageChange)="goToPage($event)"
+    />
+  }
+</section>

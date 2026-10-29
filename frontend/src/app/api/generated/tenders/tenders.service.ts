@@ -13,6 +13,7 @@ import { Injectable, inject } from '@angular/core';
 import type { Observable } from 'rxjs';
 
 import type {
+  AgencyTotalResponse,
   CreateTenderRequest,
   PageResponseTenderResponse,
   SearchTendersParams,
@@ -21,6 +22,7 @@ import type {
   TenderEventResponse,
   TenderResponse,
   TenderSummaryParams,
+  TopAgenciesParams,
   TransitionRequest,
   UpdateTenderRequest,
 } from '../model';
@@ -376,6 +378,49 @@ export class TendersService {
     });
   }
   /**
+   * @summary Órgãos pelo valor das licitações vencidas, do maior para o menor (painel)
+   */
+  topAgencies<TData = AgencyTotalResponse[]>(
+    params?: TopAgenciesParams,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  topAgencies<TData = AgencyTotalResponse[]>(
+    params?: TopAgenciesParams,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  topAgencies<TData = AgencyTotalResponse[]>(
+    params?: TopAgenciesParams,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  topAgencies<TData = AgencyTotalResponse[]>(
+    params?: TopAgenciesParams,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    const filteredParams = filterParams({ ...params, ...options?.params }, new Set<string>([]));
+
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(`/api/v1/tenders/top-agencies`, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+        params: filteredParams,
+      });
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(`/api/v1/tenders/top-agencies`, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+        params: filteredParams,
+      });
+    }
+
+    return this.http.get<TData>(`/api/v1/tenders/top-agencies`, {
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+      params: filteredParams,
+    });
+  }
+  /**
    * @summary Quantidade e valor por situação (segue os mesmos filtros da lista)
    */
   tenderSummary<TData = StatusTotalResponse[]>(
@@ -460,5 +505,6 @@ export type SearchTendersClientResult = NonNullable<PageResponseTenderResponse>;
 export type CreateTenderClientResult = NonNullable<TenderResponse>;
 export type TransitionTenderClientResult = NonNullable<TenderResponse>;
 export type TenderHistoryClientResult = NonNullable<TenderEventResponse[]>;
+export type TopAgenciesClientResult = NonNullable<AgencyTotalResponse[]>;
 export type TenderSummaryClientResult = NonNullable<StatusTotalResponse[]>;
 export type TenderSuggestionsClientResult = NonNullable<SuggestionsResponse>;

@@ -27,6 +27,7 @@ import { ApiError } from '../../core/http/api-error';
 import { fromLocalDateTimeInput, toLocalDateTimeInput } from '../../shared/format';
 import { Icon } from '../../shared/ui/icon';
 import { Panel } from '../../shared/ui/panel';
+import { EmailDraft } from './email-draft';
 
 /** O que já vem preenchido numa tarefa nova (ex.: "Criar tarefa" no card da negociação). */
 export interface TaskPreset {
@@ -49,19 +50,35 @@ function tomorrowAtNine(): string {
  */
 @Component({
   selector: 'app-task-dialog',
-  imports: [CurrencyPipe, FormsModule, Icon, Panel],
+  imports: [CurrencyPipe, FormsModule, Icon, Panel, EmailDraft],
   template: `
     <app-panel
       [open]="open()"
       [title]="task() ? 'Tarefa' : 'Nova tarefa'"
       [subtitle]="task()?.status === 'CONCLUIDA' ? 'Concluída' : null"
-      [width]="520"
+      [width]="560"
       (closed)="closed.emit()"
     >
       @if (open()) {
         <form id="task-form" class="form" (ngSubmit)="save()" novalidate>
           @if (error(); as message) {
             <div class="alert" role="alert">{{ message }}</div>
+          }
+          @if (task()?.origin === 'ALERTA') {
+            <p class="origin">
+              <span class="badge violet"
+                ><app-icon name="bell" [size]="14" />Criada por alerta</span
+              >
+              @if (task()!.completedBySystem) {
+                <span class="hint"
+                  >Concluída sozinha: o que gerou o alerta foi resolvido (pedido ou contrato
+                  registrado).</span
+                >
+              }
+            </p>
+          }
+          @if (task()?.emailDraft; as draft) {
+            <app-email-draft [draft]="draft" />
           }
           @if (task() && !task()!.canEdit) {
             <p class="hint">Só o responsável ou um administrador altera esta tarefa.</p>
@@ -253,6 +270,12 @@ function tomorrowAtNine(): string {
     }
     .hint {
       color: var(--text-2);
+    }
+    .origin {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 10px;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

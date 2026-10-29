@@ -17,6 +17,8 @@ import type {
   ContractEventResponse,
   ContractResponse,
   ContractTotalsByTenderParams,
+  ContractsWithoutOrderParams,
+  ContractsWithoutOrderResponse,
   OpenContractsSummaryResponse,
   PlaceOrderRequest,
   RemoveContractOrderParams,
@@ -463,6 +465,49 @@ export class ContractsService {
     });
   }
   /**
+   * @summary Contratos assinados há mais de N dias sem nenhum pedido, dos mais antigos (painel)
+   */
+  contractsWithoutOrder<TData = ContractsWithoutOrderResponse>(
+    params?: ContractsWithoutOrderParams,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  contractsWithoutOrder<TData = ContractsWithoutOrderResponse>(
+    params?: ContractsWithoutOrderParams,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  contractsWithoutOrder<TData = ContractsWithoutOrderResponse>(
+    params?: ContractsWithoutOrderParams,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  contractsWithoutOrder<TData = ContractsWithoutOrderResponse>(
+    params?: ContractsWithoutOrderParams,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    const filteredParams = filterParams({ ...params, ...options?.params }, new Set<string>([]));
+
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(`/api/v1/contracts/without-orders`, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+        params: filteredParams,
+      });
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(`/api/v1/contracts/without-orders`, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+        params: filteredParams,
+      });
+    }
+
+    return this.http.get<TData>(`/api/v1/contracts/without-orders`, {
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+      params: filteredParams,
+    });
+  }
+  /**
    * @summary Valor, pedido e saldo dos contratos por licitação (para as listas)
    */
   contractTotalsByTender<TData = TenderContractTotalsResponse[]>(
@@ -600,6 +645,7 @@ export type SignContractClientResult = NonNullable<ContractResponse>;
 export type PlaceContractOrderClientResult = NonNullable<ContractResponse>;
 export type CloseContractClientResult = NonNullable<ContractResponse>;
 export type TenderContractsHistoryClientResult = NonNullable<ContractEventResponse[]>;
+export type ContractsWithoutOrderClientResult = NonNullable<ContractsWithoutOrderResponse>;
 export type ContractTotalsByTenderClientResult = NonNullable<TenderContractTotalsResponse[]>;
 export type OpenContractsSummaryClientResult = NonNullable<OpenContractsSummaryResponse>;
 export type RemoveContractOrderClientResult = NonNullable<ContractResponse>;

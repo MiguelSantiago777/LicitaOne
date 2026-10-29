@@ -140,7 +140,9 @@
               {{ task.title }}
             </button>
             @if (task.origin === 'ALERTA') {
-              <span class="cell-sub">Criada por alerta</span>
+              <span class="cell-sub"
+                >Criada por alerta{{ task.emailDraft ? ' · com rascunho de e-mail' : '' }}</span
+              >
             }
           </td>
           <td>

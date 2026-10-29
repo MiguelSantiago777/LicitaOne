@@ -199,17 +199,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.roadmap {
-  display: grid;
-  gap: 12px;
-  padding: 18px 20px;
-  color: var(--text-2);
-}
-.roadmap li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
 a.entity:hover .cell-main {
   color: var(--brand);
 }
@@ -247,4 +236,77 @@ a.entity:hover .cell-main {
   .hide-sm {
     display: none;
   }
+}
+
+.kpi-icon.red {
+  background: var(--red-bg);
+  color: var(--red);
+}
+.kpi-value.danger {
+  color: var(--red);
+}
+.date-chip.amber {
+  background: var(--amber-bg);
+  color: var(--amber);
+}
+.top-list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 16px 20px 20px;
+  list-style: none;
+}
+.top-list li {
+  display: flex;
+  gap: 12px;
+}
+.rank {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 700;
+}
+.top-text {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  flex: 1;
+  gap: 4px;
+  min-width: 0;
+}
+.top-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.top-line .cell-main {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.top-line .money {
+  flex: none;
+}
+.top-track {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--hover);
+}
+.top-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand);
+}
+.list .badge {
+  flex: none;
 }

@@ -64,6 +64,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/tasks/tasks.page').then((m) => m.TasksPage),
       },
       {
+        path: 'alertas',
+        title: 'Alertas · LicitaOne',
+        loadComponent: () => import('./features/alerts/alerts.page').then((m) => m.AlertsPage),
+      },
+      {
         path: 'importacao',
         title: 'Importação · LicitaOne',
         loadComponent: () => import('./features/imports/imports.page').then((m) => m.ImportsPage),

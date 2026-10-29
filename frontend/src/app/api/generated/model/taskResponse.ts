@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type { TaskDealResponse } from './taskDealResponse';
+import type { TaskEmailDraftResponse } from './taskEmailDraftResponse';
 import type { TaskOwnerResponse } from './taskOwnerResponse';
 import type { TaskResponseOrigin } from './taskResponseOrigin';
 import type { TaskResponseStatus } from './taskResponseStatus';
@@ -22,7 +23,9 @@ export interface TaskResponse {
   tender: TaskTenderResponse;
   value: number;
   origin: TaskResponseOrigin;
+  emailDraft: TaskEmailDraftResponse;
   completedAt: string;
+  completedBySystem: boolean;
   version: number;
   canEdit: boolean;
 }
