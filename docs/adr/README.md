@@ -17,3 +17,4 @@ Cada decisão relevante tem um arquivo `NNNN-titulo.md` com contexto, decisão e
 | [0011](0011-licitacoes-fase-1.md) | Licitações: ciclo de vida, permissões e sessão | Aceito |
 | [0012](0012-contratos-pedidos-e-importacao.md) | Contratos, pedidos, saldo, outbox e importação | Aceito |
 | [0013](0013-funil-e-tarefas.md) | Funil de vendas (negociações) e tarefas | Aceito |
+| [0014](0014-atas-caronas-e-documentos.md) | Atas, caronas e documentos | Aceito |

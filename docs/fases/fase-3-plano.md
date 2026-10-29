@@ -28,10 +28,16 @@ A Fase 4 foi feita antes, a pedido do usuário (`docs/decisoes.md`). Esta branch
 - **Negociação ganha** ligada a uma licitação com ata: o card sugere "Registrar carona", mas nunca cria sozinho (ADR 0005).
 - **Municípios sem ata**: órgãos municipais sem licitação vencida e sem carona. A busca usa a nova consulta pública `tenders.AgencyDirectory`.
 
+## Decisões tomadas durante a execução (entraram no ADR 0014)
+- O órgão da própria licitação não pode pegar carona na ata (`OWN_AGENCY`), e o mesmo órgão aderindo de novo vira aviso.
+- `Quantities` e `BrFormat` foram para `shared.domain`, porque contratos e atas usam as mesmas regras numéricas.
+- O cliente HTTP do S3 é o da JDK, sem Netty nem Apache.
+- V13: as linhas de carona saem em cascata com o item, para a exclusão da ata não depender da ordem da cascata.
+
 ## Etapas
-1. Backend: `S3FileStorage`, configuração, bucket criado na subida, teste com SeaweedFS.
-2. Backend `pricerecords`: documentos e versões (upload, download, versão nova, apagar), validação do arquivo, histórico.
-3. Backend: ata, itens, caronas com limites configuráveis, oportunidades e municípios sem ata, seed.
-4. Frontend: aba *Documentos* (lista, envio, versões, baixar), ata no detalhe da licitação (dados, itens, caronas), destaque de ata vigente, página *Atas* real, "Registrar carona" no funil.
-5. E2E (1440 e 390), screenshots e checklist da Web Design Guidelines.
-6. ADR 0014 e relatório `docs/fases/fase-3.md`.
+1. ✅ Backend: `S3FileStorage`, configuração, bucket criado na subida, teste com SeaweedFS.
+2. ✅ Backend `pricerecords`: documentos e versões (upload, download, versão nova, apagar), validação do arquivo, histórico.
+3. ✅ Backend: ata, itens, caronas com limites configuráveis, oportunidades e municípios sem ata, seed.
+4. ✅ Frontend: aba *Documentos* (lista, envio, versões, baixar), ata no detalhe da licitação (dados, itens, caronas), destaque de ata vigente, página *Atas* real, "Registrar carona" no funil.
+5. ✅ E2E (1440 e 390), screenshots e checklist da Web Design Guidelines.
+6. ✅ ADR 0014 e relatório `docs/fases/fase-3.md`.
