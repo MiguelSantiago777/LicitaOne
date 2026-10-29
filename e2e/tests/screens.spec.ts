@@ -6,7 +6,7 @@ const screens: { path: string; title: string; ready?: string }[] = [
   { path: '/painel', title: 'Painel' },
   { path: '/licitacoes', title: 'Licitações' },
   { path: '/orgaos', title: 'Órgãos' },
-  { path: '/atas', title: 'Atas' },
+  { path: '/atas', title: 'Atas', ready: 'Oferecer carona' },
   { path: '/quadros', title: 'Quadros' },
   { path: '/negociacoes', title: 'Negociações', ready: 'no funil' },
   { path: '/tarefas', title: 'Tarefas', ready: 'atrasadas' },
@@ -62,6 +62,17 @@ test('@screens telas principais', async ({ page, isMobile }, info) => {
   await expect(page.getByRole('dialog', { name: 'Nova licitação' })).toBeVisible();
   await page.screenshot({ path: `screenshots/${info.project.name}/21-nova-licitacao.png` });
   await page.keyboard.press('Escape');
+  if (isMobile) {
+    await page.getByRole('button', { name: 'Abrir menu' }).click();
+    const nav = page.getByRole('navigation', { name: 'Navegação principal' });
+    await expect(nav).toHaveCSS('transform', 'none');
+    await page.screenshot({ path: `screenshots/${info.project.name}/99-menu.png` });
+  }
+});
+
+/** Telas das Fases 3 e 4 num teste à parte: juntas com as outras, a captura passava do tempo limite no celular. */
+test('@screens funil, tarefas, atas e caronas', async ({ page }, info) => {
+  await login(page);
   // Fase 4: lista do funil, diálogo da negociação e as abas da licitação com tarefas e negociações
   await page.goto('/negociacoes?visao=lista');
   await expect(page.getByRole('main').getByText('no funil')).toBeVisible();
@@ -79,10 +90,16 @@ test('@screens telas principais', async ({ page, isMobile }, info) => {
   await page.getByRole('tab', { name: 'Tarefas' }).click();
   await expect(page.getByRole('button', { name: 'Agendar a entrega do lote de banners' })).toBeVisible();
   await page.screenshot({ path: `screenshots/${info.project.name}/28-licitacao-tarefas.png`, fullPage: true });
-  if (isMobile) {
-    await page.getByRole('button', { name: 'Abrir menu' }).click();
-    const nav = page.getByRole('navigation', { name: 'Navegação principal' });
-    await expect(nav).toHaveCSS('transform', 'none');
-    await page.screenshot({ path: `screenshots/${info.project.name}/99-menu.png` });
-  }
+  // Fase 3: ata da SEFAZ com itens e carona, o diálogo de carona e os municípios sem ata
+  await page.goto('/licitacoes/20000000-0000-4000-8000-000000000013?aba=documentos');
+  await expect(page.getByRole('heading', { name: 'Ata ARP 017/2026' })).toBeVisible();
+  await page.screenshot({ path: `screenshots/${info.project.name}/29-licitacao-ata.png`, fullPage: true });
+  await page.locator('app-ata-section').getByRole('button', { name: 'Registrar carona' }).click();
+  await expect(page.getByRole('dialog', { name: 'Registrar carona' })).toBeVisible();
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `screenshots/${info.project.name}/30-registrar-carona.png` });
+  await page.keyboard.press('Escape');
+  await page.goto('/atas?aba=MUNICIPIOS');
+  await expect(page.getByRole('row', { name: /Nova Iguaçu/ })).toBeVisible();
+  await page.screenshot({ path: `screenshots/${info.project.name}/31-municipios-sem-ata.png`, fullPage: true });
 });
