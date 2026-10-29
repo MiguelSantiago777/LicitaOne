@@ -103,3 +103,18 @@ test('@screens funil, tarefas, atas e caronas', async ({ page }, info) => {
   await expect(page.getByRole('row', { name: /Nova Iguaçu/ })).toBeVisible();
   await page.screenshot({ path: `screenshots/${info.project.name}/31-municipios-sem-ata.png`, fullPage: true });
 });
+
+/** Fase 5: alertas, a tarefa com o rascunho de e-mail ao órgão e o painel com os indicadores. */
+test('@screens alertas e rascunho de e-mail', async ({ page }, info) => {
+  await login(page);
+  await page.goto('/alertas');
+  await expect(page.getByRole('heading', { level: 1, name: 'Alertas' })).toBeVisible();
+  await expect(page.getByText('Última verificação')).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  await page.screenshot({ path: `screenshots/${info.project.name}/32-alertas.png`, fullPage: true });
+  await page.goto('/tarefas?q=Sem%20pedido');
+  await page.getByRole('button', { name: /^Sem pedido há/ }).first().click();
+  await expect(page.getByRole('region', { name: 'Rascunho de e-mail ao órgão' })).toBeVisible();
+  await page.waitForTimeout(300); // fim da animação da gaveta
+  await page.screenshot({ path: `screenshots/${info.project.name}/33-tarefa-rascunho.png` });
+});
