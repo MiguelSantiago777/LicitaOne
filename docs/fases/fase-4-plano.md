@@ -26,9 +26,9 @@ Os quadros livres já foram entregues (`docs/fases/fase-4-quadros.md`). Falta:
 - **Carona** (negociação ganha ligada a uma ata) fica para a Fase 3, que traz as atas.
 
 ## Etapas
-1. Backend `deals`: migration, domínio e testes sem Spring, API, seed.
-2. Backend `tasks`: migration, domínio e testes, API (lista com filtros, criação, edição, conclusão em massa, reabrir), seed.
-3. Integração: faixa de tarefa atrasada no card, valor e título da negociação na lista de tarefas, teste de fluxo com Postgres real.
-4. Frontend: Negociações reais (kanban e lista, filtros na URL, arrastar, diálogo, criar tarefa, etapas para o admin), Tarefas reais (lista, filtros, ordenação, conclusão em massa, diálogo) e abas *Tarefas* e *Negociação* no detalhe da licitação.
-5. E2E (1440 e 390), screenshots e checklist da Web Design Guidelines.
-6. ADR 0013 e relatório `docs/fases/fase-4.md`.
+1. ✅ Backend `deals`: migration, domínio e testes sem Spring, API, seed.
+2. ✅ Backend `tasks`: migration, domínio e testes, API (lista com filtros, criação, edição, conclusão em massa, reabrir), seed.
+3. ✅ Integração: faixa de tarefa atrasada no card, valor e título da negociação na lista de tarefas, teste de fluxo com Postgres real.
+4. ✅ Frontend: Negociações reais (kanban e lista, filtros na URL, arrastar, diálogo, criar tarefa, etapas para o admin), Tarefas reais (lista, filtros, ordenação, conclusão em massa, diálogo) e abas *Tarefas* e *Negociação* no detalhe da licitação.
+5. ✅ E2E (1440 e 390), screenshots e checklist da Web Design Guidelines.
+6. ✅ ADR 0013 e relatório `docs/fases/fase-4.md`.
