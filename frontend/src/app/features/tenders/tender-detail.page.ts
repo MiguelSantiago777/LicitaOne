@@ -15,6 +15,7 @@ import { daysSince } from '../../shared/format';
 import { Avatar } from '../../shared/ui/avatar';
 import { Icon } from '../../shared/ui/icon';
 import { ContractsTab } from './contracts/contracts-tab';
+import { TenderDealsTab, TenderTasksTab } from './tender-work-tabs';
 import { TenderForm } from './tender-form';
 import { ACTION_LABELS, statusTone } from './tender-meta';
 import { TransitionDialog } from './transition-dialog';
@@ -36,6 +37,8 @@ type DetailTab = 'resumo' | 'itens' | 'documentos' | 'historico' | 'tarefas' | '
     TenderForm,
     TransitionDialog,
     ContractsTab,
+    TenderTasksTab,
+    TenderDealsTab,
   ],
   templateUrl: './tender-detail.page.html',
   styleUrl: './tender-detail.page.scss',

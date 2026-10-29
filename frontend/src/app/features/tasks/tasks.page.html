@@ -1,25 +1,97 @@
 <div class="page-head">
   <div>
-    <div class="title-line">
-      <h1>Tarefas</h1>
-      <app-demo-badge [phase]="4" />
-    </div>
+    <h1>Tarefas</h1>
     <p class="sub">
-      <span class="num">{{ openCount() }}</span> abertas ·
-      <span class="overdue-text num">{{ overdueCount() }} atrasadas</span>
+      @if (summary.value(); as s) {
+        <span class="num">{{ s.open }}</span> {{ s.open === 1 ? 'aberta' : 'abertas' }} ·
+        <span class="overdue-text num"
+          >{{ s.overdue }} {{ s.overdue === 1 ? 'atrasada' : 'atrasadas' }}</span
+        >
+      } @else {
+        Follow-up da equipe
+      }
     </p>
   </div>
   <div class="page-actions">
     @if (selected().size) {
-      <button type="button" class="btn" (click)="completeSelected()">
+      <button type="button" class="btn" (click)="completeSelected()" [disabled]="busy()">
         <app-icon name="circle-check" [size]="16" />Concluir {{ selected().size }}
       </button>
     }
-    <button type="button" class="btn primary">
-      <app-icon name="plus" [size]="16" />Nova tarefa
-    </button>
+    @if (canCreate()) {
+      <button type="button" class="btn primary" (click)="openNew()">
+        <app-icon name="plus" [size]="16" />Nova tarefa
+      </button>
+    }
   </div>
 </div>
+
+<div class="tabs" role="tablist" aria-label="Situação das tarefas">
+  @for (s of situations; track s.id) {
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="situation() === s.id"
+      (click)="navigate({ situacao: s.id === 'ABERTAS' ? null : s.id })"
+    >
+      {{ s.label }}
+      @if (countFor(s.id); as n) {
+        <span class="count" [class.red]="s.id === 'ATRASADAS'">{{ n }}</span>
+      }
+    </button>
+  }
+</div>
+
+<div class="filters">
+  <label class="search filter-search">
+    <span class="visually-hidden">Buscar tarefas</span>
+    <app-icon name="search" [size]="16" />
+    <input
+      class="input"
+      type="search"
+      name="q"
+      placeholder="Buscar pelo título da tarefa"
+      [(ngModel)]="search"
+      (ngModelChange)="search$.next($event)"
+    />
+  </label>
+  <button
+    type="button"
+    class="btn"
+    [attr.aria-pressed]="mine()"
+    [class.toggled]="mine()"
+    (click)="navigate({ minhas: mine() ? null : '1' })"
+  >
+    <app-icon name="filter" [size]="16" />Minhas tarefas
+  </button>
+</div>
+
+@if (error(); as message) {
+  <div class="alert" role="alert">
+    {{ message }}
+    <button
+      type="button"
+      class="btn ghost icon"
+      (click)="error.set(null)"
+      aria-label="Fechar aviso"
+    >
+      <app-icon name="x" [size]="16" />
+    </button>
+  </div>
+}
+@if (notice(); as message) {
+  <div class="notice" role="status">
+    {{ message }}
+    <button
+      type="button"
+      class="btn ghost icon"
+      (click)="notice.set(null)"
+      aria-label="Fechar aviso"
+    >
+      <app-icon name="x" [size]="16" />
+    </button>
+  </div>
+}
 
 <section class="card table-wrap">
   <table class="data">
@@ -28,48 +100,124 @@
     </caption>
     <thead>
       <tr>
-        <th scope="col" class="check"><span class="visually-hidden">Selecionar</span></th>
+        <th scope="col" class="check">
+          <input
+            type="checkbox"
+            [checked]="allSelected()"
+            [disabled]="!selectable().length"
+            (change)="toggleAll()"
+            aria-label="Selecionar todas as tarefas da página"
+          />
+        </th>
         <th scope="col">Tarefa</th>
         <th scope="col">Status</th>
-        <th scope="col">Data e hora</th>
+        <th scope="col" [attr.aria-sort]="direction() === 'asc' ? 'ascending' : 'descending'">
+          <button type="button" class="sort" (click)="toggleSort()">
+            Data e hora
+            <app-icon name="chevron-down" [size]="14" [class.up]="direction() === 'desc'" />
+          </button>
+        </th>
         <th scope="col">Responsável</th>
-        <th scope="col">Negociação</th>
+        <th scope="col">Negociação / licitação</th>
         <th scope="col" class="n">Valor total</th>
       </tr>
     </thead>
     <tbody>
-      @for (task of tasks(); track task.id) {
-        <tr [class.done]="task.done">
+      @for (task of list.value()?.items ?? []; track task.id) {
+        <tr [class.done]="task.status === 'CONCLUIDA'">
           <td class="check">
-            <input
-              type="checkbox"
-              [checked]="selected().has(task.id)"
-              [disabled]="task.done"
-              (change)="toggle(task.id)"
-              [attr.aria-label]="'Selecionar ' + task.title"
-            />
-          </td>
-          <td class="cell-main title">{{ task.title }}</td>
-          <td>
-            @if (task.done) {
-              <span class="badge green"><span class="dot"></span>Concluída</span>
-            } @else if (isOverdue(task)) {
-              <span class="badge red"><span class="dot"></span>Atrasada</span>
-            } @else {
-              <span class="badge"><span class="dot"></span>Aberta em dia</span>
+            @if (task.canEdit && task.status !== 'CONCLUIDA') {
+              <input
+                type="checkbox"
+                [checked]="selected().has(task.id)"
+                (change)="toggle(task.id)"
+                [attr.aria-label]="'Selecionar ' + task.title"
+              />
             }
           </td>
-          <td class="num nowrap">{{ task.dueAt | date: "dd/MM/yyyy 'às' HH:mm" }}</td>
+          <td class="title">
+            <button type="button" class="row-link" (click)="openTask(task)">
+              {{ task.title }}
+            </button>
+            @if (task.origin === 'ALERTA') {
+              <span class="cell-sub">Criada por alerta</span>
+            }
+          </td>
           <td>
-            <div class="owner"><app-avatar [name]="task.owner" [size]="26" />{{ task.owner }}</div>
+            @switch (task.status) {
+              @case ('CONCLUIDA') {
+                <span class="badge green"><span class="dot"></span>Concluída</span>
+              }
+              @case ('ATRASADA') {
+                <span class="badge red"><span class="dot"></span>Atrasada</span>
+              }
+              @default {
+                <span class="badge"><span class="dot"></span>Aberta em dia</span>
+              }
+            }
           </td>
-          <td class="deal">
-            <a class="link deal-link">{{ task.deal }}</a>
-            <div class="cell-sub">{{ task.company }}</div>
+          <td class="num nowrap">{{ task.dueAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+          <td>
+            @if (task.owner; as o) {
+              <div class="owner"><app-avatar [name]="o.name" [size]="26" />{{ o.name }}</div>
+            } @else {
+              <span class="cell-sub">Sem responsável</span>
+            }
           </td>
-          <td class="n money num">{{ task.value | currency: 'BRL' }}</td>
+          <td class="subject">
+            @if (task.deal; as d) {
+              <a class="link deal-link" routerLink="/negociacoes" [queryParams]="{ q: d.title }">{{
+                d.title
+              }}</a>
+              <div class="cell-sub">{{ d.agencyName }}</div>
+            } @else if (task.tender; as t) {
+              <a class="link deal-link" [routerLink]="['/licitacoes', t.id]">{{ t.agencyName }}</a>
+              <div class="cell-sub num">{{ t.identification }}</div>
+            } @else {
+              <span class="cell-sub">—</span>
+            }
+          </td>
+          <td class="n money num">
+            @if (task.deal || task.tender) {
+              {{ task.value | currency: 'BRL' }}
+            }
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="7" class="empty">
+            @if (list.isLoading()) {
+              Carregando…
+            } @else if (q() || mine()) {
+              Nenhuma tarefa com este filtro.
+            } @else {
+              Nenhuma tarefa
+              {{
+                situation() === 'TODAS'
+                  ? ''
+                  : situation() === 'ATRASADAS'
+                    ? 'atrasada'
+                    : situation() === 'CONCLUIDAS'
+                      ? 'concluída'
+                      : 'aberta'
+              }}.
+            }
+          </td>
         </tr>
       }
     </tbody>
   </table>
+  <app-pager
+    [page]="page()"
+    [size]="pageSize"
+    [total]="list.value()?.totalItems ?? 0"
+    (pageChange)="navigate({ pagina: $event }, false)"
+  />
 </section>
+
+<app-task-dialog
+  [open]="dialogOpen()"
+  [task]="editing()"
+  (closed)="dialogOpen.set(false); editing.set(null)"
+  (saved)="onSaved()"
+/>

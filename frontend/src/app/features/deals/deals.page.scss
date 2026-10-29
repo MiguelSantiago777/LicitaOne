@@ -53,7 +53,8 @@
   gap: 14px;
   overflow-x: auto;
   padding-bottom: 12px;
-  align-items: start;
+  /* colunas da mesma altura: dá para soltar em qualquer altura, mesmo numa etapa com poucas negociações */
+  align-items: stretch;
 }
 .column {
   display: flex;
@@ -69,12 +70,18 @@
 .column-title {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
 }
 .column-title h2 {
+  flex: 1;
+  min-width: 0;
   font-size: 14px;
   font-weight: 650;
+}
+.column-title .add {
+  width: 28px;
+  height: 28px;
+  margin: -4px -6px -4px 0;
 }
 .column-title .count {
   background: #fff;
@@ -217,4 +224,72 @@
   align-items: center;
   gap: 8px;
   color: var(--text-2);
+}
+
+.status-select {
+  width: auto;
+}
+.btn.toggled {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+button.filter-chip {
+  border: 0;
+  cursor: pointer;
+}
+.alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 8px 8px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--red-bg);
+  color: var(--red);
+  font-weight: 500;
+}
+.deal:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.deal.cdk-drag-disabled {
+  cursor: pointer;
+}
+.origin {
+  margin-top: -4px;
+  color: var(--text-3);
+  font-size: 12px;
+}
+.no-owner {
+  color: var(--text-3);
+  font-size: 12px;
+}
+.tasks-note {
+  color: var(--text-2);
+  font-size: 12px;
+}
+.overdue-text-line {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.row-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
 }

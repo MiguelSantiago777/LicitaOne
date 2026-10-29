@@ -3,6 +3,8 @@ export * from './agencies/agencies.service';
 export * from './auth/auth.service';
 export * from './boards/boards.service';
 export * from './contracts/contracts.service';
+export * from './deals/deals.service';
 export * from './imports/imports.service';
+export * from './tasks/tasks.service';
 export * from './tenders/tenders.service';
 export * from './users/users.service';

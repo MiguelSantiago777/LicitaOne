@@ -301,21 +301,15 @@
         }
       </section>
     }
+    @case ('tarefas') {
+      <app-tender-tasks-tab [tender]="t" />
+    }
+    @case ('negociacao') {
+      <app-tender-deals-tab [tender]="t" />
+    }
     @default {
       <section class="card empty upcoming">
-        <strong>
-          @switch (tab()) {
-            @case ('documentos') {
-              Anexo da ata e de outros documentos chega na Fase 3.
-            }
-            @case ('tarefas') {
-              Tarefas ligadas à licitação chegam na Fase 4.
-            }
-            @default {
-              Negociações ligadas à licitação chegam na Fase 4.
-            }
-          }
-        </strong>
+        <strong>Anexo da ata e de outros documentos chega na Fase 3.</strong>
         <span>Esta aba já está reservada para não mudar o lugar das coisas depois.</span>
       </section>
     }

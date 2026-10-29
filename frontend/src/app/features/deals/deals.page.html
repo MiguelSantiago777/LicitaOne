@@ -1,26 +1,35 @@
 <div class="page-head">
   <div>
-    <div class="title-line">
-      <h1>Negociações</h1>
-      <app-demo-badge [phase]="4" />
-    </div>
+    <h1>Negociações</h1>
     <p class="sub">
-      <span class="num">{{ deals().length }}</span> negociações ·
-      <strong class="num">{{ total() | currency: 'BRL' }}</strong> no funil
+      @if (pipeline.value(); as p) {
+        <span class="num">{{ p.dealCount }}</span>
+        {{ p.dealCount === 1 ? 'negociação' : 'negociações' }} ·
+        <strong class="num">{{ p.totalValue | currency: 'BRL' }}</strong> no funil
+      } @else {
+        Funil de vendas
+      }
     </p>
   </div>
   <div class="page-actions">
     <div class="segmented" role="group" aria-label="Visualização">
-      <button type="button" [attr.aria-pressed]="view() === 'kanban'" (click)="view.set('kanban')">
+      <button type="button" [attr.aria-pressed]="view() === 'kanban'" (click)="setView('kanban')">
         <app-icon name="columns" [size]="16" />Kanban
       </button>
-      <button type="button" [attr.aria-pressed]="view() === 'list'" (click)="view.set('list')">
+      <button type="button" [attr.aria-pressed]="view() === 'list'" (click)="setView('list')">
         <app-icon name="list" [size]="16" />Lista
       </button>
     </div>
-    <button type="button" class="btn primary">
-      <app-icon name="plus" [size]="16" />Nova negociação
-    </button>
+    @if (pipeline.value()?.canEditStages) {
+      <button type="button" class="btn" (click)="stagesOpen.set(true)">
+        <app-icon name="settings" [size]="16" />Etapas
+      </button>
+    }
+    @if (pipeline.value()?.canCreate) {
+      <button type="button" class="btn primary" (click)="openNew()">
+        <app-icon name="plus" [size]="16" />Nova negociação
+      </button>
+    }
   </div>
 </div>
 
@@ -28,58 +37,195 @@
   <label class="search filter-search">
     <span class="visually-hidden">Buscar negociações</span>
     <app-icon name="search" [size]="16" />
-    <input class="input" type="search" placeholder="Buscar negociação ou órgão" />
+    <input
+      class="input"
+      type="search"
+      name="q"
+      placeholder="Buscar negociação, órgão ou pregão"
+      [(ngModel)]="search"
+      (ngModelChange)="search$.next($event)"
+    />
   </label>
-  <button type="button" class="btn">Minhas negociações</button>
-  <span class="filter-chip">Status: Em andamento <app-icon name="x" [size]="14" /></span>
+  <button
+    type="button"
+    class="btn"
+    [attr.aria-pressed]="mine()"
+    [class.toggled]="mine()"
+    (click)="navigate({ minhas: mine() ? null : '1' })"
+  >
+    <app-icon name="filter" [size]="16" />Minhas negociações
+  </button>
+  <label class="visually-hidden" for="deal-status">Status</label>
+  <select
+    id="deal-status"
+    class="input status-select"
+    [ngModel]="status()"
+    (ngModelChange)="navigate({ status: $event || null })"
+  >
+    <option value="">Todos os status</option>
+    @for (s of statuses; track s.value) {
+      <option [value]="s.value">{{ s.label }}</option>
+    }
+  </select>
+
+  @if (q() || mine() || status()) {
+    <ul class="chips" aria-label="Filtros ativos">
+      @if (q()) {
+        <li>
+          <button type="button" class="filter-chip" (click)="clearSearch()">
+            "{{ q() }}" <app-icon name="x" [size]="14" />
+            <span class="visually-hidden">Remover busca</span>
+          </button>
+        </li>
+      }
+      @if (mine()) {
+        <li>
+          <button type="button" class="filter-chip" (click)="navigate({ minhas: null })">
+            Minhas <app-icon name="x" [size]="14" />
+            <span class="visually-hidden">Remover filtro</span>
+          </button>
+        </li>
+      }
+      @if (status()) {
+        <li>
+          <button type="button" class="filter-chip" (click)="navigate({ status: null })">
+            Status: {{ statusLabel($any(status())) }} <app-icon name="x" [size]="14" />
+            <span class="visually-hidden">Remover filtro</span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
 </div>
 
-@if (view() === 'kanban') {
+@if (error(); as message) {
+  <div class="alert" role="alert">
+    {{ message }}
+    <button
+      type="button"
+      class="btn ghost icon"
+      (click)="error.set(null)"
+      aria-label="Fechar aviso"
+    >
+      <app-icon name="x" [size]="16" />
+    </button>
+  </div>
+}
+
+@if (pipeline.error()) {
+  <p class="empty">Não foi possível carregar o funil. Recarregue a página.</p>
+} @else if (view() === 'kanban') {
   <div class="board" cdkDropListGroup>
     @for (col of columns(); track col.stage.id) {
-      <section class="column" [style.--stage]="col.stage.color" [attr.aria-label]="col.stage.name">
+      <section class="column" [style.--stage]="col.color" [attr.aria-label]="col.stage.name">
         <header class="column-head">
           <div class="column-title">
             <h2>{{ col.stage.name }}</h2>
-            <span class="count">{{ col.items.length }}</span>
+            <span class="count">{{ col.stage.dealCount }}</span>
+            @if (pipeline.value()?.canCreate) {
+              <button
+                type="button"
+                class="btn ghost icon sm add"
+                (click)="openNew(col.stage.id)"
+                [attr.aria-label]="'Nova negociação em ' + col.stage.name"
+              >
+                <app-icon name="plus" [size]="16" />
+              </button>
+            }
           </div>
-          <p class="column-value num">{{ col.value | currency: 'BRL' : 'symbol' : '1.0-0' }}</p>
+          <p class="column-value num">
+            {{ col.stage.totalValue | currency: 'BRL' : 'symbol' : '1.0-0' }}
+          </p>
         </header>
 
         <div
           class="column-body"
           cdkDropList
-          [cdkDropListData]="col.stage.id"
+          [cdkDropListData]="col.stage"
           (cdkDropListDropped)="drop($event)"
         >
-          @for (deal of col.items; track deal.id) {
-            <article class="deal" cdkDrag [cdkDragData]="deal" tabindex="0">
+          @for (deal of col.stage.deals; track deal.id) {
+            <article
+              class="deal"
+              cdkDrag
+              [cdkDragData]="deal"
+              [cdkDragDisabled]="!deal.canEdit"
+              [attr.data-deal]="deal.id"
+              tabindex="0"
+              (click)="openDeal(deal)"
+              (keydown.enter)="openDeal(deal)"
+              [attr.aria-label]="deal.title + ', ' + agencyOf(deal)"
+            >
               <div class="deal-top">
-                <span class="badge" [class.blue]="deal.isNew" [class.green]="!deal.isNew">
-                  {{ deal.isNew ? 'Nova' : 'Em andamento' }}
-                </span>
-                <span class="stars" [attr.aria-label]="'Prioridade ' + deal.priority + ' de 3'">
+                @if (deal.status !== 'EM_ANDAMENTO') {
+                  <span
+                    class="badge"
+                    [class.green]="deal.status === 'GANHA'"
+                    [class.red]="deal.status === 'PERDIDA'"
+                  >
+                    {{ statusLabel(deal.status) }}
+                  </span>
+                } @else if (deal.isNew) {
+                  <span class="badge blue">Nova</span>
+                } @else {
+                  <span class="badge">Em andamento</span>
+                }
+                <span
+                  class="stars"
+                  [attr.aria-label]="'Prioridade ' + priorityLabel(deal.priority)"
+                  role="img"
+                >
                   @for (on of stars(deal.priority); track $index) {
                     <app-icon name="star" [size]="14" [class.on]="on" />
                   }
                 </span>
               </div>
               <h3>{{ deal.title }}</h3>
-              <p class="company"><app-icon name="building" [size]="14" />{{ deal.company }}</p>
+              <p class="company"><app-icon name="building" [size]="14" />{{ agencyOf(deal) }}</p>
+              @if (deal.tender; as t) {
+                <p class="origin num" title="Licitação de origem">{{ t.identification }}</p>
+              }
               <div class="deal-foot">
-                <app-avatar [name]="deal.owner" [size]="24" />
+                @if (deal.owner; as o) {
+                  <app-avatar [name]="o.name" [size]="24" [attr.title]="o.name" />
+                } @else {
+                  <span class="no-owner">Sem responsável</span>
+                }
                 <strong class="num">{{ deal.value | currency: 'BRL' : 'symbol' : '1.0-0' }}</strong>
               </div>
-              @if (deal.overdueTask) {
-                <p class="overdue"><app-icon name="clock" [size]="14" />{{ deal.overdueTask }}</p>
-              } @else {
-                <button type="button" class="create-task">
+              @if (deal.overdueTask; as late) {
+                <p class="overdue">
+                  <app-icon name="clock" [size]="14" />
+                  <span class="overdue-text-line">
+                    <strong class="num">{{ late.dueAt | date: 'dd/MM' }}</strong> · {{ late.title }}
+                    @if (late.overdueCount > 1) {
+                      (+{{ late.overdueCount - 1 }})
+                    }
+                  </span>
+                </p>
+              } @else if (deal.canEdit) {
+                <button
+                  type="button"
+                  class="create-task"
+                  (click)="$event.stopPropagation(); createTask(deal)"
+                >
                   <app-icon name="plus" [size]="14" />Criar tarefa
                 </button>
+              } @else if (deal.openTasks) {
+                <p class="tasks-note">
+                  {{ deal.openTasks }}
+                  {{ deal.openTasks === 1 ? 'tarefa aberta' : 'tarefas abertas' }}
+                </p>
               }
             </article>
           } @empty {
-            <p class="column-empty">Arraste uma negociação para cá</p>
+            <p class="column-empty">
+              {{
+                q() || mine() || status()
+                  ? 'Nada com este filtro'
+                  : 'Arraste uma negociação para cá'
+              }}
+            </p>
           }
         </div>
       </section>
@@ -95,33 +241,92 @@
         <tr>
           <th scope="col">Negociação</th>
           <th scope="col">Etapa</th>
+          <th scope="col">Status</th>
           <th scope="col">Responsável</th>
+          <th scope="col">Tarefas</th>
           <th scope="col" class="n">Valor</th>
         </tr>
       </thead>
       <tbody>
-        @for (col of columns(); track col.stage.id) {
-          @for (deal of col.items; track deal.id) {
-            <tr>
-              <td>
-                <div class="cell-main">{{ deal.title }}</div>
-                <div class="cell-sub">{{ deal.company }}</div>
-              </td>
-              <td>
-                <span class="stage-pill" [style.--stage]="col.stage.color">{{
-                  col.stage.name
-                }}</span>
-              </td>
-              <td>
-                <div class="owner">
-                  <app-avatar [name]="deal.owner" [size]="24" />{{ deal.owner }}
-                </div>
-              </td>
-              <td class="n money num">{{ deal.value | currency: 'BRL' }}</td>
-            </tr>
-          }
+        @for (row of rows(); track row.deal.id) {
+          <tr>
+            <td>
+              <button type="button" class="link row-link" (click)="openDeal(row.deal)">
+                {{ row.deal.title }}
+              </button>
+              <div class="cell-sub">{{ agencyOf(row.deal) }}</div>
+            </td>
+            <td>
+              <span class="stage-pill" [style.--stage]="row.color">{{ row.deal.stageName }}</span>
+            </td>
+            <td>
+              <span
+                class="badge"
+                [class.blue]="row.deal.status === 'EM_ANDAMENTO'"
+                [class.green]="row.deal.status === 'GANHA'"
+                [class.red]="row.deal.status === 'PERDIDA'"
+                >{{ statusLabel(row.deal.status) }}</span
+              >
+            </td>
+            <td>
+              @if (row.deal.owner; as o) {
+                <div class="owner"><app-avatar [name]="o.name" [size]="24" />{{ o.name }}</div>
+              } @else {
+                <span class="no-owner">Sem responsável</span>
+              }
+            </td>
+            <td>
+              @if (row.deal.overdueTask; as late) {
+                <span class="badge red"
+                  ><span class="dot"></span>{{ late.overdueCount }} atrasada{{
+                    late.overdueCount > 1 ? 's' : ''
+                  }}</span
+                >
+              } @else if (row.deal.openTasks) {
+                <span class="num"
+                  >{{ row.deal.openTasks }} aberta{{ row.deal.openTasks > 1 ? 's' : '' }}</span
+                >
+              } @else {
+                <span class="cell-sub">Nenhuma</span>
+              }
+            </td>
+            <td class="n money num">{{ row.deal.value | currency: 'BRL' }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="empty">
+              {{
+                q() || mine() || status()
+                  ? 'Nenhuma negociação com este filtro.'
+                  : 'Nenhuma negociação ainda.'
+              }}
+            </td>
+          </tr>
         }
       </tbody>
     </table>
   </section>
 }
+
+<app-deal-dialog
+  [open]="dealDialogOpen()"
+  [deal]="editing()"
+  [stages]="pipeline.value()?.stages ?? []"
+  [initialStageId]="newInStage()"
+  (closed)="dealDialogOpen.set(false); editing.set(null)"
+  (saved)="onDealSaved($event)"
+/>
+
+<app-task-dialog
+  [open]="!!taskPreset()"
+  [preset]="taskPreset()"
+  (closed)="taskPreset.set(null)"
+  (saved)="onTaskSaved(taskPreset()?.deal?.id)"
+/>
+
+<app-stages-dialog
+  [open]="stagesOpen()"
+  [pipeline]="pipeline.value() ?? null"
+  (closed)="stagesOpen.set(false)"
+  (changed)="pipeline.reload()"
+/>
