@@ -3,6 +3,7 @@ package br.com.shema.crm.tasks.domain;
 import br.com.shema.crm.shared.domain.DomainRuleViolation;
 import br.com.shema.crm.shared.persistence.AuditableEntity;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -13,7 +14,8 @@ import java.util.UUID;
 
 /**
  * Tarefa com vencimento (data e hora) e responsável, ligada opcionalmente a uma negociação e a uma licitação. A chave
- * do alerta é única: o mesmo alerta nunca gera duas tarefas (Fase 5).
+ * do alerta é única: o mesmo alerta nunca gera duas tarefas. A tarefa de alerta pode trazer um rascunho de e-mail ao
+ * órgão (ADR 0015).
  */
 @Entity
 @Table(name = "tasks")
@@ -47,6 +49,9 @@ public class Task extends AuditableEntity {
     @Column(name = "alert_key", length = 120, updatable = false)
     private String alertKey;
 
+    @Embedded
+    private EmailDraft emailDraft;
+
     @Column(name = "completed_at")
     private OffsetDateTime completedAt;
 
@@ -59,11 +64,14 @@ public class Task extends AuditableEntity {
         return new Task(draft, TaskOrigin.MANUAL, null);
     }
 
-    public static Task fromAlert(TaskDraft draft, String alertKey) {
+    /** @param emailDraft rascunho ao órgão, ou nulo se o alerta não tem e-mail a mandar */
+    public static Task fromAlert(TaskDraft draft, String alertKey, EmailDraft emailDraft) {
         if (alertKey == null || alertKey.isBlank()) {
             throw new IllegalArgumentException("Tarefa de alerta precisa da chave de idempotência");
         }
-        return new Task(draft, TaskOrigin.ALERTA, alertKey);
+        Task task = new Task(draft, TaskOrigin.ALERTA, alertKey);
+        task.emailDraft = emailDraft;
+        return task;
     }
 
     private Task(TaskDraft draft, TaskOrigin origin, String alertKey) {
@@ -94,6 +102,18 @@ public class Task extends AuditableEntity {
             this.completedAt = at;
             this.completedBy = by;
         }
+    }
+
+    /**
+     * O fato que gerou o alerta deixou de valer (ex.: o pedido chegou): o sistema conclui a tarefa, sem autor. Tarefa
+     * já concluída fica como está.
+     */
+    public boolean completeBySystem(OffsetDateTime at) {
+        if (completedAt != null) {
+            return false;
+        }
+        this.completedAt = at;
+        return true;
     }
 
     public void reopen() {
@@ -168,6 +188,10 @@ public class Task extends AuditableEntity {
 
     public String getAlertKey() {
         return alertKey;
+    }
+
+    public EmailDraft getEmailDraft() {
+        return emailDraft;
     }
 
     public OffsetDateTime getCompletedAt() {

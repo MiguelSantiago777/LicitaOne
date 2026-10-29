@@ -2,6 +2,8 @@ package br.com.shema.crm.shared.domain;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 /** Números nas mensagens de regra, no formato que o usuário lê na tela. */
@@ -12,10 +14,16 @@ public final class BrFormat {
 
     private static final Locale PT_BR = Locale.forLanguageTag("pt-BR");
 
+    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     private BrFormat() {}
 
     public static String money(BigDecimal value) {
         return NumberFormat.getCurrencyInstance(PT_BR).format(value).replace(NBSP, ' ');
+    }
+
+    public static String date(LocalDate value) {
+        return value.format(DATE);
     }
 
     public static String quantity(BigDecimal value) {

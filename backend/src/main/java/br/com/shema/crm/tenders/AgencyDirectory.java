@@ -21,4 +21,7 @@ public interface AgencyDirectory {
      * @param state UF, ou nulo para todas
      */
     List<AgencyRef> municipalitiesWithoutWonTender(String state);
+
+    /** E-mails dos contatos do órgão, na ordem do cadastro: destinatários dos rascunhos de follow-up. */
+    List<String> contactEmails(UUID agencyId);
 }

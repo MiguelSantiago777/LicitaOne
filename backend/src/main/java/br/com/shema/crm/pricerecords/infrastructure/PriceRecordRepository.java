@@ -1,6 +1,7 @@
 package br.com.shema.crm.pricerecords.infrastructure;
 
 import br.com.shema.crm.pricerecords.domain.PriceRecord;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,8 @@ public interface PriceRecordRepository extends JpaRepository<PriceRecord, UUID> 
     List<PriceRecord> findByTenderIdIn(Collection<UUID> tenderIds);
 
     List<PriceRecord> findAllByOrderByValidUntilAsc();
+
+    List<PriceRecord> findByValidUntilBetweenOrderByValidUntilAsc(LocalDate from, LocalDate to);
 
     /** Órgãos que já aderiram a alguma ata (não são mais "sem ata"). */
     @Query("select distinct c.agencyId from PriceRecord p join p.caronas c")

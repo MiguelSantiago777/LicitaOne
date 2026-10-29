@@ -3,11 +3,14 @@ package br.com.shema.crm.tenders.application;
 import br.com.shema.crm.tenders.AgencyDirectory;
 import br.com.shema.crm.tenders.AgencyRef;
 import br.com.shema.crm.tenders.domain.Agency;
+import br.com.shema.crm.tenders.domain.AgencyContact;
+import br.com.shema.crm.tenders.infrastructure.AgencyContactRepository;
 import br.com.shema.crm.tenders.infrastructure.AgencyRepository;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
@@ -20,9 +23,11 @@ import org.springframework.transaction.annotation.Transactional;
 class AgencyDirectoryService implements AgencyDirectory {
 
     private final AgencyRepository agencies;
+    private final AgencyContactRepository contacts;
 
-    AgencyDirectoryService(AgencyRepository agencies) {
+    AgencyDirectoryService(AgencyRepository agencies, AgencyContactRepository contacts) {
         this.agencies = agencies;
+        this.contacts = contacts;
     }
 
     @Override
@@ -45,6 +50,15 @@ class AgencyDirectoryService implements AgencyDirectory {
     public List<AgencyRef> municipalitiesWithoutWonTender(String state) {
         return agencies.municipalitiesWithoutWonTender(state == null || state.isBlank() ? null : state.trim()).stream()
                 .map(AgencyDirectoryService::ref)
+                .toList();
+    }
+
+    @Override
+    public List<String> contactEmails(UUID agencyId) {
+        return contacts.findByAgencyIdOrderByPosition(agencyId).stream()
+                .map(AgencyContact::getEmail)
+                .filter(Objects::nonNull)
+                .distinct()
                 .toList();
     }
 

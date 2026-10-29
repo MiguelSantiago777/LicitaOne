@@ -43,6 +43,16 @@ spring:
           enabled: false
       # Eventos que não chegaram ao fim (ex.: queda antes do RabbitMQ confirmar) são reenviados na subida
       republish-outstanding-events-on-restart: true
+  # Aviso interno dos alertas (ADR 0006). Em dev, o Mailpit do compose; desligue com SHEMA_ALERTS_MAIL_ENABLED=false.
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:${MAILPIT_SMTP_PORT:11025}}
+    username: ${MAIL_USER:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
   mvc:
     problemdetails:
       enabled: true
@@ -95,6 +105,16 @@ shema:
       bucket: ${S3_BUCKET:shemacrm-files}
       access-key: ${S3_ACCESS_KEY:}
       secret-key: ${S3_SECRET_KEY:}
+  # Alertas da seção 5.4 (ADR 0015). O prazo da licitação vencida sem contrato ("X dias") precisa de validação do
+  # cliente; os outros vêm da especificação.
+  alerts:
+    cron: ${SHEMA_ALERTS_CRON:0 0 7 * * *}
+    contract-without-order-days: ${SHEMA_ALERTS_CONTRACT_WITHOUT_ORDER_DAYS:30}
+    price-record-expiring-days: ${SHEMA_ALERTS_PRICE_RECORD_EXPIRING_DAYS:90,60,30}
+    tender-without-contract-days: ${SHEMA_ALERTS_TENDER_WITHOUT_CONTRACT_DAYS:30}
+    app-url: ${SHEMA_APP_URL:http://localhost:${FRONTEND_PORT:14200}}
+    mail-from: ${SHEMA_ALERTS_MAIL_FROM:LicitaOne <alertas@shema.local>}
+    mail-enabled: ${SHEMA_ALERTS_MAIL_ENABLED:true}
   auth:
     secure-cookie: false
     cors-origins: ${SHEMA_CORS_ORIGINS:http://localhost:4300}

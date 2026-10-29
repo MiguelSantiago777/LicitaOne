@@ -1,5 +1,7 @@
 package br.com.shema.crm.contracts.infrastructure;
 
+import br.com.shema.crm.contracts.ContractFollowUp.ContractWithoutOrder;
+import br.com.shema.crm.contracts.domain.ContractKind;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
@@ -77,5 +79,22 @@ public class ContractTotalsQuery {
                         rs.getLong("contracts"),
                         rs.getBigDecimal("value").setScale(2),
                         rs.getBigDecimal("ordered").setScale(2)));
+    }
+
+    /** Contratos abertos sem nenhum pedido, assinados até a data, do mais antigo para o mais novo. */
+    public List<ContractWithoutOrder> withoutOrder(LocalDate signedOnOrBefore) {
+        return jdbc.query(
+                "select c.id, c.tender_id, c.kind, c.number, c.signed_at, c.value from contracts c"
+                        + " where c.closed_at is null and c.signed_at <= :cutoff"
+                        + " and not exists (select 1 from contract_orders o where o.contract_id = c.id)"
+                        + " order by c.signed_at, c.created_at",
+                new MapSqlParameterSource("cutoff", signedOnOrBefore),
+                (rs, n) -> new ContractWithoutOrder(
+                        rs.getObject("id", UUID.class),
+                        rs.getObject("tender_id", UUID.class),
+                        ContractKind.valueOf(rs.getString("kind")).label(),
+                        rs.getString("number"),
+                        rs.getObject("signed_at", LocalDate.class),
+                        rs.getBigDecimal("value").setScale(2)));
     }
 }

@@ -142,4 +142,19 @@ final class ContractDtos {
             LocalDate lastOrderAt) {}
 
     record OpenContractsSummaryResponse(long contracts, BigDecimal value, BigDecimal ordered, BigDecimal remaining) {}
+
+    /** @param total quantos contratos estão nessa situação (a lista traz só os mais antigos) */
+    record ContractsWithoutOrderResponse(
+            int days, long total, BigDecimal value, List<ContractWithoutOrderResponse> items) {}
+
+    record ContractWithoutOrderResponse(
+            UUID contractId,
+            UUID tenderId,
+            String agencyName,
+            String identification,
+            String kind,
+            String number,
+            LocalDate signedAt,
+            long daysSinceSigned,
+            BigDecimal value) {}
 }

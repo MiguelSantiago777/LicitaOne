@@ -1,6 +1,7 @@
 package br.com.shema.crm.identity;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,4 +13,10 @@ public interface UserDirectory {
 
     /** Busca em lote, para listas não fazerem uma consulta por linha. */
     Map<UUID, UserSummary> findAll(Collection<UUID> ids);
+
+    /** E-mail de um usuário ativo, para avisos internos; vazio se o usuário não existe ou está desativado. */
+    Optional<String> activeEmail(UUID id);
+
+    /** E-mails dos administradores ativos: recebem os avisos que não têm responsável. */
+    List<String> activeAdminEmails();
 }

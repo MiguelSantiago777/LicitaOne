@@ -59,8 +59,27 @@ class TaskTest {
         manual.requireDeletable();
         assertThat(manual.getOrigin()).isEqualTo(TaskOrigin.MANUAL);
 
-        Task alert = Task.fromAlert(draft(NOW), "contrato-sem-pedido:abc:2026-10");
+        Task alert = Task.fromAlert(draft(NOW), "CONTRATO_SEM_PEDIDO:abc", null);
         assertThat(alert.getOrigin()).isEqualTo(TaskOrigin.ALERTA);
         assertRule(alert::requireDeletable, "ALERT_TASK_NOT_DELETABLE");
+    }
+
+    @Test
+    void alertTaskCarriesTheDraftAndIsCompletedBySystemOnce() {
+        EmailDraft draft = new EmailDraft("  compras@orgao.gov.br ", "Previsão de pedidos", "Bom dia. Há previsão?");
+        Task alert = Task.fromAlert(draft(NOW), "CONTRATO_SEM_PEDIDO:abc", draft);
+        assertThat(alert.getEmailDraft().to()).isEqualTo("compras@orgao.gov.br");
+
+        assertThat(alert.completeBySystem(NOW)).isTrue();
+        assertThat(alert.getCompletedBy()).isNull();
+        assertThat(alert.status(NOW.plusDays(1))).isEqualTo(TaskStatus.CONCLUIDA);
+        assertThat(alert.completeBySystem(NOW.plusDays(1))).isFalse();
+        assertThat(alert.getCompletedAt()).isEqualTo(NOW);
+    }
+
+    @Test
+    void draftWithoutRecipientStaysEmptyAndNeedsSubjectAndBody() {
+        assertThat(new EmailDraft(" ", "Assunto", "Texto").to()).isNull();
+        assertThatThrownBy(() -> new EmailDraft("a@b.com", " ", "Texto")).isInstanceOf(IllegalArgumentException.class);
     }
 }

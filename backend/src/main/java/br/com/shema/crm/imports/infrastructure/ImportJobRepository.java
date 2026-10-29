@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ImportJobRepository extends JpaRepository<ImportJob, UUID> {
 
     List<ImportJob> findTop20ByContractIdOrderByCreatedAtDesc(UUID contractId);
+
+    long countByStatus(ImportJob.Status status);
 }

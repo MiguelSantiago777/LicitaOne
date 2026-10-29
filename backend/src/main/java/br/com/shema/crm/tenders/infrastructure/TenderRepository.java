@@ -1,6 +1,8 @@
 package br.com.shema.crm.tenders.infrastructure;
 
 import br.com.shema.crm.tenders.domain.Tender;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -35,4 +37,42 @@ public interface TenderRepository extends JpaRepository<Tender, UUID>, JpaSpecif
 
     @EntityGraph(attributePaths = "agency")
     List<Tender> findAllWithAgencyByIdIn(Collection<UUID> ids);
+
+    /** Vencidas (ou aguardando assinatura) até a data, ainda sem contrato assinado: o alerta da seção 5.4. */
+    @EntityGraph(attributePaths = "agency")
+    @Query("""
+            select t from Tender t
+            where t.status in (
+                br.com.shema.crm.tenders.domain.TenderStatus.VENCIDA,
+                br.com.shema.crm.tenders.domain.TenderStatus.AGUARDANDO_ASSINATURA)
+              and t.wonAt <= :wonOnOrBefore
+            order by t.wonAt
+            """)
+    List<Tender> awaitingContractWonOnOrBefore(LocalDate wonOnOrBefore);
+
+    interface AgencyTotal {
+        UUID getAgencyId();
+
+        String getName();
+
+        String getCity();
+
+        String getState();
+
+        long getTenders();
+
+        BigDecimal getValue();
+    }
+
+    /** Órgãos pelo valor das licitações vencidas (em disputa e perdidas não contam), do maior para o menor. */
+    @Query(value = """
+                    select a.id as agencyId, a.name as name, a.city as city, a.state as state,
+                           count(*) as tenders, sum(t.total_value) as value
+                    from tenders t join agencies a on a.id = t.agency_id
+                    where t.status not in ('EM_DISPUTA', 'PERDIDA')
+                    group by a.id, a.name, a.city, a.state
+                    order by value desc, a.name
+                    limit :limit
+                    """, nativeQuery = true)
+    List<AgencyTotal> topAgenciesByWonValue(int limit);
 }

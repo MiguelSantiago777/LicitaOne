@@ -89,6 +89,10 @@ services:
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-shemacrm}
       S3_SECRET_KEY: ${S3_SECRET_KEY}
       SHEMA_STORAGE_DIR: /app/data/files
+      # Aviso interno dos alertas (ADR 0006): no compose, o Mailpit captura tudo (http://localhost:18025)
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      SHEMA_APP_URL: http://localhost:${FRONTEND_PORT:-14200}
     volumes:
       # Pasta do FileStorage local, usada só se SHEMA_STORAGE_TYPE=local
       - backend-files:/app/data
@@ -101,6 +105,8 @@ services:
         condition: service_healthy
       s3:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8081/actuator/health/readiness || exit 1"]
       interval: 10s

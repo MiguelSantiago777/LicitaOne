@@ -229,6 +229,19 @@ public class TenderService implements TenderLifecycle {
                 .collect(Collectors.toMap(TenderRef::id, Function.identity()));
     }
 
+    @Transactional(readOnly = true)
+    public List<TenderRepository.AgencyTotal> topAgencies(int limit) {
+        return tenders.topAgenciesByWonValue(Math.clamp(limit, 1, 20));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TenderRef> awaitingContractWonOnOrBefore(LocalDate wonOnOrBefore) {
+        return tenders.awaitingContractWonOnOrBefore(wonOnOrBefore).stream()
+                .map(TenderService::ref)
+                .toList();
+    }
+
     @Override
     public void contractSigned(UUID tenderId, LocalDate signedAt, CurrentUser by) {
         Tender tender = get(tenderId);

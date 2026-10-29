@@ -3,6 +3,7 @@ package br.com.shema.crm.tenders;
 import br.com.shema.crm.shared.security.CurrentUser;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +19,9 @@ public interface TenderLifecycle {
 
     /** Busca em lote, para listas não fazerem uma consulta por linha. */
     Map<UUID, TenderRef> findAll(Collection<UUID> tenderIds);
+
+    /** Licitações vencidas até a data que ainda esperam o contrato (alerta da seção 5.4), das mais antigas. */
+    List<TenderRef> awaitingContractWonOnOrBefore(LocalDate wonOnOrBefore);
 
     /** Um contrato foi assinado. O primeiro leva a licitação para "Contrato assinado". */
     void contractSigned(UUID tenderId, LocalDate signedAt, CurrentUser by);

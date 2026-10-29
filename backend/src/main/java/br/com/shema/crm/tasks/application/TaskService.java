@@ -232,7 +232,14 @@ public class TaskService implements TaskOverview {
                                     tender.id(), tender.agencyName(), tender.identification(), tender.totalValue()),
                     deal != null ? deal.value() : tender != null ? tender.totalValue() : null,
                     t.getOrigin(),
+                    t.getEmailDraft() == null
+                            ? null
+                            : new TaskView.EmailDraftView(
+                                    t.getEmailDraft().to(),
+                                    t.getEmailDraft().subject(),
+                                    t.getEmailDraft().body()),
                     t.getCompletedAt(),
+                    t.getCompletedAt() != null && t.getCompletedBy() == null,
                     t.getVersion() == null ? 0 : t.getVersion(),
                     me.canEditOwnedBy(t.getOwnerId())));
         }

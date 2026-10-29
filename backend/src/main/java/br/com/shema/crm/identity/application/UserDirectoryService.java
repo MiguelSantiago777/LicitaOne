@@ -2,10 +2,12 @@ package br.com.shema.crm.identity.application;
 
 import br.com.shema.crm.identity.UserDirectory;
 import br.com.shema.crm.identity.UserSummary;
+import br.com.shema.crm.identity.domain.Role;
 import br.com.shema.crm.identity.domain.User;
 import br.com.shema.crm.identity.infrastructure.UserRepository;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,6 +40,20 @@ class UserDirectoryService implements UserDirectory {
         return users.findAllById(ids).stream()
                 .map(UserDirectoryService::summary)
                 .collect(Collectors.toMap(UserSummary::id, Function.identity()));
+    }
+
+    @Override
+    public Optional<String> activeEmail(UUID id) {
+        return id == null
+                ? Optional.empty()
+                : users.findById(id).filter(User::isActive).map(User::getEmail);
+    }
+
+    @Override
+    public List<String> activeAdminEmails() {
+        return users.findByRoleAndActiveTrueOrderByName(Role.ADMIN).stream()
+                .map(User::getEmail)
+                .toList();
     }
 
     static UserSummary summary(User user) {

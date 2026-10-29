@@ -4,6 +4,7 @@ import br.com.shema.crm.identity.UserDirectory;
 import br.com.shema.crm.identity.UserSummary;
 import br.com.shema.crm.shared.security.CurrentUser;
 import br.com.shema.crm.shared.web.PageResponse;
+import br.com.shema.crm.tenders.api.TenderDtos.AgencyTotalResponse;
 import br.com.shema.crm.tenders.api.TenderDtos.CreateTenderRequest;
 import br.com.shema.crm.tenders.api.TenderDtos.StatusTotalResponse;
 import br.com.shema.crm.tenders.api.TenderDtos.SuggestionsResponse;
@@ -118,6 +119,17 @@ class TenderController {
                 null, q, agencyId, city, state, materialType, minValue, maxValue, from, to, ownerId, null);
         return service.summary(filter).stream()
                 .map(s -> new StatusTotalResponse(s.status(), s.status().label(), s.count(), s.value()))
+                .toList();
+    }
+
+    @GetMapping("/top-agencies")
+    @Operation(
+            summary = "Órgãos pelo valor das licitações vencidas, do maior para o menor (painel)",
+            operationId = "topAgencies")
+    List<AgencyTotalResponse> topAgencies(@RequestParam(defaultValue = "5") int limit) {
+        return service.topAgencies(limit).stream()
+                .map(a -> new AgencyTotalResponse(
+                        a.getAgencyId(), a.getName(), a.getCity(), a.getState(), a.getTenders(), a.getValue()))
                 .toList();
     }
 

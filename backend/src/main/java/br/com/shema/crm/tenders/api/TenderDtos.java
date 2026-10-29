@@ -163,6 +163,9 @@ final class TenderDtos {
         }
     }
 
+    /** @param value soma das licitações vencidas do órgão */
+    record AgencyTotalResponse(UUID agencyId, String name, String city, String state, long tenders, BigDecimal value) {}
+
     record StatusTotalResponse(TenderStatus status, String label, long count, BigDecimal value) {}
 
     record TenderEventResponse(

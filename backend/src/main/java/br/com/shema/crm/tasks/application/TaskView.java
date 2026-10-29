@@ -11,6 +11,8 @@ import java.util.UUID;
  * Uma tarefa pronta para a lista. É também a resposta da API.
  *
  * @param value valor da negociação ligada; sem negociação, o da licitação
+ * @param emailDraft rascunho de e-mail ao órgão (só em tarefas de alerta)
+ * @param completedBySystem concluída sozinha, porque o fato do alerta deixou de valer
  * @param canEdit se quem pediu pode alterar, concluir ou apagar
  */
 @Schema(name = "TaskResponse")
@@ -25,9 +27,14 @@ public record TaskView(
         TenderLink tender,
         BigDecimal value,
         TaskOrigin origin,
+        EmailDraftView emailDraft,
         OffsetDateTime completedAt,
+        boolean completedBySystem,
         long version,
         boolean canEdit) {
+
+    @Schema(name = "TaskEmailDraftResponse")
+    public record EmailDraftView(String to, String subject, String body) {}
 
     @Schema(name = "TaskOwnerResponse")
     public record Owner(UUID id, String name, String initials) {}

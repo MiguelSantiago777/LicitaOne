@@ -22,6 +22,7 @@
 		<poi.version>5.4.1</poi.version>
 		<commons-csv.version>1.14.0</commons-csv.version>
 		<awssdk.version>2.55.16</awssdk.version>
+		<shedlock.version>7.10.1</shedlock.version>
 		<jacoco.version>0.8.16</jacoco.version>
 		<spotless.version>3.10.4</spotless.version>
 		<!-- Quality gate: cobertura mínima de linhas nas classes de domínio -->
@@ -112,6 +113,23 @@
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>url-connection-client</artifactId>
+		</dependency>
+
+		<!-- Alertas (Fase 5): o job diário roda uma vez só, mesmo com várias instâncias (lock no PostgreSQL) -->
+		<dependency>
+			<groupId>net.javacrumbs.shedlock</groupId>
+			<artifactId>shedlock-spring</artifactId>
+			<version>${shedlock.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.javacrumbs.shedlock</groupId>
+			<artifactId>shedlock-provider-jdbc-template</artifactId>
+			<version>${shedlock.version}</version>
+		</dependency>
+		<!-- Aviso interno por e-mail (ADR 0006); Mailpit no compose -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 
 		<dependency>

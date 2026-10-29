@@ -4,6 +4,7 @@ import br.com.shema.crm.tasks.domain.Task;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -15,6 +16,8 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, JpaSpecificat
     List<Task> findOpenByDealIds(Collection<UUID> dealIds);
 
     long countByDealIdAndCompletedAtIsNull(UUID dealId);
+
+    Optional<Task> findByAlertKey(String alertKey);
 
     /** Abertas e atrasadas de uma vez, para o resumo no topo da lista (só do responsável, se informado). */
     @Query("""

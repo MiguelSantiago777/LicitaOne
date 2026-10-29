@@ -2,6 +2,8 @@ package br.com.shema.crm.contracts.api;
 
 import br.com.shema.crm.contracts.api.ContractDtos.CloseContractRequest;
 import br.com.shema.crm.contracts.api.ContractDtos.ContractEventResponse;
+import br.com.shema.crm.contracts.api.ContractDtos.ContractWithoutOrderResponse;
+import br.com.shema.crm.contracts.api.ContractDtos.ContractsWithoutOrderResponse;
 import br.com.shema.crm.contracts.api.ContractDtos.FieldChangeResponse;
 import br.com.shema.crm.contracts.api.ContractDtos.ItemRequest;
 import br.com.shema.crm.contracts.api.ContractDtos.OpenContractsSummaryResponse;
@@ -13,13 +15,21 @@ import br.com.shema.crm.contracts.api.ContractDtos.UpdateContractRequest;
 import br.com.shema.crm.contracts.application.ContractDetails;
 import br.com.shema.crm.contracts.application.ContractService;
 import br.com.shema.crm.contracts.infrastructure.ContractTotalsQuery;
+import br.com.shema.crm.tenders.TenderLifecycle;
+import br.com.shema.crm.tenders.TenderRef;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -43,12 +53,21 @@ class ContractController {
 
     private final ContractService service;
     private final ContractTotalsQuery totals;
+    private final TenderLifecycle tenders;
     private final JsonMapper json;
+    private final Clock clock;
 
-    ContractController(ContractService service, ContractTotalsQuery totals, JsonMapper json) {
+    ContractController(
+            ContractService service,
+            ContractTotalsQuery totals,
+            TenderLifecycle tenders,
+            JsonMapper json,
+            Clock clock) {
         this.service = service;
         this.totals = totals;
+        this.tenders = tenders;
         this.json = json;
+        this.clock = clock;
     }
 
     @GetMapping("/tenders/{tenderId}/contracts")
@@ -152,6 +171,39 @@ class ContractController {
     OpenContractsSummaryResponse summary() {
         ContractTotalsQuery.OpenTotals open = totals.open();
         return new OpenContractsSummaryResponse(open.contracts(), open.value(), open.ordered(), open.remaining());
+    }
+
+    @GetMapping("/contracts/without-orders")
+    @Operation(
+            summary = "Contratos assinados há mais de N dias sem nenhum pedido, dos mais antigos (painel)",
+            operationId = "contractsWithoutOrder")
+    ContractsWithoutOrderResponse withoutOrders(
+            @RequestParam(defaultValue = "30") int days, @RequestParam(defaultValue = "5") int limit) {
+        int safeDays = Math.clamp(days, 1, 3650);
+        LocalDate today = LocalDate.now(clock);
+        var all = totals.withoutOrder(today.minusDays(safeDays));
+        var shown = all.stream().limit(Math.clamp(limit, 1, 50)).toList();
+        Map<UUID, TenderRef> refs =
+                tenders.findAll(shown.stream().map(c -> c.tenderId()).collect(Collectors.toSet()));
+        return new ContractsWithoutOrderResponse(
+                safeDays,
+                all.size(),
+                all.stream().map(c -> c.value()).reduce(BigDecimal.ZERO, BigDecimal::add),
+                shown.stream()
+                        .map(c -> {
+                            TenderRef t = refs.get(c.tenderId());
+                            return new ContractWithoutOrderResponse(
+                                    c.contractId(),
+                                    c.tenderId(),
+                                    t == null ? null : t.agencyName(),
+                                    t == null ? null : t.identification(),
+                                    c.kind(),
+                                    c.number(),
+                                    c.signedAt(),
+                                    ChronoUnit.DAYS.between(c.signedAt(), today),
+                                    c.value());
+                        })
+                        .toList());
     }
 
     private List<FieldChangeResponse> changes(String changesJson) {
