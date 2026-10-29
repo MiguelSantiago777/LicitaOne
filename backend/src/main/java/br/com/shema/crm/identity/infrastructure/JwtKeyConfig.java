@@ -35,10 +35,14 @@ class JwtKeyConfig {
 
     @Bean
     RSAKey jwtSigningKey(JwtProperties properties) {
-        KeyPair keyPair =
-                properties.privateKey() == null || properties.privateKey().isBlank()
-                        ? generateKeyPair()
-                        : parsePrivateKey(properties.privateKey());
+        boolean missing =
+                properties.privateKey() == null || properties.privateKey().isBlank();
+        if (missing && properties.requireKey()) {
+            throw new IllegalStateException(
+                    "Defina SHEMA_JWT_PRIVATE_KEY (chave RSA em PEM): em produção o backend não sobe com chave"
+                            + " temporária. Veja docs/operacao/runbook.md.");
+        }
+        KeyPair keyPair = missing ? generateKeyPair() : parsePrivateKey(properties.privateKey());
         return new RSAKey.Builder((RSAPublicKey) keyPair.getPublic())
                 .privateKey(keyPair.getPrivate())
                 .keyID(properties.keyId())

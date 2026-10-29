@@ -189,6 +189,31 @@ class AuthFlowTests {
         assertThat(response.getBody()).containsEntry("code", "ACCESS_DENIED");
     }
 
+    @Test
+    void weakPasswordsAreRefusedWithTheReason() {
+        String token =
+                (String) login("admin@test.local", "Senha-forte-123").getBody().get("accessToken");
+        for (var weak : Map.of(
+                        "curta-1234", "pelo menos 12 caracteres",
+                        "Senha1234567", "muito comum",
+                        "maria.lima-2026", "não pode conter o seu e-mail")
+                .entrySet()) {
+            ResponseEntity<Map> response = http.post()
+                    .uri("/api/v1/users")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of(
+                            "name", "Maria Lima",
+                            "email", "maria.lima@test.local",
+                            "role", "SALES",
+                            "password", weak.getKey()))
+                    .retrieve()
+                    .toEntity(Map.class);
+            assertThat(response.getStatusCode().value()).as(weak.getKey()).isEqualTo(400);
+            assertThat((String) response.getBody().get("detail")).contains(weak.getValue());
+        }
+    }
+
     private ResponseEntity<Map> login(String email, String password) {
         return http.post()
                 .uri("/api/v1/auth/login")

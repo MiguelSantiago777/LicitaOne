@@ -9,7 +9,8 @@ RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -q package -DskipTests -Dspotl
     && java -Djarmode=tools -jar target/shemacrm-*.jar extract --layers --launcher --destination /app
 
 FROM eclipse-temurin:21-jre-alpine
-RUN addgroup -S shema && adduser -S shema -G shema
+# Correções de segurança do Alpine publicadas depois da imagem base (Trivy no CI)
+RUN apk upgrade --no-cache && addgroup -S shema && adduser -S shema -G shema
 WORKDIR /app
 ENV TZ=America/Sao_Paulo \
     JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError"

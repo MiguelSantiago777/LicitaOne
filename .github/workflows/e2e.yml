@@ -20,6 +20,23 @@ jobs:
           cp .env.example .env
           echo "SHEMA_LOGIN_ATTEMPTS_PER_MINUTE=1000" >> .env
           docker compose up -d --build --wait
+      # As imagens que sobem em produção: pacotes do Alpine e jars, não só os arquivos de dependência
+      - name: Trivy na imagem do backend
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: image
+          image-ref: shemacrm-backend
+          severity: CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+      - name: Trivy na imagem do frontend
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: image
+          image-ref: shemacrm-frontend
+          severity: CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
       - uses: actions/setup-node@v5
         with:
           node-version: "24"

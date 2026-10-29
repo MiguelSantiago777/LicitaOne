@@ -1,5 +1,6 @@
 package br.com.shema.crm.identity.application;
 
+import br.com.shema.crm.identity.domain.PasswordPolicy;
 import br.com.shema.crm.identity.domain.Role;
 import br.com.shema.crm.identity.domain.User;
 import br.com.shema.crm.identity.infrastructure.BootstrapAdminProperties;
@@ -41,6 +42,10 @@ class AdminBootstrap implements ApplicationRunner {
             log.warn("Nenhum administrador cadastrado e SHEMA_ADMIN_EMAIL/SHEMA_ADMIN_PASSWORD não definidos.");
             return;
         }
+        PasswordPolicy.problem(properties.password(), properties.email())
+                .ifPresent(problem -> log.warn(
+                        "A senha inicial do administrador não segue a política ({}). Troque no primeiro acesso.",
+                        problem));
         users.save(new User(
                 properties.name(), properties.email(), passwordEncoder.encode(properties.password()), Role.ADMIN));
         log.info("Administrador inicial criado");

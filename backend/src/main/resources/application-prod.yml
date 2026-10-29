@@ -16,3 +16,6 @@ springdoc:
 shema:
   auth:
     secure-cookie: true
+  jwt:
+    # Sem SHEMA_JWT_PRIVATE_KEY o backend não sobe (ASVS V6: segredo de produção nunca gerado na hora)
+    require-key: true

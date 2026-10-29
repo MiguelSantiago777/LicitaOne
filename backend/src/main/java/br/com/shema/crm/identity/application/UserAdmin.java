@@ -1,5 +1,6 @@
 package br.com.shema.crm.identity.application;
 
+import br.com.shema.crm.identity.domain.PasswordPolicy;
 import br.com.shema.crm.identity.domain.Role;
 import br.com.shema.crm.identity.domain.User;
 import br.com.shema.crm.identity.infrastructure.RefreshTokenRepository;
@@ -17,8 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class UserAdmin {
 
-    public static final int MIN_PASSWORD_LENGTH = 10;
-
     private final UserRepository users;
     private final RefreshTokenRepository refreshTokens;
     private final PasswordEncoder passwordEncoder;
@@ -33,7 +32,7 @@ public class UserAdmin {
     }
 
     public User create(String name, String email, Role role, String password) {
-        requireStrong(password);
+        requireStrong(password, email);
         if (users.findByEmail(User.normalizeEmail(email)).isPresent()) {
             throw new ApiException(ErrorCode.CONFLICT, "Já existe um usuário com este e-mail.");
         }
@@ -53,8 +52,8 @@ public class UserAdmin {
     }
 
     public void resetPassword(UUID id, String newPassword) {
-        requireStrong(newPassword);
         User user = get(id);
+        requireStrong(newPassword, user.getEmail());
         user.changePassword(passwordEncoder.encode(newPassword));
         refreshTokens.revokeAllForUser(id, clock.instant());
     }
@@ -64,7 +63,7 @@ public class UserAdmin {
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
             throw new ApiException(ErrorCode.INVALID_CREDENTIALS, "A senha atual não confere.");
         }
-        requireStrong(newPassword);
+        requireStrong(newPassword, user.getEmail());
         user.changePassword(passwordEncoder.encode(newPassword));
     }
 
@@ -72,11 +71,9 @@ public class UserAdmin {
         return users.findById(id).orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Usuário não encontrado."));
     }
 
-    private static void requireStrong(String password) {
-        if (password == null || password.length() < MIN_PASSWORD_LENGTH) {
-            throw new ApiException(
-                    ErrorCode.VALIDATION_ERROR,
-                    "A senha precisa ter pelo menos " + MIN_PASSWORD_LENGTH + " caracteres.");
-        }
+    private static void requireStrong(String password, String email) {
+        PasswordPolicy.problem(password, email).ifPresent(problem -> {
+            throw new ApiException(ErrorCode.VALIDATION_ERROR, problem);
+        });
     }
 }
