@@ -12,4 +12,4 @@ A especificação (5.4) diz para não enviar e-mail automaticamente no MVP e ger
 - O envio é feito por um consumidor da fila de alertas (ADR 0003), com idempotência por contrato + regra + período, para que um alerta nunca chegue duas vezes.
 
 ## Pendência
-⚠ Quem recebe cada alerta: o responsável pela licitação, todos ou uma lista configurável?
+⚠ Quem recebe cada alerta: o responsável pela licitação, todos ou uma lista configurável? Implementado na Fase 5 com a resposta assumida (o responsável; sem responsável ativo, os administradores). Ver [0015](0015-alertas-e-painel.md).

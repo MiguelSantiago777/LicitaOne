@@ -22,8 +22,9 @@ order by publication_date;
 ## Exchanges e filas
 | Exchange | Routing keys | Filas (consumidor) |
 |---|---|---|
-| `shemacrm.contracts` | `contract.signed`, `contract.order-registered`, `contract.closed` | nenhuma ainda (alertas e notificações, Fase 5) |
+| `shemacrm.contracts` | `contract.signed`, `contract.order-registered`, `contract.closed` | `shemacrm.alerts.contract-facts` (`contract.signed` e `contract.order-registered`: conclui sozinha a tarefa do alerta resolvido) |
 | `shemacrm.imports` | `import.requested` | `shemacrm.imports.import-requested` (processa a planilha) |
+| `shemacrm.alerts` | `alert.raised` | `shemacrm.alerts.create-task` (cria a tarefa com o rascunho) e `shemacrm.alerts.notify-team` (e-mail interno) |
 | `shemacrm.dlx` | nome da fila de origem | `<fila>.dlq` de cada fila |
 
 A topologia é declarada no código (`Topology.queue(...)`): exchanges topic duráveis, filas duráveis, e cada fila com a sua DLQ.
@@ -34,7 +35,18 @@ A topologia é declarada no código (`Topology.queue(...)`): exchanges topic dur
 - O efeito e a marca em `processed_messages` (`eventId` + consumidor) são gravados na mesma transação. Assim, uma mensagem entregue duas vezes só tem efeito uma vez.
 - Esgotadas as tentativas, ou se o envelope for ilegível, a mensagem é rejeitada sem voltar para a fila e o RabbitMQ a move para `<fila>.dlq`. O erro fica no log, com o `correlationId`.
 
+## Alertas (Fase 5, ADR 0015)
+- O job diário (7h, `shema.alerts.cron`) roda sob o lock `alert-scan` do ShedLock (tabela `shedlock`): com várias instâncias, só uma roda. "Verificar agora" (tela Alertas, administrador, ou `POST /api/v1/alerts/run`) usa o mesmo lock e responde 409 se já estiver rodando.
+- O job grava cada alerta novo em `alerts` (chave única) e publica `alert.raised` pelo outbox. Rodar de novo não repete nada.
+- Para ver o que já foi avisado:
+  ```sql
+  select rule, title, raised_at, task_id is not null as tarefa, notified_to
+  from alerts order by raised_at desc limit 20;
+  ```
+- Falha no SMTP: o aviso vai para `shemacrm.alerts.notify-team.dlq` depois das tentativas, e a tarefa sai mesmo assim (fila separada). Com o SMTP de volta, reprocesse.
+
 ## Reprocessar a DLQ
+0. Pela tela: **Alertas → Mensagens com falha → Reprocessar** (só administradores; o quadro aparece quando há mensagem parada). A métrica `shema_messaging_dlq_messages{queue}` e o painel "LicitaOne · negócio" do Grafana mostram o mesmo número.
 1. Ache a causa no log: procure por `enviada para a DLQ` e pelo `correlationId` da mensagem.
 2. Corrija a causa (dado, configuração ou deploy da correção).
 3. Veja quantas mensagens estão paradas (perfil ADMIN):
