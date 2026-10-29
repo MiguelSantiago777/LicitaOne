@@ -72,7 +72,7 @@ const price = new Intl.NumberFormat('pt-BR', {
               </button>
             </div>
           }
-          <div class="table-wrap">
+          <div class="table-wrap" tabindex="0" role="region" aria-label="Itens da ata">
             <table class="data rows">
               <caption class="visually-hidden">
                 Itens da ata

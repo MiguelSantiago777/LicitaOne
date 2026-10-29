@@ -93,7 +93,12 @@
 
       <div class="topbar-actions">
         @if (!isViewer()) {
-          <button type="button" class="btn primary new-btn" (click)="newTender()">
+          <button
+            type="button"
+            class="btn primary new-btn"
+            (click)="newTender()"
+            aria-label="Nova licitação"
+          >
             <app-icon name="plus" [size]="16" />
             <span class="hide-sm">Nova licitação</span>
           </button>

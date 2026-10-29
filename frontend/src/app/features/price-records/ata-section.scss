@@ -40,6 +40,10 @@
   color: var(--violet);
   font-weight: 550;
 }
+.opportunity .link {
+  color: inherit;
+  text-decoration: underline;
+}
 .alert {
   display: flex;
   align-items: center;

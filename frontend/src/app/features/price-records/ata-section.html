@@ -114,7 +114,8 @@
 
     <h3 class="sub-title">Itens registrados</h3>
     @if (a.items.length) {
-      <div class="table-wrap">
+      <!-- Focável: no celular a tabela rola de lado e precisa de teclado -->
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Itens registrados na ata">
         <table class="data">
           <caption class="visually-hidden">
             Itens registrados na ata
