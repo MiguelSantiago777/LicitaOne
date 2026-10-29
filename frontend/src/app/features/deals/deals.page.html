@@ -193,6 +193,15 @@
                 }
                 <strong class="num">{{ deal.value | currency: 'BRL' : 'symbol' : '1.0-0' }}</strong>
               </div>
+              @if (deal.status === 'GANHA' && deal.tender && deal.canEdit) {
+                <a
+                  class="carona-link"
+                  [routerLink]="['/licitacoes', deal.tender.id]"
+                  [queryParams]="{ aba: 'documentos', carona: deal.id }"
+                  (click)="$event.stopPropagation()"
+                  ><app-icon name="handshake" [size]="14" />Registrar carona na ata</a
+                >
+              }
               @if (deal.overdueTask; as late) {
                 <p class="overdue">
                   <app-icon name="clock" [size]="14" />

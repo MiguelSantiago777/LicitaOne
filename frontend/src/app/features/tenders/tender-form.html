@@ -47,7 +47,7 @@
     <div class="field">
       <label for="agency">Órgão</label>
       <app-agency-picker
-        id="agency"
+        [id]="'agency'"
         [value]="agency()"
         (valueChange)="agency.set($event)"
         [invalid]="!!fieldError('agencyId')"

@@ -1,0 +1,346 @@
+@if (ata.isLoading() && !ata.hasValue()) {
+  <section class="card">
+    <div class="card-body"><span class="sk w-60"></span></div>
+  </section>
+} @else if (ata.error()) {
+  <section class="card empty" role="alert">
+    <strong>Não foi possível carregar a ata.</strong>
+    <button type="button" class="btn sm" (click)="ata.reload()">Tentar de novo</button>
+  </section>
+} @else if (ata.value(); as a) {
+  <section class="card ata" aria-labelledby="ata-title">
+    <header class="ata-head">
+      <div class="ata-title">
+        <h2 id="ata-title">Ata {{ a.number }}</h2>
+        <span class="badge" [class]="tone(a.situation)"
+          ><span class="dot"></span>{{ situationLabel(a.situation, a.daysLeft) }}</span
+        >
+        @if (!a.allowsAdhesion) {
+          <span class="badge">Não permite adesão</span>
+        }
+      </div>
+      @if (a.canEdit) {
+        <div class="ata-actions">
+          @if (a.allowsAdhesion) {
+            <button type="button" class="btn sm primary" (click)="openCarona()">
+              <app-icon name="handshake" [size]="16" />Registrar carona
+            </button>
+          }
+          <button type="button" class="btn sm" (click)="itemsOpen.set(true)">Itens</button>
+          <button type="button" class="btn sm ghost" (click)="openForm(a)">Editar</button>
+        </div>
+      }
+    </header>
+
+    @if (a.opportunity) {
+      <p class="opportunity">
+        <app-icon name="trend" [size]="16" />
+        Ata válida até {{ a.validUntil | date: 'dd/MM/yyyy' }}: oportunidade de replicar em outros
+        municípios.
+        <a class="link" routerLink="/negociacoes">Abrir o funil</a>
+      </p>
+    }
+
+    @if (error(); as message) {
+      <div class="alert" role="alert">
+        {{ message }}
+        <button
+          type="button"
+          class="btn ghost icon"
+          (click)="error.set(null)"
+          aria-label="Fechar aviso"
+        >
+          <app-icon name="x" [size]="16" />
+        </button>
+      </div>
+    }
+
+    <dl class="facts">
+      <div>
+        <dt>Assinada em</dt>
+        <dd class="num">{{ a.signedAt ? (a.signedAt | date: 'dd/MM/yyyy') : '—' }}</dd>
+      </div>
+      <div>
+        <dt>Vigente até</dt>
+        <dd class="num">{{ a.validUntil | date: 'dd/MM/yyyy' }}</dd>
+      </div>
+      <div>
+        <dt>Valor registrado</dt>
+        <dd class="num">{{ a.referenceValue | currency: 'BRL' }}</dd>
+      </div>
+      <div>
+        <dt>Caronas</dt>
+        <dd class="num">{{ a.agencyCount }} de {{ a.limits.maxAgencies }} órgãos</dd>
+      </div>
+      <div class="wide">
+        <dt>Usado pelas caronas</dt>
+        <dd>
+          <span class="num"
+            >{{ a.caronasValue | currency: 'BRL' }} · {{ a.usedPercent | number: '1.0-1' }}% de até
+            {{ a.limits.maxTotalPercent }}%</span
+          >
+          <span
+            class="bar"
+            role="progressbar"
+            [attr.aria-valuenow]="a.usedPercent"
+            aria-valuemin="0"
+            [attr.aria-valuemax]="a.limits.maxTotalPercent"
+            [attr.aria-label]="a.usedPercent + '% do valor registrado usado em caronas'"
+            ><span
+              [style.width.%]="usedPercentBar(a)"
+              [class.full]="a.usedPercent >= a.limits.maxTotalPercent"
+            ></span
+          ></span>
+        </dd>
+      </div>
+      <div class="wide">
+        <dt>Documento</dt>
+        <dd>
+          @if (a.document; as d) {
+            <button type="button" class="link file-link" (click)="downloadDocument(a)">
+              <app-icon name="download" [size]="14" />{{ d.title }} (versão {{ d.currentVersion }})
+            </button>
+          } @else {
+            <span class="cell-sub"
+              >Nenhum arquivo ligado. Envie a ata em Documentos e ligue aqui em Editar.</span
+            >
+          }
+        </dd>
+      </div>
+    </dl>
+    @if (a.notes) {
+      <p class="notes">{{ a.notes }}</p>
+    }
+
+    <h3 class="sub-title">Itens registrados</h3>
+    @if (a.items.length) {
+      <div class="table-wrap">
+        <table class="data">
+          <caption class="visually-hidden">
+            Itens registrados na ata
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Item</th>
+              <th scope="col" class="n">Registrado</th>
+              <th scope="col" class="n">Valor unitário</th>
+              <th scope="col">Caronas (até {{ a.limits.maxTotalPercent }}%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (i of a.items; track i.id) {
+              <tr>
+                <td>
+                  <div class="cell-main">{{ i.description }}</div>
+                  @if (i.lot) {
+                    <div class="cell-sub">{{ i.lot }}</div>
+                  }
+                </td>
+                <td class="n num">{{ qty(i.quantity) }} {{ i.unit ?? '' }}</td>
+                <td class="n num">{{ i.unitPrice | currency: 'BRL' : 'symbol' : '1.2-4' }}</td>
+                <td>
+                  <div class="usage">
+                    <span class="num">{{ qty(i.used) }} de {{ qty(i.limit) }}</span>
+                    <span class="bar small" aria-hidden="true"
+                      ><span
+                        [style.width.%]="itemBar(i.used, i.limit)"
+                        [class.full]="i.used >= i.limit"
+                      ></span
+                    ></span>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <p class="muted">
+        Sem itens: o limite das caronas vale sobre o valor da licitação.
+        @if (a.canEdit) {
+          <button type="button" class="link inline" (click)="itemsOpen.set(true)">
+            Cadastrar itens
+          </button>
+        }
+      </p>
+    }
+
+    <h3 class="sub-title">Caronas</h3>
+    @if (a.caronas.length) {
+      <ul class="caronas">
+        @for (c of a.caronas; track c.id) {
+          <li>
+            <div class="c-main">
+              <span class="cell-main">{{ c.agency?.name ?? 'Órgão' }}</span>
+              <span class="cell-sub num">
+                {{ c.adheredAt | date: 'dd/MM/yyyy' }}
+                @if (c.lines.length) {
+                  · {{ linesOf(c) }}
+                }
+                @if (c.deal; as d) {
+                  · negociação
+                  <a class="link" routerLink="/negociacoes" [queryParams]="{ q: d.title }">{{
+                    d.title
+                  }}</a>
+                }
+              </span>
+              @if (c.limitsOverridden) {
+                <span class="override" [attr.title]="c.overrideNote">
+                  <app-icon name="alert" [size]="14" />Passou dos limites, registrada com
+                  confirmação
+                </span>
+              }
+            </div>
+            <strong class="num">{{ c.value | currency: 'BRL' }}</strong>
+            @if (a.canEdit) {
+              @if (confirmingCarona() === c.id) {
+                <span class="confirm">Apagar esta carona?</span>
+                <button type="button" class="btn sm danger" (click)="removeCarona(a, c)">
+                  Apagar
+                </button>
+                <button type="button" class="btn sm" (click)="confirmingCarona.set(null)">
+                  Manter
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="btn ghost icon sm"
+                  (click)="confirmingCarona.set(c.id)"
+                  [attr.aria-label]="'Apagar a carona de ' + (c.agency?.name ?? 'órgão')"
+                >
+                  <app-icon name="x" [size]="16" />
+                </button>
+              }
+            }
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="muted">Nenhum órgão aderiu a esta ata ainda.</p>
+    }
+  </section>
+
+  <app-ata-items-dialog
+    [open]="itemsOpen()"
+    [record]="a"
+    (closed)="itemsOpen.set(false)"
+    (saved)="accept($event)"
+  />
+  <app-carona-dialog
+    [open]="caronaOpen()"
+    [record]="a"
+    [preset]="activePreset()"
+    (closed)="caronaOpen.set(false); activePreset.set(null)"
+    (saved)="accept($event)"
+  />
+} @else {
+  <section class="card empty no-ata">
+    <strong>Esta licitação ainda não tem ata.</strong>
+    <span
+      >A ata tem vigência própria: mesmo com o contrato encerrado, ela pode ser oferecida a outros
+      municípios (carona).</span
+    >
+    @if (canCreate()) {
+      <button type="button" class="btn primary" (click)="openForm(null)">
+        <app-icon name="plus" [size]="16" />Registrar ata
+      </button>
+    }
+  </section>
+}
+
+<app-panel
+  [open]="formOpen()"
+  [title]="ata.value() ? 'Editar ata' : 'Registrar ata'"
+  [width]="520"
+  (closed)="formOpen.set(false)"
+>
+  @if (formOpen()) {
+    <form id="ata-form" class="form" (ngSubmit)="saveForm(ata.value() ?? null)" novalidate>
+      @if (formError(); as message) {
+        <div class="alert" role="alert">{{ message }}</div>
+      }
+      <div class="field">
+        <label for="ata-number">Número da ata</label>
+        <input
+          id="ata-number"
+          class="input"
+          name="number"
+          [(ngModel)]="number"
+          maxlength="60"
+          placeholder="Ex.: ARP 017/2026"
+          autocomplete="off"
+        />
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="ata-signed">Assinada em</label>
+          <input id="ata-signed" type="date" class="input" name="signedAt" [(ngModel)]="signedAt" />
+        </div>
+        <div class="field">
+          <label for="ata-valid">Vigente até</label>
+          <input
+            id="ata-valid"
+            type="date"
+            class="input"
+            name="validUntil"
+            [(ngModel)]="validUntil"
+          />
+        </div>
+      </div>
+      <p class="hint">
+        A vigência vem do documento da ata. Prazos legais (prorrogação, limites) não são calculados
+        pelo sistema.
+      </p>
+      <label class="check-line">
+        <input type="checkbox" name="allowsAdhesion" [(ngModel)]="allowsAdhesion" />
+        Permite adesão de outros órgãos (carona)
+      </label>
+      <div class="field">
+        <label for="ata-document">Arquivo da ata</label>
+        <select id="ata-document" class="input" name="documentId" [(ngModel)]="documentId">
+          <option value="">Nenhum</option>
+          @for (d of ataDocuments.value() ?? []; track d.id) {
+            <option [value]="d.id">{{ d.kindLabel }} · {{ d.title }}</option>
+          }
+        </select>
+        <p class="hint">Os documentos são enviados na seção Documentos, logo abaixo.</p>
+      </div>
+      <div class="field">
+        <label for="ata-notes">Observações</label>
+        <textarea
+          id="ata-notes"
+          class="input textarea"
+          name="notes"
+          rows="3"
+          maxlength="2000"
+          [(ngModel)]="notes"
+        ></textarea>
+      </div>
+    </form>
+  }
+  <ng-container panel-footer>
+    @if (ata.value(); as a) {
+      @if (confirmingDelete()) {
+        <span class="confirm">Apagar esta ata?</span>
+        <button type="button" class="btn danger" (click)="deleteAta(a); formOpen.set(false)">
+          Apagar
+        </button>
+        <button type="button" class="btn" (click)="confirmingDelete.set(false)">Manter</button>
+      } @else {
+        <button
+          type="button"
+          class="btn ghost danger-text push"
+          (click)="confirmingDelete.set(true)"
+        >
+          Apagar
+        </button>
+      }
+    }
+    @if (!confirmingDelete()) {
+      <button type="button" class="btn" (click)="formOpen.set(false)">Cancelar</button>
+      <button type="submit" form="ata-form" class="btn primary" [disabled]="saving()">
+        {{ saving() ? 'Salvando…' : 'Salvar' }}
+      </button>
+    }
+  </ng-container>
+</app-panel>

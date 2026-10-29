@@ -1,12 +1,16 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { map } from 'rxjs';
 import { ContractsService } from '../../api/generated/contracts/contracts.service';
+import { DealsService } from '../../api/generated/deals/deals.service';
+import { PriceRecordsService } from '../../api/generated/price-records/price-records.service';
 import { TendersService } from '../../api/generated/tenders/tenders.service';
 import type {
   ContractEventResponse,
   NextStatusResponse,
+  PriceRecordEventResponse,
   TenderEventResponse,
   TenderResponse,
 } from '../../api/generated/model';
@@ -14,6 +18,9 @@ import { ApiError } from '../../core/http/api-error';
 import { daysSince } from '../../shared/format';
 import { Avatar } from '../../shared/ui/avatar';
 import { Icon } from '../../shared/ui/icon';
+import { AtaSection } from '../price-records/ata-section';
+import { CaronaPreset } from '../price-records/carona-dialog';
+import { DocumentsSection } from '../price-records/documents-section';
 import { ContractsTab } from './contracts/contracts-tab';
 import { TenderDealsTab, TenderTasksTab } from './tender-work-tabs';
 import { TenderForm } from './tender-form';
@@ -22,9 +29,11 @@ import { TransitionDialog } from './transition-dialog';
 
 type HistoryItem =
   | { source: 'tender'; at: string; tender: TenderEventResponse }
-  | { source: 'contract'; at: string; contract: ContractEventResponse };
+  | { source: 'contract'; at: string; contract: ContractEventResponse }
+  | { source: 'record'; at: string; record: PriceRecordEventResponse };
 
 type DetailTab = 'resumo' | 'itens' | 'documentos' | 'historico' | 'tarefas' | 'negociacao';
+const TABS: DetailTab[] = ['resumo', 'itens', 'documentos', 'historico', 'tarefas', 'negociacao'];
 
 @Component({
   selector: 'app-tender-detail-page',
@@ -39,6 +48,8 @@ type DetailTab = 'resumo' | 'itens' | 'documentos' | 'historico' | 'tarefas' | '
     ContractsTab,
     TenderTasksTab,
     TenderDealsTab,
+    AtaSection,
+    DocumentsSection,
   ],
   templateUrl: './tender-detail.page.html',
   styleUrl: './tender-detail.page.scss',
@@ -47,13 +58,19 @@ type DetailTab = 'resumo' | 'itens' | 'documentos' | 'historico' | 'tarefas' | '
 export class TenderDetailPage {
   private readonly api = inject(TendersService);
   private readonly contractsApi = inject(ContractsService);
+  private readonly recordsApi = inject(PriceRecordsService);
+  private readonly dealsApi = inject(DealsService);
+  private readonly route = inject(ActivatedRoute);
 
   /** Vem da rota (:id) por withComponentInputBinding. */
   readonly id = input.required<string>();
 
   protected readonly tone = statusTone;
   protected readonly actionLabels = ACTION_LABELS;
-  protected readonly tab = signal<DetailTab>('resumo');
+  /** A aba pode vir na URL (?aba=documentos), por exemplo do "Registrar carona" do funil. */
+  protected readonly tab = signal<DetailTab>(
+    initialTab(this.route.snapshot.queryParamMap.get('aba')),
+  );
   protected readonly editing = signal(false);
   protected readonly transitionTarget = signal<NextStatusResponse | null>(null);
   /** Pedido do cabeçalho para a aba de contratos abrir "Registrar contrato". */
@@ -67,6 +84,27 @@ export class TenderDetailPage {
     params: () => (this.tab() === 'historico' ? this.id() : undefined),
     stream: ({ params }) => this.api.tenderHistory(params),
   });
+  protected readonly recordHistory = rxResource({
+    params: () => (this.tab() === 'historico' ? this.id() : undefined),
+    stream: ({ params }) => this.recordsApi.priceRecordHistory({ tenderId: params }),
+  });
+  /** Ata vigente que permite adesão e ainda tem vaga: destaque no cabeçalho. */
+  protected readonly highlight = rxResource({
+    params: () => this.id(),
+    stream: ({ params }) => this.recordsApi.priceRecordHighlights({ tenderIds: [params] }),
+  });
+  protected readonly ataHighlight = computed(
+    () => this.highlight.value()?.find((h) => h.opportunity) ?? null,
+  );
+  /** ?carona=<negociação>: a carona chega com a negociação e o órgão dela. */
+  private readonly caronaDeal = rxResource({
+    params: () => this.route.snapshot.queryParamMap.get('carona') ?? undefined,
+    stream: ({ params }) =>
+      this.dealsApi
+        .getDeal(params)
+        .pipe(map((d): CaronaPreset => ({ dealId: d.id, agency: d.agency ?? undefined }))),
+  });
+  protected readonly caronaPreset = computed(() => this.caronaDeal.value() ?? null);
   protected readonly contractHistory = rxResource({
     params: () => (this.tab() === 'historico' ? this.id() : undefined),
     stream: ({ params }) => this.contractsApi.tenderContractsHistory(params),
@@ -84,7 +122,14 @@ export class TenderDetailPage {
       at: e.occurredAt,
       contract: e,
     }));
-    return [...tenderEvents, ...contractEvents].sort((a, b) => b.at.localeCompare(a.at));
+    const recordEvents: HistoryItem[] = (this.recordHistory.value() ?? []).map((e) => ({
+      source: 'record',
+      at: e.occurredAt,
+      record: e,
+    }));
+    return [...tenderEvents, ...contractEvents, ...recordEvents].sort((a, b) =>
+      b.at.localeCompare(a.at),
+    );
   });
 
   /** Vencida ou aguardando assinatura: a próxima ação é registrar o contrato. */
@@ -131,6 +176,11 @@ export class TenderDetailPage {
     this.contractHistory.reload();
   }
 
+  protected onAtaChanged(): void {
+    this.highlight.reload();
+    this.recordHistory.reload();
+  }
+
   protected onSaved(t: TenderResponse): void {
     this.editing.set(false);
     this.transitionTarget.set(null);
@@ -141,4 +191,8 @@ export class TenderDetailPage {
   protected days(iso: string | null): number {
     return daysSince(iso);
   }
+}
+
+function initialTab(value: string | null): DetailTab {
+  return TABS.includes(value as DetailTab) ? (value as DetailTab) : 'resumo';
 }

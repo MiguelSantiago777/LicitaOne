@@ -199,6 +199,17 @@
                     >
                     <div class="cell-sub">{{ t.agency.city }}/{{ t.agency.state }}</div>
                     <div class="cell-sub mobile-only">{{ t.reference }} · {{ t.materialType }}</div>
+                    @if (atasByTender().get(t.id); as ata) {
+                      @if (ata.situation !== 'VENCIDA') {
+                        <span
+                          class="badge violet ata-badge"
+                          [title]="
+                            ata.opportunity ? 'Oportunidade de replicar a ata' : 'Ata vigente'
+                          "
+                          >Ata válida até {{ ata.validUntil | date: 'dd/MM/yyyy' }}</span
+                        >
+                      }
+                    }
                   </div>
                 </div>
               </td>

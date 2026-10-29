@@ -1,0 +1,49 @@
+.form {
+  display: grid;
+  gap: 14px;
+}
+.alert {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--red-bg);
+  color: var(--red);
+  font-weight: 500;
+}
+.copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.copy .input {
+  flex: 1;
+  min-width: 200px;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+.rows {
+  min-width: 680px;
+}
+.rows td {
+  padding: 4px 6px;
+}
+.rows .input {
+  height: 34px;
+}
+.lot {
+  width: 80px;
+}
+.unit {
+  width: 64px;
+}
+.n-input {
+  width: 120px;
+  text-align: right;
+}
+.foot-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}

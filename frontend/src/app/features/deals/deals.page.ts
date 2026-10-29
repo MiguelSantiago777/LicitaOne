@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 import { rxResource, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { DealsService } from '../../api/generated/deals/deals.service';
 import type {
@@ -43,6 +43,7 @@ import { StagesDialog } from './stages-dialog';
     CurrencyPipe,
     DatePipe,
     FormsModule,
+    RouterLink,
     Avatar,
     Icon,
     DealDialog,

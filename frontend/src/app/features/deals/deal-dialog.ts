@@ -68,8 +68,8 @@ import { PRIORITIES } from './deal-meta';
             </div>
 
             <div class="field">
-              <span class="label" id="deal-agency-label">Órgão</span>
-              <app-agency-picker id="deal-agency" [(value)]="agency" />
+              <label for="deal-agency">Órgão</label>
+              <app-agency-picker [id]="'deal-agency'" [(value)]="agency" />
             </div>
 
             <div class="field">
@@ -230,6 +230,8 @@ export class DealDialog {
   readonly initialStageId = input<string | null>(null);
   /** Licitação de origem de uma negociação nova (o "Nova negociação" no detalhe da licitação). */
   readonly presetTender = input<DealTenderResponse | null>(null);
+  /** Órgão de uma negociação nova (o "Nova negociação" nos municípios sem ata). */
+  readonly presetAgency = input<AgencyRefResponse | null>(null);
   readonly closed = output<void>();
   /** Negociação criada ou alterada; nula quando foi apagada. */
   readonly saved = output<DealResponse | null>();
@@ -267,7 +269,7 @@ export class DealDialog {
       this.ownerId = d ? (d.owner?.id ?? '') : (this.session.user()?.id ?? '');
       this.stageId = d?.stageId ?? this.initialStageId() ?? this.stages()[0]?.id ?? '';
       this.notes = d?.notes ?? '';
-      this.agency.set(d?.agency ?? null);
+      this.agency.set(d?.agency ?? (d ? null : this.presetAgency()));
       this.tender.set(d?.tender ?? preset);
       this.tenderSearch = '';
       this.tenderResults.set([]);

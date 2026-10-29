@@ -459,7 +459,10 @@ public class PriceRecordService {
                 document == null
                         ? null
                         : new PriceRecordViews.DocumentLink(
-                                document.getId(), document.getTitle(), document.getCurrentVersion()),
+                                document.getId(),
+                                document.getTitle(),
+                                document.getCurrentVersion(),
+                                document.getVersions().getFirst().getFileName()),
                 new PriceRecordViews.Limits(limits.maxAgencies(), limits.maxTotalPercent()),
                 r.agencyCount(),
                 reference,

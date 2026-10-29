@@ -77,7 +77,7 @@ public final class PriceRecordViews {
             boolean canEdit) {}
 
     @Schema(name = "PriceRecordDocumentResponse")
-    public record DocumentLink(UUID id, String title, int currentVersion) {}
+    public record DocumentLink(UUID id, String title, int currentVersion, String fileName) {}
 
     /**
      * @param used quanto as caronas já somam no item

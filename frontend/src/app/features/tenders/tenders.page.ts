@@ -4,9 +4,11 @@ import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map, of } from 'rxjs';
 import { ContractsService } from '../../api/generated/contracts/contracts.service';
+import { PriceRecordsService } from '../../api/generated/price-records/price-records.service';
 import { TendersService } from '../../api/generated/tenders/tenders.service';
 import { UsersService } from '../../api/generated/users/users.service';
 import type {
+  PriceRecordHighlightResponse,
   SearchTendersParams,
   TenderContractTotalsResponse,
   TenderResponse,
@@ -36,6 +38,7 @@ export class TendersPage {
   private readonly api = inject(TendersService);
   private readonly usersApi = inject(UsersService);
   private readonly contractsApi = inject(ContractsService);
+  private readonly recordsApi = inject(PriceRecordsService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   protected readonly session = inject(Session);
@@ -102,6 +105,22 @@ export class TendersPage {
   protected readonly totalsByTender = computed(() => {
     const byId = new Map<string, TenderContractTotalsResponse>();
     for (const t of this.contractTotals.value() ?? []) byId.set(t.tenderId, t);
+    return byId;
+  });
+
+  /** Encerradas com ata ainda vigente: "a ata é dinheiro" (seção 3.3 da especificação). */
+  protected readonly atas = rxResource({
+    params: computed(() => {
+      if (this.tabId() !== 'encerrados') return undefined;
+      const ids = (this.list.value()?.items ?? []).map((t) => t.id);
+      return ids.length ? ids : undefined;
+    }),
+    stream: ({ params }) =>
+      params ? this.recordsApi.priceRecordHighlights({ tenderIds: params }) : of([]),
+  });
+  protected readonly atasByTender = computed(() => {
+    const byId = new Map<string, PriceRecordHighlightResponse>();
+    for (const h of this.atas.value() ?? []) byId.set(h.tenderId, h);
     return byId;
   });
 

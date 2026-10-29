@@ -92,3 +92,12 @@ export const UFS = [
   'SE',
   'TO',
 ];
+
+/** Valor unitário digitado, com até 4 casas (preço de pregão): "0,4235" → 0.4235. Devolve null se não der. */
+export function parseUnitPrice(text: string | null | undefined): number | null {
+  if (text == null) return null;
+  const clean = String(text).replace(/[R$\s]/g, '');
+  if (!clean) return null;
+  const normalized = clean.includes(',') ? clean.replace(/\./g, '').replace(',', '.') : clean;
+  return /^\d+(\.\d{1,4})?$/.test(normalized) ? Number(normalized) : null;
+}

@@ -1,0 +1,139 @@
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 12px 20px 0;
+  padding: 8px 8px 8px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--red-bg);
+  color: var(--red);
+  font-weight: 500;
+}
+form .alert {
+  margin: 0;
+}
+.docs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.docs > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+}
+.docs > li:first-child {
+  border-top: 0;
+}
+.docs > li.empty {
+  justify-content: center;
+  padding: 28px 20px;
+  color: var(--text-2);
+  text-align: center;
+}
+.kind {
+  min-width: 76px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+.kind[data-kind='ATA'] {
+  background: var(--violet-bg, #f3e8ff);
+  color: var(--violet, #7c3aed);
+}
+.kind[data-kind='CONTRATO'],
+.kind[data-kind='EMPENHO'] {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+}
+.doc-main {
+  display: grid;
+  flex: 1;
+  min-width: 200px;
+}
+.versions {
+  flex-basis: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.versions ol {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.versions li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 13px;
+}
+.grow {
+  flex: 1;
+  min-width: 140px;
+  overflow-wrap: anywhere;
+}
+.doc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.file-btn {
+  position: relative;
+  cursor: pointer;
+}
+.file-btn input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.file-btn:focus-within {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.confirm {
+  font-weight: 550;
+}
+.danger-text {
+  color: var(--red);
+}
+.btn.danger {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+.form {
+  display: grid;
+  gap: 16px;
+}
+.input.file {
+  height: auto;
+  padding: 8px;
+}
+.hint {
+  margin-top: 4px;
+  color: var(--text-2);
+  font-size: 12px;
+}

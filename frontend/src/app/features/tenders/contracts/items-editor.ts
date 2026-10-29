@@ -12,7 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { ContractsService } from '../../../api/generated/contracts/contracts.service';
 import type { ContractResponse } from '../../../api/generated/model';
 import { ApiError } from '../../../core/http/api-error';
-import { formatQuantity, parseQuantity } from '../../../shared/format';
+import { formatQuantity, parseQuantity, parseUnitPrice } from '../../../shared/format';
 import { Icon } from '../../../shared/ui/icon';
 import { Panel } from '../../../shared/ui/panel';
 
@@ -29,13 +29,6 @@ interface ItemRow {
 }
 
 /** Converte "4,10" ou "0,3333" em número com até 4 casas (valor unitário). */
-function parseUnitPrice(text: string): number | null {
-  const clean = text.replace(/[R$\s]/g, '');
-  if (!clean) return null;
-  const normalized = clean.includes(',') ? clean.replace(/\./g, '').replace(',', '.') : clean;
-  return /^\d+(\.\d{1,4})?$/.test(normalized) ? Number(normalized) : null;
-}
-
 const price = new Intl.NumberFormat('pt-BR', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 4,

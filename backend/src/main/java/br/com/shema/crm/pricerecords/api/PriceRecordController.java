@@ -67,7 +67,7 @@ class PriceRecordController {
 
             @NotNull @Valid RecordRequest record) {}
 
-    record ItemRequest(
+    record AtaItemRequest(
             UUID id,
             @Size(max = 40) String lot,
 
@@ -79,11 +79,11 @@ class PriceRecordController {
             @NotNull BigDecimal quantity,
             @NotNull BigDecimal unitPrice) {}
 
-    record ReplaceItemsRequest(
+    record ReplaceAtaItemsRequest(
             @NotNull(message = "Versão obrigatória") @PositiveOrZero
             Long version,
 
-            @NotNull @Size(max = 500) List<@Valid @NotNull ItemRequest> items) {}
+            @NotNull @Size(max = 500) List<@Valid @NotNull AtaItemRequest> items) {}
 
     record LineRequest(@NotNull UUID itemId, @NotNull BigDecimal quantity) {}
 
@@ -166,7 +166,7 @@ class PriceRecordController {
     @PutMapping("/{id}/items")
     @PreAuthorize("hasAnyRole('ADMIN','SALES')")
     @Operation(summary = "Troca os itens registrados na ata", operationId = "replacePriceRecordItems")
-    Detail replaceItems(@PathVariable UUID id, @Valid @RequestBody ReplaceItemsRequest request) {
+    Detail replaceItems(@PathVariable UUID id, @Valid @RequestBody ReplaceAtaItemsRequest request) {
         return service.replaceItems(
                 id,
                 request.version(),

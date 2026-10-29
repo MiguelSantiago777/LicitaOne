@@ -293,3 +293,15 @@ button.filter-chip {
   text-align: left;
   cursor: pointer;
 }
+.carona-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  justify-self: start;
+  color: var(--violet);
+  font-size: 12px;
+  font-weight: 600;
+}
+.carona-link:hover {
+  text-decoration: underline;
+}

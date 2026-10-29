@@ -1,0 +1,206 @@
+<div class="page-head">
+  <div>
+    <h1>Atas</h1>
+    <p class="sub">
+      A ata vale mesmo depois do contrato encerrado e pode virar carona em outro município.
+      @if (all.value()) {
+        <span class="num">{{ counts()['OPORTUNIDADES'] }}</span>
+        {{ counts()['OPORTUNIDADES'] === 1 ? 'oportunidade aberta' : 'oportunidades abertas' }}.
+      }
+    </p>
+  </div>
+</div>
+
+<div class="tabs" role="tablist" aria-label="Atas">
+  @for (t of tabs; track t.id) {
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="tab() === t.id"
+      (click)="navigate({ aba: t.id === 'OPORTUNIDADES' ? null : t.id })"
+    >
+      {{ t.label }}
+      @if (t.id !== 'MUNICIPIOS' && all.value()) {
+        <span class="count" [class.amber]="t.id === 'VENCENDO' && counts()[t.id]">{{
+          counts()[t.id]
+        }}</span>
+      }
+    </button>
+  }
+</div>
+
+<div class="filters">
+  <label class="search filter-search">
+    <span class="visually-hidden">{{
+      tab() === 'MUNICIPIOS' ? 'Buscar município' : 'Buscar atas'
+    }}</span>
+    <app-icon name="search" [size]="16" />
+    <input
+      class="input"
+      type="search"
+      name="q"
+      [placeholder]="
+        tab() === 'MUNICIPIOS' ? 'Buscar município' : 'Buscar órgão, pregão, ata ou material'
+      "
+      [(ngModel)]="search"
+      (ngModelChange)="search$.next($event)"
+    />
+  </label>
+  @if (tab() === 'MUNICIPIOS') {
+    <label class="visually-hidden" for="prospect-uf">UF</label>
+    <select
+      id="prospect-uf"
+      class="input uf"
+      [ngModel]="state()"
+      (ngModelChange)="navigate({ uf: $event })"
+    >
+      <option value="">Todas as UFs</option>
+      @for (uf of ufs; track uf) {
+        <option [value]="uf">{{ uf }}</option>
+      }
+    </select>
+  }
+</div>
+
+@if (created(); as title) {
+  <div class="notice" role="status">
+    Negociação "{{ title }}" criada.
+    <a class="link" routerLink="/negociacoes" [queryParams]="{ q: title }">Abrir no funil</a>
+    <button
+      type="button"
+      class="btn ghost icon"
+      (click)="created.set(null)"
+      aria-label="Fechar aviso"
+    >
+      <app-icon name="x" [size]="16" />
+    </button>
+  </div>
+}
+
+@if (tab() === 'MUNICIPIOS') {
+  <section class="card table-wrap">
+    <p class="intro">
+      Prefeituras sem licitação vencida pela Shema e sem carona: candidatas a receber uma das atas
+      vigentes.
+    </p>
+    <table class="data">
+      <caption class="visually-hidden">
+        Municípios sem ata
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Órgão</th>
+          <th scope="col">Município</th>
+          <th scope="col"><span class="visually-hidden">Ações</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of prospects.value() ?? []; track p.id) {
+          <tr>
+            <td>
+              <div class="owner">
+                <app-avatar [name]="p.name" [size]="28" [square]="true" />{{ p.name }}
+              </div>
+            </td>
+            <td>{{ p.city }}/{{ p.state }}</td>
+            <td class="n">
+              @if (canCreateDeal()) {
+                <button type="button" class="btn sm" (click)="prospect(p)">
+                  <app-icon name="plus" [size]="14" />Nova negociação
+                </button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="3" class="empty">
+              @if (prospects.isLoading()) {
+                Carregando…
+              } @else {
+                Nenhum município sem ata com este filtro.
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+} @else {
+  <div class="records">
+    @for (r of records.value() ?? []; track r.id) {
+      <article
+        class="card record"
+        [attr.aria-label]="'Ata ' + r.number + ' de ' + r.tender.agencyName"
+      >
+        <div class="record-head">
+          <app-avatar [name]="r.tender.agencyName" [size]="40" [square]="true" />
+          <div class="record-title">
+            <h2>{{ r.tender.agencyName }}</h2>
+            <p class="cell-sub">
+              {{ r.number }} · {{ r.tender.identification }} · {{ r.tender.materialType }}
+            </p>
+          </div>
+          <span class="badge" [class]="tone(r.situation)"
+            ><span class="dot"></span>{{ situationLabel(r.situation, r.daysLeft) }}</span
+          >
+        </div>
+        <dl class="record-figures">
+          <div>
+            <dt>Vigente até</dt>
+            <dd class="num">{{ r.validUntil | date: 'dd/MM/yyyy' }}</dd>
+          </div>
+          <div>
+            <dt>Valor registrado</dt>
+            <dd class="num">{{ r.referenceValue | currency: 'BRL' : 'symbol' : '1.0-0' }}</dd>
+          </div>
+          <div>
+            <dt>Caronas</dt>
+            <dd class="num">{{ r.agencyCount }} · {{ r.usedPercent | number: '1.0-1' }}%</dd>
+          </div>
+        </dl>
+        <div class="caronas" [attr.aria-label]="r.agencyCount + ' órgãos já aderiram'" role="img">
+          @for (used of slots(r); track $index) {
+            <span class="slot" [class.used]="used"></span>
+          }
+        </div>
+        @if (!r.allowsAdhesion) {
+          <p class="cell-sub">Não permite adesão.</p>
+        }
+        <div class="record-foot">
+          <a
+            class="btn sm"
+            [routerLink]="['/licitacoes', r.tender.id]"
+            [queryParams]="{ aba: 'documentos' }"
+          >
+            <app-icon name="tenders" [size]="14" />Ver ata
+          </a>
+          @if (r.opportunity && canCreateDeal()) {
+            <button type="button" class="btn sm primary" (click)="offer(r)">
+              <app-icon name="handshake" [size]="14" />Oferecer carona
+            </button>
+          }
+        </div>
+      </article>
+    } @empty {
+      <p class="card empty">
+        @if (records.isLoading()) {
+          Carregando…
+        } @else if (q()) {
+          Nenhuma ata com esta busca.
+        } @else {
+          Nenhuma ata nesta situação. As atas são registradas no detalhe de cada licitação, em
+          Documentos.
+        }
+      </p>
+    }
+  </div>
+}
+
+<app-deal-dialog
+  [open]="dealOpen()"
+  [stages]="stages()"
+  [presetTender]="presetTender()"
+  [presetAgency]="presetAgency()"
+  (closed)="dealOpen.set(false)"
+  (saved)="onDealSaved($event?.title ?? null)"
+/>

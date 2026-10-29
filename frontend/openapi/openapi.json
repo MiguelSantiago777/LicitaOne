@@ -44,12 +44,20 @@
       "description": "Órgãos"
     },
     {
+      "name": "documents",
+      "description": "Documentos das licitações"
+    },
+    {
       "name": "users",
       "description": "Usuários"
     },
     {
       "name": "deals",
       "description": "Funil de vendas (negociações)"
+    },
+    {
+      "name": "price-records",
+      "description": "Atas de registro de preços e caronas"
     }
   ],
   "paths": {
@@ -244,6 +252,226 @@
         ],
         "summary": "Apaga uma tarefa manual",
         "operationId": "deleteTask",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/price-records/{id}": {
+      "get": {
+        "tags": [
+          "price-records"
+        ],
+        "summary": "Uma ata com itens e caronas",
+        "operationId": "getPriceRecord",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "price-records"
+        ],
+        "summary": "Altera os dados da ata",
+        "operationId": "updatePriceRecord",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRecordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "price-records"
+        ],
+        "summary": "Apaga uma ata sem caronas",
+        "operationId": "deletePriceRecord",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/price-records/{id}/items": {
+      "put": {
+        "tags": [
+          "price-records"
+        ],
+        "summary": "Troca os itens registrados na ata",
+        "operationId": "replacePriceRecordItems",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceAtaItemsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{id}": {
+      "put": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Altera tipo, título e data",
+        "operationId": "describeDocument",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DescribeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Apaga o documento (os arquivos continuam guardados)",
+        "operationId": "deleteDocument",
         "parameters": [
           {
             "name": "id",
@@ -1612,6 +1840,170 @@
         }
       }
     },
+    "/api/v1/price-records": {
+      "get": {
+        "tags": [
+          "price-records"
+        ],
+        "summary": "Atas ordenadas pelo vencimento",
+        "description": "filter: VIGENTES (padrão), OPORTUNIDADES, VENCENDO, VENCIDAS ou TODAS.",
+        "operationId": "listPriceRecords",
+        "parameters": [
+          {
+            "name": "filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "VIGENTES",
+                "OPORTUNIDADES",
+                "VENCENDO",
+                "VENCIDAS",
+                "TODAS"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PriceRecordSummaryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "price-records"
+        ],
+        "summary": "Registra a ata de uma licitação vencida",
+        "operationId": "createPriceRecord",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewRecordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/price-records/{id}/caronas": {
+      "post": {
+        "tags": [
+          "price-records"
+        ],
+        "summary": "Registra uma carona",
+        "description": "Passou de um limite configurado: 422 CARONA_LIMITS, a menos que confirmLimits seja true.",
+        "operationId": "registerCarona",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterCaronaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/price-records/{id}/caronas/check": {
+      "post": {
+        "tags": [
+          "price-records"
+        ],
+        "summary": "Confere uma carona sem registrar: valor e avisos de limite",
+        "operationId": "checkCarona",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaronaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaronaCheckResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/me/password": {
       "post": {
         "tags": [
@@ -1806,6 +2198,182 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ImportJobResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents": {
+      "get": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Documentos ativos de uma licitação, com as versões",
+        "operationId": "listDocuments",
+        "parameters": [
+          {
+            "name": "tenderId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Envia um documento",
+        "description": "Até 25 MB; PDF, PNG, JPG, Word, Excel ou ODF. O tipo é conferido pelo conteúdo.",
+        "operationId": "uploadDocument",
+        "parameters": [
+          {
+            "name": "tenderId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ATA",
+                "CONTRATO",
+                "EMPENHO",
+                "ATESTADO",
+                "EDITAL",
+                "OUTROS"
+              ]
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{id}/versions": {
+      "post": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Envia uma versão nova do arquivo",
+        "operationId": "addDocumentVersion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResponse"
                 }
               }
             }
@@ -2751,6 +3319,155 @@
         }
       }
     },
+    "/api/v1/price-records/prospects": {
+      "get": {
+        "tags": [
+          "price-records"
+        ],
+        "summary": "Municípios sem ata: prefeituras sem licitação vencida e sem carona",
+        "operationId": "listProspects",
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProspectResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/price-records/history": {
+      "get": {
+        "tags": [
+          "price-records"
+        ],
+        "summary": "Histórico de ata, caronas e documentos de uma licitação",
+        "operationId": "priceRecordHistory",
+        "parameters": [
+          {
+            "name": "tenderId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PriceRecordEventResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/price-records/highlights": {
+      "get": {
+        "tags": [
+          "price-records"
+        ],
+        "summary": "Ata de cada licitação pedida, para os destaques",
+        "operationId": "priceRecordHighlights",
+        "parameters": [
+          {
+            "name": "tenderIds",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "maxItems": 200,
+              "minItems": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PriceRecordHighlightResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/price-records/by-tender/{tenderId}": {
+      "get": {
+        "tags": [
+          "price-records"
+        ],
+        "summary": "A ata de uma licitação (404 se ainda não tem)",
+        "operationId": "getPriceRecordByTender",
+        "parameters": [
+          {
+            "name": "tenderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/me": {
       "get": {
         "tags": [
@@ -2830,6 +3547,48 @@
                 "schema": {
                   "type": "string",
                   "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{id}/versions/{number}/file": {
+      "get": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Baixa o arquivo de uma versão",
+        "operationId": "downloadDocument",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             }
@@ -2992,6 +3751,56 @@
                   "items": {
                     "$ref": "#/components/schemas/DeadLetterQueueResponse"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/price-records/{id}/caronas/{caronaId}": {
+      "delete": {
+        "tags": [
+          "price-records"
+        ],
+        "summary": "Apaga uma carona registrada por engano",
+        "operationId": "removeCarona",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "caronaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceRecordResponse"
                 }
               }
             }
@@ -3619,6 +4428,594 @@
           "id",
           "identification",
           "totalValue"
+        ]
+      },
+      "RecordRequest": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 0
+          },
+          "signedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date"
+          },
+          "allowsAdhesion": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "allowsAdhesion",
+          "number",
+          "validUntil"
+        ]
+      },
+      "UpdateRecordRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "record": {
+            "$ref": "#/components/schemas/RecordRequest"
+          }
+        },
+        "required": [
+          "record",
+          "version"
+        ]
+      },
+      "CaronaAgencyResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city",
+          "id",
+          "name",
+          "state"
+        ]
+      },
+      "CaronaDealResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "title"
+        ]
+      },
+      "CaronaLineResponse": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "description",
+          "itemId",
+          "quantity"
+        ]
+      },
+      "CaronaResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "agency": {
+            "$ref": "#/components/schemas/CaronaAgencyResponse"
+          },
+          "adheredAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "value": {
+            "type": "number"
+          },
+          "deal": {
+            "$ref": "#/components/schemas/CaronaDealResponse"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CaronaLineResponse"
+            }
+          },
+          "notes": {
+            "type": "string"
+          },
+          "limitsOverridden": {
+            "type": "boolean"
+          },
+          "overrideNote": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "adheredAt",
+          "agency",
+          "createdAt",
+          "createdBy",
+          "deal",
+          "id",
+          "limitsOverridden",
+          "lines",
+          "notes",
+          "overrideNote",
+          "value"
+        ]
+      },
+      "PriceRecordDocumentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "currentVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "currentVersion",
+          "fileName",
+          "id",
+          "title"
+        ]
+      },
+      "PriceRecordItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lot": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unitPrice": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "used": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "description",
+          "id",
+          "limit",
+          "lot",
+          "quantity",
+          "total",
+          "unit",
+          "unitPrice",
+          "used"
+        ]
+      },
+      "PriceRecordLimitsResponse": {
+        "type": "object",
+        "properties": {
+          "maxAgencies": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxTotalPercent": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "maxAgencies",
+          "maxTotalPercent"
+        ]
+      },
+      "PriceRecordResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tender": {
+            "$ref": "#/components/schemas/PriceRecordTenderResponse"
+          },
+          "number": {
+            "type": "string"
+          },
+          "signedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date"
+          },
+          "daysLeft": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "situation": {
+            "type": "string",
+            "enum": [
+              "VIGENTE",
+              "VENCENDO",
+              "VENCIDA"
+            ]
+          },
+          "allowsAdhesion": {
+            "type": "boolean"
+          },
+          "opportunity": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "document": {
+            "$ref": "#/components/schemas/PriceRecordDocumentResponse"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/PriceRecordLimitsResponse"
+          },
+          "agencyCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "referenceValue": {
+            "type": "number"
+          },
+          "caronasValue": {
+            "type": "number"
+          },
+          "usedPercent": {
+            "type": "number"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PriceRecordItemResponse"
+            }
+          },
+          "caronas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CaronaResponse"
+            }
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "canEdit": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "agencyCount",
+          "allowsAdhesion",
+          "canEdit",
+          "caronas",
+          "caronasValue",
+          "daysLeft",
+          "document",
+          "id",
+          "items",
+          "limits",
+          "notes",
+          "number",
+          "opportunity",
+          "referenceValue",
+          "signedAt",
+          "situation",
+          "tender",
+          "usedPercent",
+          "validUntil",
+          "version"
+        ]
+      },
+      "PriceRecordTenderResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "agencyName": {
+            "type": "string"
+          },
+          "identification": {
+            "type": "string"
+          },
+          "object": {
+            "type": "string"
+          },
+          "materialType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "totalValue": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "agencyName",
+          "id",
+          "identification",
+          "materialType",
+          "object",
+          "status",
+          "totalValue"
+        ]
+      },
+      "AtaItemRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lot": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unitPrice": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "description",
+          "quantity",
+          "unitPrice"
+        ]
+      },
+      "ReplaceAtaItemsRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AtaItemRequest"
+            },
+            "maxItems": 500,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "items",
+          "version"
+        ]
+      },
+      "DescribeRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "ATA",
+              "CONTRATO",
+              "EMPENHO",
+              "ATESTADO",
+              "EDITAL",
+              "OUTROS"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "documentDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "kind",
+          "title",
+          "version"
+        ]
+      },
+      "DocumentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "ATA",
+              "CONTRATO",
+              "EMPENHO",
+              "ATESTADO",
+              "EDITAL",
+              "OUTROS"
+            ]
+          },
+          "kindLabel": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "documentDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "currentVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentVersionResponse"
+            }
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "canEdit": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canEdit",
+          "currentVersion",
+          "documentDate",
+          "id",
+          "kind",
+          "kindLabel",
+          "tenderId",
+          "title",
+          "version",
+          "versions"
+        ]
+      },
+      "DocumentVersionResponse": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uploadedBy": {
+            "type": "string"
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "contentType",
+          "fileName",
+          "number",
+          "sizeBytes",
+          "uploadedAt",
+          "uploadedBy"
         ]
       },
       "DealRequest": {
@@ -4925,6 +6322,122 @@
           "completed"
         ]
       },
+      "NewRecordRequest": {
+        "type": "object",
+        "properties": {
+          "tenderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "record": {
+            "$ref": "#/components/schemas/RecordRequest"
+          }
+        },
+        "required": [
+          "record",
+          "tenderId"
+        ]
+      },
+      "CaronaRequest": {
+        "type": "object",
+        "properties": {
+          "agencyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "adheredAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LineRequest"
+            },
+            "maxItems": 500,
+            "minItems": 0
+          },
+          "value": {
+            "type": "number"
+          },
+          "dealId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "adheredAt",
+          "agencyId"
+        ]
+      },
+      "LineRequest": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "itemId",
+          "quantity"
+        ]
+      },
+      "RegisterCaronaRequest": {
+        "type": "object",
+        "properties": {
+          "carona": {
+            "$ref": "#/components/schemas/CaronaRequest"
+          },
+          "confirmLimits": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "carona"
+        ]
+      },
+      "CaronaCheckResponse": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CaronaWarningResponse"
+            }
+          }
+        },
+        "required": [
+          "value",
+          "warnings"
+        ]
+      },
+      "CaronaWarningResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
       "ChangeOwnPassword": {
         "type": "object",
         "properties": {
@@ -5854,6 +7367,158 @@
         "required": [
           "open",
           "overdue"
+        ]
+      },
+      "PriceRecordSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tender": {
+            "$ref": "#/components/schemas/PriceRecordTenderResponse"
+          },
+          "number": {
+            "type": "string"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date"
+          },
+          "daysLeft": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "situation": {
+            "type": "string",
+            "enum": [
+              "VIGENTE",
+              "VENCENDO",
+              "VENCIDA"
+            ]
+          },
+          "allowsAdhesion": {
+            "type": "boolean"
+          },
+          "opportunity": {
+            "type": "boolean"
+          },
+          "agencyCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "referenceValue": {
+            "type": "number"
+          },
+          "caronasValue": {
+            "type": "number"
+          },
+          "usedPercent": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "agencyCount",
+          "allowsAdhesion",
+          "caronasValue",
+          "daysLeft",
+          "id",
+          "number",
+          "opportunity",
+          "referenceValue",
+          "situation",
+          "tender",
+          "usedPercent",
+          "validUntil"
+        ]
+      },
+      "ProspectResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city",
+          "id",
+          "name",
+          "state"
+        ]
+      },
+      "PriceRecordEventResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "occurredAt",
+          "summary",
+          "type",
+          "userName"
+        ]
+      },
+      "PriceRecordHighlightResponse": {
+        "type": "object",
+        "properties": {
+          "tenderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "priceRecordId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date"
+          },
+          "situation": {
+            "type": "string",
+            "enum": [
+              "VIGENTE",
+              "VENCENDO",
+              "VENCIDA"
+            ]
+          },
+          "opportunity": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "opportunity",
+          "priceRecordId",
+          "situation",
+          "tenderId",
+          "validUntil"
         ]
       },
       "TenderContractTotalsResponse": {

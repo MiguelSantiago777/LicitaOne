@@ -1,139 +1,156 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
-import { DemoBadge } from '../../shared/ui/demo-badge';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { rxResource, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Subject, debounceTime, distinctUntilChanged, map } from 'rxjs';
+import { DealsService } from '../../api/generated/deals/deals.service';
+import type {
+  AgencyRefResponse,
+  DealTenderResponse,
+  ListPriceRecordsFilter,
+  PriceRecordSummaryResponse,
+} from '../../api/generated/model';
+import { PriceRecordsService } from '../../api/generated/price-records/price-records.service';
+import { Session } from '../../core/auth/session';
+import { UFS } from '../../shared/format';
 import { Avatar } from '../../shared/ui/avatar';
 import { Icon } from '../../shared/ui/icon';
-import { TENDERS, daysBetween } from '../demo/demo-data';
+import { DealDialog } from '../deals/deal-dialog';
+import { situationLabel, situationTone } from './price-record-meta';
 
+type Tab = ListPriceRecordsFilter | 'MUNICIPIOS';
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'OPORTUNIDADES', label: 'Oportunidades' },
+  { id: 'VIGENTES', label: 'Vigentes' },
+  { id: 'VENCENDO', label: 'Vencendo' },
+  { id: 'VENCIDAS', label: 'Vencidas' },
+  { id: 'TODAS', label: 'Todas' },
+  { id: 'MUNICIPIOS', label: 'Municípios sem ata' },
+];
+
+/**
+ * Atas vigentes e oportunidades de carona, pelo vencimento, e os municípios onde a Shema ainda não tem ata (para
+ * prospectar). "Oferecer carona" e "Nova negociação" abrem o funil já preenchido. Aba, busca e UF ficam na URL.
+ */
 @Component({
   selector: 'app-price-records-page',
-  imports: [DemoBadge, CurrencyPipe, DatePipe, Avatar, Icon],
-  template: `
-    <div class="page-head">
-      <div>
-        <div class="title-line">
-          <h1>Atas</h1>
-          <app-demo-badge [phase]="3" />
-        </div>
-        <p class="sub">
-          Atas de registro de preços vigentes. Cada uma pode virar carona em outro município.
-        </p>
-      </div>
-      <div class="page-actions">
-        <button type="button" class="btn primary">
-          <app-icon name="plus" [size]="16" />Anexar ata
-        </button>
-      </div>
-    </div>
-
-    <div class="records">
-      @for (r of records; track r.id) {
-        <article class="card record">
-          <div class="record-head">
-            <app-avatar [name]="r.agency" [size]="40" [square]="true" />
-            <div class="record-title">
-              <h2>{{ r.agency }}</h2>
-              <p class="cell-sub">{{ r.uasgPregao }} · {{ r.material }}</p>
-            </div>
-            <span class="badge" [class.amber]="r.daysLeft <= 120" [class.violet]="r.daysLeft > 120">
-              {{ r.daysLeft <= 120 ? 'Vence em ' + r.daysLeft + ' dias' : 'Válida' }}
-            </span>
-          </div>
-          <dl class="record-figures">
-            <div>
-              <dt>Vigente até</dt>
-              <dd class="num">{{ r.ataUntil | date: 'dd/MM/yyyy' }}</dd>
-            </div>
-            <div>
-              <dt>Valor registrado</dt>
-              <dd class="num">{{ r.value | currency: 'BRL' : 'symbol' : '1.0-0' }}</dd>
-            </div>
-            <div>
-              <dt>Caronas</dt>
-              <dd class="num">{{ r.caronas }} de 4</dd>
-            </div>
-          </dl>
-          <div class="caronas">
-            @for (slot of [0, 1, 2, 3]; track slot) {
-              <span class="slot" [class.used]="slot < r.caronas"></span>
-            }
-          </div>
-          <div class="record-foot">
-            <button type="button" class="btn sm">
-              <app-icon name="tenders" [size]="14" />Ver ata
-            </button>
-            <button type="button" class="btn sm">
-              <app-icon name="handshake" [size]="14" />Oferecer carona
-            </button>
-          </div>
-        </article>
-      }
-    </div>
-  `,
-  styles: `
-    .records {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 16px;
-    }
-    .record {
-      padding: 20px;
-      display: grid;
-      gap: 16px;
-    }
-    .record-head {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-    }
-    .record-title {
-      flex: 1;
-      min-width: 0;
-    }
-    .record-title h2 {
-      font-size: 15px;
-      font-weight: 650;
-      line-height: 22px;
-    }
-    .record-figures {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin: 0;
-      padding: 14px;
-      border-radius: 10px;
-      background: var(--surface-2);
-    }
-    .record-figures dt {
-      color: var(--text-3);
-      font-size: 12px;
-    }
-    .record-figures dd {
-      margin: 2px 0 0;
-      font-weight: 650;
-    }
-    .caronas {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-    }
-    .slot {
-      height: 6px;
-      border-radius: 999px;
-      background: var(--hover);
-    }
-    .slot.used {
-      background: var(--violet);
-    }
-    .record-foot {
-      display: flex;
-      gap: 8px;
-    }
-  `,
+  imports: [CurrencyPipe, DatePipe, DecimalPipe, FormsModule, RouterLink, Avatar, Icon, DealDialog],
+  templateUrl: './price-records.page.html',
+  styleUrl: './price-records.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PriceRecordsPage {
-  protected readonly records = TENDERS.filter((t) => t.ataUntil && daysBetween(t.ataUntil) < 0)
-    .map((t, i) => ({ ...t, daysLeft: -daysBetween(t.ataUntil!), caronas: [1, 0, 2, 0, 1][i % 5] }))
-    .sort((a, b) => a.daysLeft - b.daysLeft);
+  private readonly api = inject(PriceRecordsService);
+  private readonly dealsApi = inject(DealsService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly session = inject(Session);
+
+  protected readonly tabs = TABS;
+  protected readonly ufs = UFS;
+  protected readonly situationLabel = situationLabel;
+  protected readonly tone = situationTone;
+
+  private readonly params = toSignal(this.route.queryParamMap.pipe(map((p) => p)), {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+  protected readonly tab = computed(() => {
+    const value = this.params().get('aba') as Tab | null;
+    return TABS.some((t) => t.id === value) ? value! : 'OPORTUNIDADES';
+  });
+  protected readonly q = computed(() => this.params().get('q') ?? '');
+  protected readonly state = computed(() => this.params().get('uf') ?? 'RJ');
+
+  protected readonly records = rxResource({
+    params: computed(() =>
+      this.tab() === 'MUNICIPIOS'
+        ? undefined
+        : { filter: this.tab() as ListPriceRecordsFilter, q: this.q() || undefined },
+    ),
+    stream: ({ params }) => this.api.listPriceRecords(params),
+  });
+  protected readonly prospects = rxResource({
+    params: computed(() =>
+      this.tab() === 'MUNICIPIOS'
+        ? { state: this.state() || undefined, q: this.q() || undefined }
+        : undefined,
+    ),
+    stream: ({ params }) => this.api.listProspects(params),
+  });
+  /** Contadores das abas de atas, sem filtro de busca. */
+  protected readonly all = rxResource({
+    stream: () => this.api.listPriceRecords({ filter: 'TODAS' }),
+  });
+  protected readonly counts = computed(() => {
+    const all = this.all.value() ?? [];
+    return {
+      OPORTUNIDADES: all.filter((r) => r.opportunity).length,
+      VIGENTES: all.filter((r) => r.situation !== 'VENCIDA').length,
+      VENCENDO: all.filter((r) => r.situation === 'VENCENDO').length,
+      VENCIDAS: all.filter((r) => r.situation === 'VENCIDA').length,
+      TODAS: all.length,
+    } as Record<string, number>;
+  });
+
+  protected readonly canCreateDeal = computed(() => this.session.user()?.role !== 'VIEWER');
+  protected readonly dealOpen = signal(false);
+  protected readonly presetTender = signal<DealTenderResponse | null>(null);
+  protected readonly presetAgency = signal<AgencyRefResponse | null>(null);
+  protected readonly created = signal<string | null>(null);
+  private readonly pipeline = rxResource({
+    params: () => (this.dealOpen() ? true : undefined),
+    stream: () => this.dealsApi.getPipeline({}),
+  });
+  protected readonly stages = computed(() => this.pipeline.value()?.stages ?? []);
+
+  protected readonly search$ = new Subject<string>();
+  protected search = this.route.snapshot.queryParamMap.get('q') ?? '';
+
+  constructor() {
+    this.search$
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((q) => this.navigate({ q: q.trim() || null }));
+  }
+
+  protected navigate(changes: Record<string, string | null>): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: changes,
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  protected slots(r: PriceRecordSummaryResponse): boolean[] {
+    const max = Math.max(4, r.agencyCount);
+    return Array.from({ length: max }, (_, i) => i < r.agencyCount);
+  }
+
+  /** Oferecer a ata: negociação nova com a licitação de origem e o valor dela. */
+  protected offer(r: PriceRecordSummaryResponse): void {
+    this.presetAgency.set(null);
+    this.presetTender.set({
+      id: r.tender.id,
+      agencyName: r.tender.agencyName,
+      identification: r.tender.identification,
+      totalValue: r.referenceValue,
+      status: r.tender.status,
+    });
+    this.created.set(null);
+    this.dealOpen.set(true);
+  }
+
+  protected prospect(agency: AgencyRefResponse): void {
+    this.presetTender.set(null);
+    this.presetAgency.set(agency);
+    this.created.set(null);
+    this.dealOpen.set(true);
+  }
+
+  protected onDealSaved(title: string | null): void {
+    this.dealOpen.set(false);
+    this.created.set(title);
+  }
 }

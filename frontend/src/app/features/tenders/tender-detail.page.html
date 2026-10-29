@@ -63,6 +63,16 @@
         alterar esta licitação.
       </p>
     }
+    @if (tab() !== 'documentos' && ataHighlight(); as h) {
+      <p class="ata-highlight">
+        <app-icon name="trend" [size]="16" />
+        <span
+          >Ata válida até <strong class="num">{{ h.validUntil | date: 'dd/MM/yyyy' }}</strong
+          >: oportunidade de replicar em outros municípios.</span
+        >
+        <button type="button" class="btn sm" (click)="tab.set('documentos')">Ver ata</button>
+      </p>
+    }
   </header>
 
   <div class="tabs detail-tabs" role="tablist" aria-label="Seções da licitação">
@@ -184,7 +194,7 @@
     }
     @case ('historico') {
       <section class="card">
-        @if (history.isLoading() || contractHistory.isLoading()) {
+        @if (history.isLoading() || contractHistory.isLoading() || recordHistory.isLoading()) {
           <div class="card-body"><span class="sk w-60"></span></div>
         } @else {
           <ol class="history">
@@ -235,6 +245,27 @@
                         }
                       </ul>
                     }
+                    <p class="cell-sub num">{{ e.occurredAt | date: "dd/MM/yyyy 'às' HH:mm" }}</p>
+                  </div>
+                </li>
+              } @else if (item.source === 'record') {
+                @let e = item.record;
+                <li>
+                  <span class="h-icon record"
+                    ><app-icon
+                      [name]="
+                        e.type.startsWith('DOCUMENT')
+                          ? 'download'
+                          : e.type.startsWith('CARONA')
+                            ? 'handshake'
+                            : 'records'
+                      "
+                      [size]="14"
+                  /></span>
+                  <div class="h-body">
+                    <p>
+                      <strong>{{ e.userName ?? 'Sistema' }}</strong> {{ e.summary }}
+                    </p>
                     <p class="cell-sub num">{{ e.occurredAt | date: "dd/MM/yyyy 'às' HH:mm" }}</p>
                   </div>
                 </li>
@@ -307,11 +338,11 @@
     @case ('negociacao') {
       <app-tender-deals-tab [tender]="t" />
     }
-    @default {
-      <section class="card empty upcoming">
-        <strong>Anexo da ata e de outros documentos chega na Fase 3.</strong>
-        <span>Esta aba já está reservada para não mudar o lugar das coisas depois.</span>
-      </section>
+    @case ('documentos') {
+      <div class="documents-tab">
+        <app-ata-section [tender]="t" [caronaPreset]="caronaPreset()" (changed)="onAtaChanged()" />
+        <app-documents-section [tenderId]="t.id" [canEdit]="t.canEdit" />
+      </div>
     }
   }
 
