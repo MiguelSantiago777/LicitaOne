@@ -95,6 +95,8 @@
 .column-body {
   flex: 1;
   display: grid;
+  // minmax(0, …): texto longo sem quebra (tarefa atrasada) corta com reticências em vez de alargar o card
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: 10px;
   padding: 0 10px 12px;
@@ -111,6 +113,7 @@
 
 .deal {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   padding: 14px;
   border-radius: 10px;
