@@ -97,7 +97,13 @@ function formatPhone(digits: string | null | undefined): string {
         <button type="button" class="btn sm" (click)="add()">
           <app-icon name="plus" [size]="16" />Adicionar contato
         </button>
-        <button type="button" class="btn sm primary" (click)="save()" [disabled]="saving()">
+        <button
+          type="button"
+          class="btn sm primary"
+          (click)="save()"
+          [disabled]="saving()"
+          [attr.aria-busy]="saving() || null"
+        >
           {{ saving() ? 'Salvando…' : 'Salvar contatos' }}
         </button>
       </div>

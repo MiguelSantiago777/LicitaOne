@@ -67,6 +67,8 @@ export class BoardsPage {
     stream: ({ params }) => this.api.getBoard(params),
   });
 
+  /** Colunas e cards de mentira enquanto o quadro carrega. */
+  protected readonly skeletonColumns = [[1, 2, 3], [1, 2], [1], [1, 2]];
   protected readonly error = signal<string | null>(null);
   protected readonly busy = signal(false);
   protected readonly editingCard = signal<BoardCardResponse | null>(null);

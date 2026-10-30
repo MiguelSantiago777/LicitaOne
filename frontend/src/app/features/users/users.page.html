@@ -126,7 +126,13 @@
   </form>
   <ng-container panel-footer>
     <button type="button" class="btn" (click)="mode.set(null)">Cancelar</button>
-    <button type="submit" form="user-form" class="btn primary" [disabled]="saving()">
+    <button
+      type="submit"
+      form="user-form"
+      class="btn primary"
+      [disabled]="saving()"
+      [attr.aria-busy]="saving() || null"
+    >
       {{ saving() ? 'Salvando…' : 'Salvar' }}
     </button>
   </ng-container>

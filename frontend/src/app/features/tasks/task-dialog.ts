@@ -252,7 +252,13 @@ function tomorrowAtNine(): string {
             {{ readonly() ? 'Fechar' : 'Cancelar' }}
           </button>
           @if (!readonly()) {
-            <button type="submit" form="task-form" class="btn primary" [disabled]="saving()">
+            <button
+              type="submit"
+              form="task-form"
+              class="btn primary"
+              [disabled]="saving()"
+              [attr.aria-busy]="saving() || null"
+            >
               {{ saving() ? 'Salvando…' : task() ? 'Salvar' : 'Criar tarefa' }}
             </button>
           }

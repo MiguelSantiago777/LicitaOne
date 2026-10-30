@@ -49,7 +49,14 @@ const KINDS: { value: NewStageRequestKind; label: string }[] = [
                     [attr.aria-label]="'Novo nome para ' + s.name"
                     (keydown.escape)="renaming.set(null)"
                   />
-                  <button type="submit" class="btn sm primary" [disabled]="busy()">Salvar</button>
+                  <button
+                    type="submit"
+                    class="btn sm primary"
+                    [disabled]="busy()"
+                    [attr.aria-busy]="busy() || null"
+                  >
+                    Salvar
+                  </button>
                 </form>
               } @else if (confirming() === s.id) {
                 <span class="confirm">Excluir "{{ s.name }}"?</span>
@@ -112,7 +119,12 @@ const KINDS: { value: NewStageRequestKind; label: string }[] = [
               }
             </select>
           </div>
-          <button type="submit" class="btn primary" [disabled]="busy() || !newName.trim()">
+          <button
+            type="submit"
+            class="btn primary"
+            [disabled]="busy() || !newName.trim()"
+            [attr.aria-busy]="busy() || null"
+          >
             <app-icon name="plus" [size]="16" />Adicionar
           </button>
         </form>

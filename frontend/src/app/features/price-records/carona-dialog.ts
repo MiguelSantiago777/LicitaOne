@@ -181,6 +181,7 @@ export interface CaronaPreset {
           form="carona-form"
           class="btn primary"
           [disabled]="saving() || (needsConfirm() && !confirmLimits)"
+          [attr.aria-busy]="saving() || null"
         >
           {{ saving() ? 'Registrando…' : 'Registrar carona' }}
         </button>

@@ -264,13 +264,25 @@
     @switch (step()) {
       @case ('file') {
         <button type="button" class="btn" (click)="close()">Cancelar</button>
-        <button type="button" class="btn primary" (click)="send()" [disabled]="busy()">
+        <button
+          type="button"
+          class="btn primary"
+          (click)="send()"
+          [disabled]="busy()"
+          [attr.aria-busy]="busy() || null"
+        >
           {{ busy() ? 'Lendo planilha…' : 'Continuar' }}
         </button>
       }
       @case ('columns') {
         <button type="button" class="btn" (click)="back()">Voltar</button>
-        <button type="button" class="btn primary" (click)="runPreview()" [disabled]="busy()">
+        <button
+          type="button"
+          class="btn primary"
+          (click)="runPreview()"
+          [disabled]="busy()"
+          [attr.aria-busy]="busy() || null"
+        >
           {{ busy() ? 'Conferindo…' : 'Ver prévia' }}
         </button>
       }
@@ -281,6 +293,7 @@
           class="btn primary"
           (click)="confirm()"
           [disabled]="busy() || !importable()"
+          [attr.aria-busy]="busy() || null"
         >
           {{ busy() ? 'Enviando…' : 'Importar ' + importable() + ' linhas' }}
         </button>

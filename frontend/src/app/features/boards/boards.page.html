@@ -16,7 +16,14 @@
             maxlength="80"
             (keydown.escape)="creatingBoard.set(false)"
           />
-          <button type="submit" class="btn primary" [disabled]="busy()">Criar</button>
+          <button
+            type="submit"
+            class="btn primary"
+            [disabled]="busy()"
+            [attr.aria-busy]="busy() || null"
+          >
+            Criar
+          </button>
           <button type="button" class="btn ghost" (click)="creatingBoard.set(false)">
             Cancelar
           </button>
@@ -61,7 +68,20 @@
 }
 
 @if (board.isLoading() && !board.hasValue()) {
-  <div class="card empty" aria-busy="true">Carregando o quadro…</div>
+  <div class="board" aria-busy="true" aria-label="Carregando o quadro">
+    @for (col of skeletonColumns; track $index) {
+      <div class="column">
+        <div class="column-head"><span class="sk w-40"></span></div>
+        <div class="column-body">
+          @for (card of col; track $index) {
+            <div class="board-card sk-card">
+              <span class="sk w-80"></span><span class="sk w-40"></span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
 } @else if (board.error()) {
   <div class="card empty" role="alert">
     <strong>Não foi possível carregar o quadro.</strong>
@@ -252,7 +272,14 @@
                 autocomplete="off"
               />
               <div class="add-card-actions">
-                <button type="submit" class="btn sm primary" [disabled]="busy()">Adicionar</button>
+                <button
+                  type="submit"
+                  class="btn sm primary"
+                  [disabled]="busy()"
+                  [attr.aria-busy]="busy() || null"
+                >
+                  Adicionar
+                </button>
                 <button type="button" class="btn sm ghost" (click)="addingCardTo.set(null)">
                   Fechar
                 </button>
@@ -285,7 +312,14 @@
               autocomplete="off"
             />
             <div class="add-card-actions">
-              <button type="submit" class="btn sm primary" [disabled]="busy()">Criar coluna</button>
+              <button
+                type="submit"
+                class="btn sm primary"
+                [disabled]="busy()"
+                [attr.aria-busy]="busy() || null"
+              >
+                Criar coluna
+              </button>
               @if (b.columns.length) {
                 <button type="button" class="btn sm ghost" (click)="addingColumn.set(false)">
                   Fechar

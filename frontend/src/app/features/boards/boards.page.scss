@@ -148,7 +148,8 @@
   cursor: grab;
   transition:
     box-shadow 150ms ease,
-    border-color 150ms ease;
+    border-color 150ms ease,
+    translate 200ms var(--ease);
 }
 .board-card:hover {
   box-shadow: var(--shadow);
@@ -266,6 +267,37 @@
 }
 .cdk-drop-list-dragging .board-card:not(.cdk-drag-placeholder) {
   transition: transform 200ms var(--ease);
+}
+/* Cards entram em cascata; o card solto em outra coluna é recriado lá e "assenta" com o mesmo pop */
+.board-card {
+  animation: pop-in 420ms cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
+}
+@for $i from 1 through 8 {
+  .board-card:nth-child(#{$i}) {
+    animation-delay: 80ms + ($i - 1) * 40ms;
+  }
+}
+.board-card:hover {
+  translate: 0 -2px;
+}
+/* o card arrastado fica um pouco maior; ao soltar, desliza até o lugar */
+.cdk-drag-preview {
+  scale: 1.03;
+  animation: none;
+}
+.cdk-drag-animating {
+  transition: transform 250ms var(--ease);
+}
+.cdk-drop-list-receiving,
+.column-body.cdk-drop-list-dragging {
+  background: rgb(37 99 235 / 0.04);
+  border-radius: 10px;
+}
+.sk-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px 12px;
+  cursor: default;
 }
 @media (prefers-reduced-motion: reduce) {
   .cdk-drag-preview {

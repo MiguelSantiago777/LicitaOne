@@ -510,11 +510,189 @@ table.data .n {
   font-weight: 600;
 }
 
+/* ---------- movimento ---------- */
+/* Entradas em cascata: cada filho chega um pouco depois do anterior. Só preenche para trás (backwards): terminada a
+   animação, o elemento não guarda transform, que viraria bloco de contenção para os painéis position: fixed. */
+@mixin stagger($step, $count, $start: 0ms) {
+  @for $i from 1 through $count {
+    &:nth-child(#{$i}) {
+      animation-delay: $start + ($i - 1) * $step;
+    }
+  }
+  &:nth-child(n + #{$count + 1}) {
+    animation-delay: $start + $count * $step;
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes row-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    scale: 0.94;
+  }
+}
+@keyframes grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+/* sacudida curta de sino, repetida de tempos em tempos */
+@keyframes nudge {
+  0%,
+  80%,
+  100% {
+    rotate: 0deg;
+  }
+  84% {
+    rotate: -12deg;
+  }
+  88% {
+    rotate: 10deg;
+  }
+  92% {
+    rotate: -6deg;
+  }
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* Cada tela que o roteador abre entra em cascata (cabeçalho, indicadores, cartões) */
+.canvas > router-outlet + * > * {
+  animation: rise 520ms var(--ease) backwards;
+  @include stagger(70ms, 6);
+}
+/* Linhas de tabela e itens de lista entram um a um; as que chegam depois (filtro, página) também */
+table.data tbody tr,
+ul.list > li,
+ol.top-list > li {
+  animation: row-in 380ms var(--ease) backwards;
+  @include stagger(35ms, 10, 120ms);
+}
+.btn:hover:not([disabled]) {
+  box-shadow: var(--shadow);
+}
+.btn.primary:hover:not([disabled]) {
+  box-shadow: 0 4px 12px rgb(37 99 235 / 0.35);
+}
+
+/* Botão ocupado: [attr.aria-busy] enquanto salva mostra um giro no lugar do ícone */
+.btn[aria-busy='true'] {
+  cursor: progress;
+}
+.btn[aria-busy='true']::before {
+  content: '';
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: spin 700ms linear infinite;
+}
+.btn[aria-busy='true'] app-icon {
+  display: none;
+}
+
+/* Esqueleto: blocos cinza com brilho correndo, no lugar do "Carregando…" */
+.sk {
+  display: block;
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--hover) 0%, #e2e8f0 40%, var(--hover) 80%) 0 0 / 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+.sk-stack {
+  display: grid;
+  gap: 14px;
+  padding: 24px 20px;
+}
+.sk.lg {
+  height: 26px;
+  border-radius: 6px;
+}
+.w-20 {
+  width: 20%;
+}
+.w-30 {
+  width: 30%;
+}
+.w-40 {
+  width: 40%;
+}
+.w-60 {
+  width: 60%;
+}
+.w-80 {
+  width: 80%;
+}
+
+/* Troca de página (View Transitions do roteador): a tela antiga some enquanto a nova entra em cascata. Barra
+   lateral e superior têm nome próprio e ficam por cima, para a tela rolada não passar sobre elas. Os nomes só
+   existem durante a troca (classe posta pelo app.config.ts). */
+.page-transition {
+  .canvas {
+    view-transition-name: page;
+  }
+  .topbar {
+    view-transition-name: topbar;
+  }
+  .sidebar {
+    view-transition-name: sidebar;
+  }
+}
+::view-transition-group(topbar),
+::view-transition-group(sidebar) {
+  z-index: 2;
+}
+::view-transition-group(page) {
+  animation: none;
+}
+::view-transition-old(page) {
+  animation: page-out 160ms ease both;
+}
+::view-transition-new(page) {
+  animation: none;
+}
+@keyframes page-out {
+  to {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
+    animation: none !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
     animation: none !important;
   }
 }

@@ -190,7 +190,13 @@ import { PRIORITIES } from './deal-meta';
             {{ readonly() ? 'Fechar' : 'Cancelar' }}
           </button>
           @if (!readonly()) {
-            <button type="submit" form="deal-form" class="btn primary" [disabled]="saving()">
+            <button
+              type="submit"
+              form="deal-form"
+              class="btn primary"
+              [disabled]="saving()"
+              [attr.aria-busy]="saving() || null"
+            >
               {{ saving() ? 'Salvando…' : deal() ? 'Salvar' : 'Criar negociação' }}
             </button>
           }

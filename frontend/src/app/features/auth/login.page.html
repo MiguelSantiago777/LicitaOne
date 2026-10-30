@@ -94,7 +94,12 @@
           }
         </div>
 
-        <button type="submit" class="btn primary submit" [disabled]="submitting()">
+        <button
+          type="submit"
+          class="btn primary submit"
+          [disabled]="submitting()"
+          [attr.aria-busy]="submitting() || null"
+        >
           {{ submitting() ? 'Entrando…' : 'Entrar' }}
         </button>
       </form>

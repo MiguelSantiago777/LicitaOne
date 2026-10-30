@@ -10,6 +10,7 @@ import { TendersService } from '../../api/generated/tenders/tenders.service';
 import type { TenderResponseStatus } from '../../api/generated/model';
 import { Session } from '../../core/auth/session';
 import { Avatar } from '../../shared/ui/avatar';
+import { CountUp } from '../../shared/ui/count-up';
 import { Icon } from '../../shared/ui/icon';
 import { TENDER_TABS, statusTone } from '../tenders/tender-meta';
 
@@ -19,7 +20,7 @@ import { TENDER_TABS, statusTone } from '../tenders/tender-meta';
  */
 @Component({
   selector: 'app-dashboard-page',
-  imports: [CurrencyPipe, DatePipe, RouterLink, Icon, Avatar],
+  imports: [CurrencyPipe, DatePipe, RouterLink, Icon, Avatar, CountUp],
   templateUrl: './dashboard.page.html',
   styleUrl: './dashboard.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

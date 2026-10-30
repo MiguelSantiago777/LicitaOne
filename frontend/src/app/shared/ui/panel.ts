@@ -6,16 +6,17 @@ let nextId = 0;
 
 /**
  * Painel sobreposto: gaveta lateral (formulários) ou diálogo central (confirmações). Prende o foco, fecha com Esc
- * e no clique fora.
+ * e no clique fora. Entra e sai animado (animate.leave segura o elemento até o fim da saída).
  */
 @Component({
   selector: 'app-panel',
   imports: [A11yModule, Icon],
   template: `
     @if (open()) {
-      <div class="backdrop" (click)="closed.emit()" aria-hidden="true"></div>
+      <div class="backdrop" animate.leave="out" (click)="closed.emit()" aria-hidden="true"></div>
       <section
         class="panel"
+        animate.leave="out"
         [class.dialog]="variant() === 'dialog'"
         [style.--panel-width.px]="width()"
         role="dialog"
@@ -47,7 +48,11 @@ let nextId = 0;
       inset: 0;
       z-index: 70;
       background: rgb(15 23 42 / 0.45);
-      animation: fade 160ms ease;
+      backdrop-filter: blur(2px);
+      animation: fade 220ms ease;
+    }
+    .backdrop.out {
+      animation: fade 200ms ease reverse forwards;
     }
     .panel {
       position: fixed;
@@ -60,7 +65,7 @@ let nextId = 0;
       flex-direction: column;
       background: var(--surface);
       box-shadow: var(--shadow-lg);
-      animation: slide 220ms var(--ease);
+      animation: slide 380ms var(--ease);
     }
     .panel.dialog {
       top: 50%;
@@ -71,7 +76,13 @@ let nextId = 0;
       max-height: calc(100svh - 32px);
       width: min(var(--panel-width, 440px), calc(100vw - 32px));
       border-radius: var(--radius);
-      animation: pop 180ms var(--ease);
+      animation: pop 340ms cubic-bezier(0.34, 1.4, 0.64, 1);
+    }
+    .panel.out {
+      animation: slide-out 220ms cubic-bezier(0.4, 0, 1, 1) forwards;
+    }
+    .panel.dialog.out {
+      animation: pop-out 160ms ease-in forwards;
     }
     .panel-head {
       display: flex;
@@ -120,14 +131,35 @@ let nextId = 0;
     }
     @keyframes slide {
       from {
-        transform: translateX(24px);
-        opacity: 0;
+        transform: translateX(100%);
+      }
+    }
+    @keyframes slide-out {
+      to {
+        transform: translateX(100%);
       }
     }
     @keyframes pop {
       from {
-        scale: 0.97;
+        scale: 0.9;
         opacity: 0;
+      }
+    }
+    @keyframes pop-out {
+      to {
+        scale: 0.95;
+        opacity: 0;
+      }
+    }
+    /* o conteúdo do painel chega logo depois da moldura */
+    .panel-body,
+    .panel-foot {
+      animation: body-in 360ms 120ms var(--ease) backwards;
+    }
+    @keyframes body-in {
+      from {
+        opacity: 0;
+        translate: 0 8px;
       }
     }
   `,

@@ -62,7 +62,13 @@ import { SPHERES } from './tender-meta';
         }
         <div class="create-actions">
           <button type="button" class="btn sm ghost" (click)="creating.set(false)">Cancelar</button>
-          <button type="button" class="btn sm primary" (click)="create()" [disabled]="saving()">
+          <button
+            type="button"
+            class="btn sm primary"
+            (click)="create()"
+            [disabled]="saving()"
+            [attr.aria-busy]="saving() || null"
+          >
             {{ saving() ? 'Salvando…' : 'Cadastrar órgão' }}
           </button>
         </div>

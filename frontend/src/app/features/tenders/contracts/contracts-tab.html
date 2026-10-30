@@ -1,6 +1,8 @@
 @if (contracts.isLoading() && !contracts.hasValue()) {
-  <section class="card empty" aria-busy="true">
-    <span>Carregando contratos…</span>
+  <section class="card sk-stack" aria-busy="true" aria-label="Carregando contratos">
+    <span class="sk w-40"></span>
+    <span class="sk w-80"></span>
+    <span class="sk w-60"></span>
   </section>
 } @else if (contracts.error()) {
   <section class="card empty" role="alert">

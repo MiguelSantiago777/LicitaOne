@@ -62,7 +62,7 @@
   </nav>
 
   @if (menuOpen()) {
-    <div class="scrim" (click)="toggleMenu()" aria-hidden="true"></div>
+    <div class="scrim" animate.leave="out" (click)="toggleMenu()" aria-hidden="true"></div>
   }
 
   <div class="main">

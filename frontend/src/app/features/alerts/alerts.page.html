@@ -133,7 +133,11 @@
       <button type="button" class="btn sm" (click)="alerts.reload()">Tentar de novo</button>
     </div>
   } @else if (alerts.isLoading() && !alerts.value()) {
-    <div class="empty"><span>Carregando…</span></div>
+    <div class="sk-stack" aria-busy="true" aria-label="Carregando os alertas">
+      <span class="sk w-60"></span>
+      <span class="sk w-80"></span>
+      <span class="sk w-40"></span>
+    </div>
   } @else {
     <div class="table-wrap">
       <table class="data">

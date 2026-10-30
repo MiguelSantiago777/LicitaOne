@@ -56,7 +56,13 @@ import { Panel } from '../../../shared/ui/panel';
       }
       <ng-container panel-footer>
         <button type="button" class="btn" (click)="closed.emit()">Cancelar</button>
-        <button type="submit" form="close-form" class="btn primary" [disabled]="saving()">
+        <button
+          type="submit"
+          form="close-form"
+          class="btn primary"
+          [disabled]="saving()"
+          [attr.aria-busy]="saving() || null"
+        >
           {{ saving() ? 'Salvando…' : 'Encerrar' }}
         </button>
       </ng-container>

@@ -23,7 +23,11 @@
       <span class="kpi-label">Valor em carteira</span>
       <span class="kpi-icon blue"><app-icon name="wallet" /></span>
     </div>
-    <p class="kpi-value num">{{ portfolio().value | currency: 'BRL' : 'symbol' : '1.0-0' }}</p>
+    @if (summary.hasValue() || !summary.isLoading()) {
+      <p class="kpi-value num" [appCountUp]="portfolio().value" countFormat="brl"></p>
+    } @else {
+      <span class="sk lg w-60" aria-hidden="true"></span>
+    }
     <p class="kpi-foot">{{ portfolio().count }} contratos assinados ou em andamento</p>
   </a>
 
@@ -33,12 +37,16 @@
       <span class="kpi-icon green"><app-icon name="piggy" /></span>
     </div>
     @if (openContracts.value(); as oc) {
-      <p class="kpi-value num">{{ oc.remaining | currency: 'BRL' : 'symbol' : '1.0-0' }}</p>
+      <p class="kpi-value num" [appCountUp]="oc.remaining" countFormat="brl"></p>
       <p class="kpi-foot num">
         em {{ oc.contracts }} {{ oc.contracts === 1 ? 'contrato aberto' : 'contratos abertos' }}
       </p>
     } @else {
-      <p class="kpi-value num">—</p>
+      @if (openContracts.isLoading()) {
+        <span class="sk lg w-60" aria-hidden="true"></span>
+      } @else {
+        <p class="kpi-value num">—</p>
+      }
       <p class="kpi-foot">Somando os contratos…</p>
     }
   </a>
@@ -48,9 +56,15 @@
       <span class="kpi-label">Tarefas atrasadas</span>
       <span class="kpi-icon red"><app-icon name="clock" /></span>
     </div>
-    <p class="kpi-value num" [class.danger]="(tasks.value()?.overdue ?? 0) > 0">
-      {{ tasks.value()?.overdue ?? '—' }}
-    </p>
+    @if (tasks.isLoading() && !tasks.hasValue()) {
+      <span class="sk lg w-30" aria-hidden="true"></span>
+    } @else {
+      <p
+        class="kpi-value num"
+        [class.danger]="(tasks.value()?.overdue ?? 0) > 0"
+        [appCountUp]="tasks.value()?.overdue"
+      ></p>
+    }
     <p class="kpi-foot num">
       @if (tasks.value(); as t) {
         de {{ t.open }} {{ t.open === 1 ? 'tarefa aberta' : 'tarefas abertas' }}
@@ -65,7 +79,11 @@
       <span class="kpi-label">Atas vencendo</span>
       <span class="kpi-icon violet"><app-icon name="records" /></span>
     </div>
-    <p class="kpi-value num">{{ expiring.value()?.length ?? '—' }}</p>
+    @if (expiring.isLoading() && !expiring.hasValue()) {
+      <span class="sk lg w-30" aria-hidden="true"></span>
+    } @else {
+      <p class="kpi-value num" [appCountUp]="expiring.value()?.length"></p>
+    }
     <p class="kpi-foot">
       @if (alertSettings.value(); as s) {
         nos próximos {{ s.priceRecordExpiringDays[0] }} dias

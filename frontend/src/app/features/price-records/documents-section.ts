@@ -238,7 +238,13 @@ export function saveBlob(blob: Blob, fileName: string): void {
       }
       <ng-container panel-footer>
         <button type="button" class="btn" (click)="formOpen.set(false)">Cancelar</button>
-        <button type="submit" form="doc-form" class="btn primary" [disabled]="busy()">
+        <button
+          type="submit"
+          form="doc-form"
+          class="btn primary"
+          [disabled]="busy()"
+          [attr.aria-busy]="busy() || null"
+        >
           {{ busy() ? 'Enviando…' : editingDoc() ? 'Salvar' : 'Enviar' }}
         </button>
       </ng-container>

@@ -6,6 +6,9 @@ import { login } from './helpers';
  * Auditoria de acessibilidade (Fase 6): axe com as regras WCAG 2.1 A e AA em todas as telas e nos diálogos
  * principais, em 1440 e 390 px. Qualquer violação quebra o build.
  */
+
+// Sem animação: o axe mede o contraste da tela parada, não de um texto no meio do fade de entrada
+test.use({ reducedMotion: 'reduce' });
 async function audit(page: Page, name: string): Promise<void> {
   await page.waitForLoadState('networkidle');
   const result = await new AxeBuilder({ page })
