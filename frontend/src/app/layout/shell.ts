@@ -104,7 +104,12 @@ export class Shell {
   }
 
   protected newTender(): void {
-    void this.router.navigate(['/licitacoes'], { queryParams: { novo: 1 } });
+    // Já na lista, mantém aba, filtros e página por trás do formulário
+    const onList = this.router.url.split('?')[0] === '/licitacoes';
+    void this.router.navigate(['/licitacoes'], {
+      queryParams: { novo: 1 },
+      queryParamsHandling: onList ? 'merge' : '',
+    });
   }
 
   protected logout(): void {

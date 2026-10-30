@@ -1,8 +1,8 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { rxResource, toSignal } from '@angular/core/rxjs-interop';
+import { rxResource, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { map, of } from 'rxjs';
+import { filter, map, of } from 'rxjs';
 import { ContractsService } from '../../api/generated/contracts/contracts.service';
 import { PriceRecordsService } from '../../api/generated/price-records/price-records.service';
 import { TendersService } from '../../api/generated/tenders/tenders.service';
@@ -144,10 +144,17 @@ export class TendersPage {
   protected readonly canCreate = computed(() => this.session.user()?.role !== 'VIEWER');
 
   constructor() {
-    if (this.route.snapshot.queryParamMap.get('novo') === '1') {
-      this.formOpen.set(true);
-      this.navigate({ novo: null });
-    }
+    // "Nova licitação" da barra superior manda ?novo=1; ouvir a query (e não só a primeira) abre o formulário
+    // também quando a lista já está aberta e o roteador reaproveita a página
+    this.route.queryParamMap
+      .pipe(
+        filter((p) => p.get('novo') === '1'),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => {
+        this.formOpen.set(true);
+        this.navigate({ novo: null }, false);
+      });
   }
 
   protected navigate(changes: Record<string, string | number | null>, resetPage = true): void {
