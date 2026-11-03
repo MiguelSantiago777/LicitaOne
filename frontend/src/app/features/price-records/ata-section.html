@@ -224,7 +224,8 @@
   <app-ata-items-dialog
     [open]="itemsOpen()"
     [record]="a"
-    (closed)="itemsOpen.set(false)"
+    [suggested]="suggestedItems()"
+    (closed)="closeItems()"
     (saved)="accept($event)"
   />
   <app-carona-dialog
@@ -260,8 +261,34 @@
       @if (formError(); as message) {
         <div class="alert" role="alert">{{ message }}</div>
       }
+      <app-ata-ai-fill
+        [documents]="ataDocuments.value() ?? []"
+        [preferredId]="documentId"
+        (done)="applyAi($event)"
+      />
+      @if (aiReading(); as r) {
+        <div class="ai-applied" role="status">
+          <strong>Campos preenchidos com a leitura da IA.</strong>
+          Confira cada um no PDF antes de salvar; a página de onde saiu aparece ao lado do campo.
+          @if (r.extraction.result?.items?.length; as n) {
+            Depois de salvar, os {{ n }} itens lidos aparecem para você conferir.
+          }
+          @if (r.extraction.result?.warnings?.length) {
+            <ul class="ai-warnings">
+              @for (w of r.extraction.result?.warnings; track $index) {
+                <li><app-icon name="alert" [size]="14" />{{ w }}</li>
+              }
+            </ul>
+          }
+        </div>
+      }
       <div class="field">
-        <label for="ata-number">Número da ata</label>
+        <label for="ata-number"
+          >Número da ata
+          @if (aiTag('number'); as t) {
+            <span class="ai-tag">{{ t }}</span>
+          }
+        </label>
         <input
           id="ata-number"
           class="input"
@@ -274,11 +301,21 @@
       </div>
       <div class="grid-2">
         <div class="field">
-          <label for="ata-signed">Assinada em</label>
+          <label for="ata-signed"
+            >Assinada em
+            @if (aiTag('signedAt'); as t) {
+              <span class="ai-tag">{{ t }}</span>
+            }
+          </label>
           <input id="ata-signed" type="date" class="input" name="signedAt" [(ngModel)]="signedAt" />
         </div>
         <div class="field">
-          <label for="ata-valid">Vigente até</label>
+          <label for="ata-valid"
+            >Vigente até
+            @if (aiTag('validUntil'); as t) {
+              <span class="ai-tag">{{ t }}</span>
+            }
+          </label>
           <input
             id="ata-valid"
             type="date"
@@ -295,6 +332,9 @@
       <label class="check-line">
         <input type="checkbox" name="allowsAdhesion" [(ngModel)]="allowsAdhesion" />
         Permite adesão de outros órgãos (carona)
+        @if (aiTag('allowsAdhesion'); as t) {
+          <span class="ai-tag">{{ t }}</span>
+        }
       </label>
       <div class="field">
         <label for="ata-document">Arquivo da ata</label>

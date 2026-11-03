@@ -11,4 +11,5 @@ export interface UpdateRecordRequest {
   /** @minimum 0 */
   version: number;
   record: RecordRequest;
+  suggestedByAi?: boolean;
 }

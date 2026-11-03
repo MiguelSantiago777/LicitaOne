@@ -4,7 +4,7 @@ CRM de licitações públicas da Shema Suprimentos e Serviços. Acompanha cada l
 
 > O sistema se chamava ShemaCRM. Só o nome visível mudou: código, banco e filas continuam com `shema`/`shemacrm`.
 
-**Situação:** o MVP está pronto (Fases 0 a 6, com todos os itens da definição de pronto). A Fase 7 (IA para ler atas e contratos) está começando. Veja [Andamento](#andamento).
+**Situação:** o MVP está pronto (Fases 0 a 6, com todos os itens da definição de pronto). Na Fase 7, a leitura da ata com IA está pronta e aguarda a chave da API e a autorização do cliente. Veja [Andamento](#andamento).
 
 ## O que o sistema faz
 
@@ -19,6 +19,7 @@ CRM de licitações públicas da Shema Suprimentos e Serviços. Acompanha cada l
 - **Documentos versionados** por licitação (Ata, Contrato, Empenho, Atestado, Edital, Outros). O arquivo é conferido pelo conteúdo, não só pela extensão.
 - **Atas com vigência própria**, independente do contrato, e itens registrados.
 - **Caronas (adesões):** registro por órgão e item, com os limites configuráveis só sinalizados. O sistema não afirma regra jurídica; a pessoa confirma.
+- **Preencher com IA:** a IA lê o PDF da ata e preenche número, datas, "permite adesão" e itens, com a página de onde saiu cada valor e avisos do que não conseguiu ler. A pessoa confere e salva; o histórico registra que os dados vieram da IA. Desligado sem `ANTHROPIC_API_KEY`.
 - **Destaque e lista de oportunidades:** "Ata válida até 2028, oportunidade de replicar", ordenada por vencimento, e um calendário de vencimento das atas.
 
 **Comercial**
@@ -45,6 +46,7 @@ CRM de licitações públicas da Shema Suprimentos e Serviços. Acompanha cada l
 |---|---|
 | Backend | Java 21 (virtual threads), Spring Boot 4.1, Spring Modulith, JPA/Hibernate, Flyway, PostgreSQL |
 | Mensageria | RabbitMQ com outbox transacional, consumidores idempotentes, retry com backoff e DLQ por fila |
+| IA | Claude (SDK oficial da Anthropic para Java), saída estruturada, leitura em segundo plano pela fila |
 | Agendamento | Spring Scheduler + ShedLock (o job roda uma vez mesmo com várias instâncias) |
 | Arquivos | Interface `FileStorage` com S3 (SeaweedFS no compose) |
 | Segurança | OAuth2 Resource Server, JWT RS256 próprio, refresh em cookie HttpOnly, senhas com bcrypt, rate limit no login, checklist OWASP ASVS nível 1 |
@@ -62,6 +64,7 @@ Um único deployable Spring Boot, dividido em **módulos por contexto de negóci
 | `tenders` | Órgãos, licitações e ciclo de vida |
 | `contracts` | Contratos, itens, pedidos, saldo e importação de itens |
 | `pricerecords` | Atas, caronas e documentos |
+| `extraction` | Leitura de atas e contratos com IA (só sugere; a pessoa confere) |
 | `deals` | Funil de negociações |
 | `boards` | Quadros kanban livres |
 | `tasks` | Tarefas manuais e de alerta |
@@ -156,7 +159,7 @@ Uma branch por fase, cada uma a partir da anterior. O relatório de cada fase (o
 | 4 | Funil (Kanban), tarefas e quadros livres | ✅ |
 | 5 | Alertas (ShedLock → RabbitMQ), DLQ, rascunhos, painel e métricas | ✅ |
 | 6 | Acessibilidade, performance, segurança (ASVS L1), backup/restore, runbook | ✅ |
-| 7 | IA: leitura de ata e contrato em PDF para preencher o cadastro ([proposta](docs/propostas/0001-ia-no-licitaone.md)) | Em andamento |
+| 7 | IA: "Preencher com IA" lê o PDF da ata e preenche o formulário e os itens ([ADR 0016](docs/adr/0016-leitura-com-ia.md)) | ✅ ata (falta medir com atas reais e liberar o envio) |
 
 **Pendências:**
 - respostas do cliente em [`docs/decisoes.md`](docs/decisoes.md);

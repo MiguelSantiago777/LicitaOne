@@ -15,4 +15,5 @@ export interface ReplaceAtaItemsRequest {
    * @maxItems 500
    */
   items: AtaItemRequest[];
+  suggestedByAi?: boolean;
 }

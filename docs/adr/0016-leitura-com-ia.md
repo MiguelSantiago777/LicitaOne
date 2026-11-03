@@ -24,6 +24,7 @@ Cadastrar uma ata ou um contrato é digitação: número, datas, "permite adesã
   - **Claude**, com o SDK oficial `com.anthropic:anthropic-java`;
   - **desligada**, quando não há chave: a API responde `AI_DISABLED` e o front esconde o botão;
   - **falsa**, nos testes: CI e `verify` rodam sem rede e sem chave.
+  - **demonstração** (`SHEMA_EXTRACTION_DEMO=true`), só para o E2E: devolve sempre a mesma ata sem ler o PDF, e o backend não sobe com ela no perfil `prod`.
 - **Esquema:** `RawReading` (tudo texto, `""` para "não encontrado") é convertido e conferido em `ReadingResult`, no domínio e sem Spring:
   - dinheiro nunca passa por double;
   - aceita formato brasileiro copiado do documento;

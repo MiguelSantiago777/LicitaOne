@@ -1,6 +1,6 @@
 # Proposta 0001 — IA no LicitaOne
 
-- **Status:** em discussão (nada aprovado nem implementado)
+- **Status:** item 1 (leitura da ata) aprovado e feito na Fase 7 ([relatório](../fases/fase-7.md), [ADR 0016](../adr/0016-leitura-com-ia.md)); os outros seguem em discussão
 - **Data:** 03/11/2026
 - **Origem:** conversa com o time em 03/11/2026 sobre funcionalidades para diferenciar o produto
 

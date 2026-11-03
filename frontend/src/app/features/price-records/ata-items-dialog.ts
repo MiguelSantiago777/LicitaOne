@@ -12,7 +12,11 @@ import {
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ContractsService } from '../../api/generated/contracts/contracts.service';
-import type { ContractResponse, PriceRecordResponse } from '../../api/generated/model';
+import type {
+  ContractResponse,
+  ExtractionItem,
+  PriceRecordResponse,
+} from '../../api/generated/model';
 import { PriceRecordsService } from '../../api/generated/price-records/price-records.service';
 import { ApiError } from '../../core/http/api-error';
 import { parseQuantity, parseUnitPrice } from '../../shared/format';
@@ -55,6 +59,15 @@ const price = new Intl.NumberFormat('pt-BR', {
         <form id="ata-items-form" class="form" (ngSubmit)="save()" novalidate>
           @if (error(); as message) {
             <div class="alert" role="alert">{{ message }}</div>
+          }
+          @if (suggested()?.length) {
+            <p class="ai-note" role="status">
+              <app-icon name="sparkles" [size]="16" />
+              <span
+                >Itens lidos pela IA no PDF da ata. Confira descrição, quantidade e valor unitário
+                de cada um antes de salvar; os campos em branco ela não conseguiu ler.</span
+              >
+            </p>
           }
           @if (contracts().length) {
             <div class="copy">
@@ -187,6 +200,8 @@ export class AtaItemsDialog {
 
   readonly open = input(false);
   readonly record = input<PriceRecordResponse | null>(null);
+  /** Itens lidos pela IA (ADR 0016): entram no lugar dos itens sem carona, para conferir antes de salvar. */
+  readonly suggested = input<ExtractionItem[] | null>(null);
   readonly closed = output<void>();
   readonly saved = output<PriceRecordResponse>();
 
@@ -232,7 +247,22 @@ export class AtaItemsDialog {
           locked: i.used > 0,
         })),
       );
-      if (!r?.items.length) this.add();
+      const suggested = this.suggested();
+      if (suggested?.length) {
+        this.rows.update((rows) => [
+          ...rows.filter((row) => row.locked),
+          ...suggested.map((i) => ({
+            lot: i.lot ?? '',
+            description: i.description ?? '',
+            unit: i.unit ?? '',
+            quantity: i.quantity != null ? formatQty(i.quantity) : '',
+            unitPrice: i.unitPrice != null ? price.format(i.unitPrice) : '',
+            locked: false,
+          })),
+        ]);
+      } else if (!r?.items.length) {
+        this.add();
+      }
     });
   }
 
@@ -288,7 +318,8 @@ export class AtaItemsDialog {
     }
     this.saving.set(true);
     this.error.set(null);
-    this.api.replacePriceRecordItems(r.id, { version: r.version, items }).subscribe({
+    const suggestedByAi = !!this.suggested()?.length;
+    this.api.replacePriceRecordItems(r.id, { version: r.version, items, suggestedByAi }).subscribe({
       next: (updated) => {
         this.saving.set(false);
         this.saved.emit(updated);

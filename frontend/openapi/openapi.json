@@ -52,6 +52,10 @@
       "description": "Operação"
     },
     {
+      "name": "extractions",
+      "description": "Leitura de atas e contratos com IA"
+    },
+    {
       "name": "auth",
       "description": "Autenticação"
     },
@@ -2385,6 +2389,38 @@
         }
       }
     },
+    "/api/v1/documents/{documentId}/extractions": {
+      "post": {
+        "tags": [
+          "extractions"
+        ],
+        "summary": "Pede para a IA ler a versão atual do documento (processada em segundo plano)",
+        "operationId": "requestExtraction",
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/deals": {
       "post": {
         "tags": [
@@ -3615,6 +3651,59 @@
         }
       }
     },
+    "/api/v1/extractions/{extractionId}": {
+      "get": {
+        "tags": [
+          "extractions"
+        ],
+        "summary": "Situação e resultado de uma leitura",
+        "operationId": "getExtraction",
+        "parameters": [
+          {
+            "name": "extractionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/extractions/settings": {
+      "get": {
+        "tags": [
+          "extractions"
+        ],
+        "summary": "Se a leitura com IA está ligada neste ambiente",
+        "operationId": "getExtractionSettings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionSettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/documents/{id}/versions/{number}/file": {
       "get": {
         "tags": [
@@ -3650,6 +3739,38 @@
                 "schema": {
                   "type": "string",
                   "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{documentId}/extractions/latest": {
+      "get": {
+        "tags": [
+          "extractions"
+        ],
+        "summary": "Leitura mais recente do documento (204 se nunca foi lido)",
+        "operationId": "getLatestExtraction",
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionResponse"
                 }
               }
             }
@@ -4683,6 +4804,9 @@
           },
           "record": {
             "$ref": "#/components/schemas/RecordRequest"
+          },
+          "suggestedByAi": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -5087,6 +5211,9 @@
             },
             "maxItems": 500,
             "minItems": 0
+          },
+          "suggestedByAi": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -6539,6 +6666,9 @@
           },
           "record": {
             "$ref": "#/components/schemas/RecordRequest"
+          },
+          "suggestedByAi": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -6988,6 +7118,204 @@
         "required": [
           "orderDate"
         ]
+      },
+      "ExtractionItem": {
+        "type": "object",
+        "properties": {
+          "lot": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unitPrice": {
+            "type": "number"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ExtractionReading": {
+        "type": "object",
+        "properties": {
+          "documentType": {
+            "type": "string"
+          },
+          "number": {
+            "$ref": "#/components/schemas/ValueString"
+          },
+          "signedAt": {
+            "$ref": "#/components/schemas/ValueLocalDate"
+          },
+          "validFrom": {
+            "$ref": "#/components/schemas/ValueLocalDate"
+          },
+          "validUntil": {
+            "$ref": "#/components/schemas/ValueLocalDate"
+          },
+          "allowsAdhesion": {
+            "$ref": "#/components/schemas/ValueBoolean"
+          },
+          "totalValue": {
+            "$ref": "#/components/schemas/ValueBigDecimal"
+          },
+          "agencyName": {
+            "$ref": "#/components/schemas/ValueString"
+          },
+          "supplierName": {
+            "$ref": "#/components/schemas/ValueString"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExtractionItem"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ExtractionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tenderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "ATA",
+              "CONTRATO"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "DONE",
+              "FAILED"
+            ]
+          },
+          "result": {
+            "$ref": "#/components/schemas/ExtractionReading"
+          },
+          "model": {
+            "type": "string"
+          },
+          "inputTokens": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "outputTokens": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "createdByName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "createdAt",
+          "createdByName",
+          "documentId",
+          "documentVersion",
+          "errorMessage",
+          "finishedAt",
+          "id",
+          "inputTokens",
+          "kind",
+          "model",
+          "outputTokens",
+          "result",
+          "status",
+          "tenderId"
+        ]
+      },
+      "ValueBigDecimal": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ValueBoolean": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "boolean"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ValueLocalDate": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "format": "date"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ValueString": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
       },
       "NewDealRequest": {
         "type": "object",
@@ -7790,6 +8118,26 @@
           "situation",
           "tenderId",
           "validUntil"
+        ]
+      },
+      "ExtractionSettingsResponse": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "model": {
+            "type": "string"
+          },
+          "maxFileMb": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "enabled",
+          "maxFileMb",
+          "model"
         ]
       },
       "ContractWithoutOrderResponse": {

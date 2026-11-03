@@ -10,4 +10,5 @@ import type { RecordRequest } from './recordRequest';
 export interface NewRecordRequest {
   tenderId: string;
   record: RecordRequest;
+  suggestedByAi?: boolean;
 }

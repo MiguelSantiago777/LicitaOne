@@ -17,6 +17,7 @@ import { catchError } from 'rxjs/operators';
 import { DocumentsService } from '../../api/generated/documents/documents.service';
 import type {
   CaronaResponse,
+  ExtractionItem,
   PriceRecordResponse,
   TenderResponse,
 } from '../../api/generated/model';
@@ -24,6 +25,7 @@ import { PriceRecordsService } from '../../api/generated/price-records/price-rec
 import { ApiError } from '../../core/http/api-error';
 import { Icon } from '../../shared/ui/icon';
 import { Panel } from '../../shared/ui/panel';
+import { AiReading, AtaAiFill } from './ata-ai-fill';
 import { AtaItemsDialog } from './ata-items-dialog';
 import { CaronaDialog, CaronaPreset } from './carona-dialog';
 import { saveBlob } from './documents-section';
@@ -46,6 +48,7 @@ const WON = ['VENCIDA', 'AGUARDANDO_ASSINATURA', 'CONTRATO_ASSINADO', 'EM_ANDAME
     RouterLink,
     Icon,
     Panel,
+    AtaAiFill,
     AtaItemsDialog,
     CaronaDialog,
   ],
@@ -96,6 +99,10 @@ export class AtaSection {
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly formError = signal<string | null>(null);
+  /** Leitura da IA aplicada no formulário aberto (ADR 0016); vai como "sugerido pela IA" no histórico. */
+  protected readonly aiReading = signal<AiReading | null>(null);
+  /** Itens lidos pela IA, oferecidos no diálogo de itens depois de salvar a ata. */
+  protected readonly suggestedItems = signal<ExtractionItem[] | null>(null);
 
   protected number = '';
   protected signedAt = '';
@@ -122,6 +129,7 @@ export class AtaSection {
     this.allowsAdhesion = ata?.allowsAdhesion ?? true;
     this.notes = ata?.notes ?? '';
     this.documentId = ata?.document?.id ?? '';
+    this.aiReading.set(null);
     this.formError.set(null);
     this.formOpen.set(true);
   }
@@ -143,22 +151,54 @@ export class AtaSection {
       notes: this.notes.trim() || undefined,
       documentId: this.documentId || undefined,
     };
+    const reading = this.aiReading();
+    const suggestedByAi = reading != null;
     this.saving.set(true);
     this.formError.set(null);
     const request = ata
-      ? this.api.updatePriceRecord(ata.id, { version: ata.version, record })
-      : this.api.createPriceRecord({ tenderId: this.tender().id, record });
+      ? this.api.updatePriceRecord(ata.id, { version: ata.version, record, suggestedByAi })
+      : this.api.createPriceRecord({ tenderId: this.tender().id, record, suggestedByAi });
     request.subscribe({
       next: (saved) => {
         this.saving.set(false);
         this.formOpen.set(false);
+        this.aiReading.set(null);
         this.accept(saved);
+        const items = reading?.extraction.result?.items ?? [];
+        if (items.length) {
+          this.suggestedItems.set(items);
+          this.itemsOpen.set(true);
+        }
       },
       error: (err: unknown) => {
         this.saving.set(false);
         this.formError.set(err instanceof ApiError ? err.detail : 'Não foi possível salvar.');
       },
     });
+  }
+
+  /** Preenche o formulário com o que a IA leu. Só troca os campos que ela achou; o resto fica como está. */
+  protected applyAi(reading: AiReading): void {
+    const r = reading.extraction.result;
+    if (r?.number?.value) this.number = r.number.value;
+    if (r?.signedAt?.value) this.signedAt = r.signedAt.value;
+    if (r?.validUntil?.value) this.validUntil = r.validUntil.value;
+    if (r?.allowsAdhesion?.value != null) this.allowsAdhesion = r.allowsAdhesion.value;
+    this.documentId = reading.documentId;
+    this.formError.set(null);
+    this.aiReading.set(reading);
+  }
+
+  /** Etiqueta "IA · p. 3" ao lado do campo que veio da leitura. */
+  protected aiTag(field: 'number' | 'signedAt' | 'validUntil' | 'allowsAdhesion'): string | null {
+    const v = this.aiReading()?.extraction.result?.[field];
+    if (v?.value == null) return null;
+    return v.page ? `IA · p. ${v.page}` : 'IA';
+  }
+
+  protected closeItems(): void {
+    this.itemsOpen.set(false);
+    this.suggestedItems.set(null);
   }
 
   protected openCarona(preset: CaronaPreset | null = null): void {
@@ -201,6 +241,7 @@ export class AtaSection {
 
   protected accept(updated: PriceRecordResponse): void {
     this.itemsOpen.set(false);
+    this.suggestedItems.set(null);
     this.caronaOpen.set(false);
     this.activePreset.set(null);
     this.error.set(null);
