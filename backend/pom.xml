@@ -23,6 +23,7 @@
 		<commons-csv.version>1.14.0</commons-csv.version>
 		<awssdk.version>2.55.16</awssdk.version>
 		<shedlock.version>7.10.1</shedlock.version>
+		<anthropic.version>3.4.0</anthropic.version>
 		<!-- Acima da versão do Spring Boot 4.1.2 (5.30.0), que tem CVEs HIGH corrigidas na 5.33/5.34 (Trivy, Fase 6) -->
 		<rabbit-amqp-client.version>5.37.0</rabbit-amqp-client.version>
 		<jacoco.version>0.8.16</jacoco.version>
@@ -148,6 +149,12 @@
 			<groupId>com.bucket4j</groupId>
 			<artifactId>bucket4j_jdk17-core</artifactId>
 			<version>${bucket4j.version}</version>
+		</dependency>
+		<!-- Leitura de atas e contratos com IA (Fase 7, ADR 0016) -->
+		<dependency>
+			<groupId>com.anthropic</groupId>
+			<artifactId>anthropic-java</artifactId>
+			<version>${anthropic.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.micrometer</groupId>

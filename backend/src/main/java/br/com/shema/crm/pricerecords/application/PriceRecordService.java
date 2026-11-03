@@ -150,7 +150,7 @@ public class PriceRecordService {
                 .toList();
     }
 
-    public Detail create(UUID tenderId, RecordDraft draft) {
+    public Detail create(UUID tenderId, RecordDraft draft, boolean suggestedByAi) {
         TenderRef tender = tender(tenderId);
         CurrentUser user = CurrentUser.get();
         user.requireCanEditOwnedBy(tender.ownerId());
@@ -166,12 +166,13 @@ public class PriceRecordService {
                 record,
                 PriceRecordEvent.Type.ATA_CREATED,
                 "Ata " + record.getNumber() + " registrada, válida até " + date(record.getValidUntil())
-                        + (record.isAllowsAdhesion() ? "" : " (não permite adesão)"),
+                        + (record.isAllowsAdhesion() ? "" : " (não permite adesão)")
+                        + aiNote(suggestedByAi, user),
                 user);
         return detail(record);
     }
 
-    public Detail update(UUID id, long expectedVersion, RecordDraft draft) {
+    public Detail update(UUID id, long expectedVersion, RecordDraft draft, boolean suggestedByAi) {
         CurrentUser user = CurrentUser.get();
         PriceRecord record = editable(id, expectedVersion, user);
         validateDocument(record.getTenderId(), draft.documentId());
@@ -184,12 +185,13 @@ public class PriceRecordService {
                 "Ata " + record.getNumber() + " alterada"
                         + (before.equals(record.getValidUntil())
                                 ? ""
-                                : "; vigência de " + date(before) + " para " + date(record.getValidUntil())),
+                                : "; vigência de " + date(before) + " para " + date(record.getValidUntil()))
+                        + aiNote(suggestedByAi, user),
                 user);
         return detail(record);
     }
 
-    public Detail replaceItems(UUID id, long expectedVersion, List<ItemDraft> items) {
+    public Detail replaceItems(UUID id, long expectedVersion, List<ItemDraft> items, boolean suggestedByAi) {
         CurrentUser user = CurrentUser.get();
         PriceRecord record = changing(id, expectedVersion, user);
         record.replaceItems(items);
@@ -199,7 +201,8 @@ public class PriceRecordService {
                 PriceRecordEvent.Type.ITEMS_CHANGED,
                 "Itens da ata: " + items.size()
                         + (items.size() == 1 ? " item" : " itens") + ", "
-                        + BrFormat.money(record.itemsValue() == null ? BigDecimal.ZERO : record.itemsValue()),
+                        + BrFormat.money(record.itemsValue() == null ? BigDecimal.ZERO : record.itemsValue())
+                        + aiNote(suggestedByAi, user),
                 user);
         return detail(record);
     }
@@ -337,6 +340,11 @@ public class PriceRecordService {
     private TenderRef tender(UUID tenderId) {
         return tenders.find(tenderId)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Licitação não encontrada."));
+    }
+
+    /** Complemento do histórico quando os dados vieram da leitura com IA (ADR 0016). */
+    private static String aiNote(boolean suggestedByAi, CurrentUser user) {
+        return suggestedByAi ? " · dados sugeridos pela IA e conferidos por " + user.name() : "";
     }
 
     private void record(PriceRecord record, PriceRecordEvent.Type type, String summary, CurrentUser user) {

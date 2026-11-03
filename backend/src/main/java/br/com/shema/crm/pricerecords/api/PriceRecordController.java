@@ -58,14 +58,16 @@ class PriceRecordController {
         }
     }
 
+    /** @param suggestedByAi os dados vieram da leitura com IA e foram conferidos (fica no histórico) */
     record NewRecordRequest(
-            @NotNull UUID tenderId, @NotNull @Valid RecordRequest record) {}
+            @NotNull UUID tenderId, @NotNull @Valid RecordRequest record, Boolean suggestedByAi) {}
 
     record UpdateRecordRequest(
             @NotNull(message = "Versão obrigatória") @PositiveOrZero
             Long version,
 
-            @NotNull @Valid RecordRequest record) {}
+            @NotNull @Valid RecordRequest record,
+            Boolean suggestedByAi) {}
 
     record AtaItemRequest(
             UUID id,
@@ -83,7 +85,8 @@ class PriceRecordController {
             @NotNull(message = "Versão obrigatória") @PositiveOrZero
             Long version,
 
-            @NotNull @Size(max = 500) List<@Valid @NotNull AtaItemRequest> items) {}
+            @NotNull @Size(max = 500) List<@Valid @NotNull AtaItemRequest> items,
+            Boolean suggestedByAi) {}
 
     record LineRequest(@NotNull UUID itemId, @NotNull BigDecimal quantity) {}
 
@@ -153,14 +156,16 @@ class PriceRecordController {
     @PreAuthorize("hasAnyRole('ADMIN','SALES')")
     @Operation(summary = "Registra a ata de uma licitação vencida", operationId = "createPriceRecord")
     Detail create(@Valid @RequestBody NewRecordRequest request) {
-        return service.create(request.tenderId(), request.record().toDraft());
+        return service.create(
+                request.tenderId(), request.record().toDraft(), Boolean.TRUE.equals(request.suggestedByAi()));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','SALES')")
     @Operation(summary = "Altera os dados da ata", operationId = "updatePriceRecord")
     Detail update(@PathVariable UUID id, @Valid @RequestBody UpdateRecordRequest request) {
-        return service.update(id, request.version(), request.record().toDraft());
+        return service.update(
+                id, request.version(), request.record().toDraft(), Boolean.TRUE.equals(request.suggestedByAi()));
     }
 
     @PutMapping("/{id}/items")
@@ -173,7 +178,8 @@ class PriceRecordController {
                 request.items().stream()
                         .map(i ->
                                 new ItemDraft(i.id(), i.lot(), i.description(), i.unit(), i.quantity(), i.unitPrice()))
-                        .toList());
+                        .toList(),
+                Boolean.TRUE.equals(request.suggestedByAi()));
     }
 
     @PostMapping("/{id}/caronas/check")

@@ -46,6 +46,43 @@ public class ReliableConsumer {
             Class<T> payloadType,
             Consumer<MessageEnvelope<T>> handler)
             throws IOException {
+        run(
+                message,
+                channel,
+                consumerName,
+                payloadType,
+                envelope -> tx.execute(status -> {
+                    if (processed.markIfNew(envelope.eventId(), consumerName)) {
+                        handler.accept(envelope);
+                    } else {
+                        log.info("Mensagem {} já processada por {}; ignorada", envelope.eventId(), consumerName);
+                    }
+                    return null;
+                }));
+    }
+
+    /**
+     * Como {@link #consume}, mas sem abrir transação nem marcar a mensagem: para trabalho demorado fora do banco (ex.:
+     * chamada a um serviço externo), que não pode segurar uma conexão. O handler abre as próprias transações curtas e
+     * precisa ser idempotente pelo estado do que processa.
+     */
+    public <T> void consumeOutsideTransaction(
+            Message message,
+            Channel channel,
+            String consumerName,
+            Class<T> payloadType,
+            Consumer<MessageEnvelope<T>> handler)
+            throws IOException {
+        run(message, channel, consumerName, payloadType, handler);
+    }
+
+    private <T> void run(
+            Message message,
+            Channel channel,
+            String consumerName,
+            Class<T> payloadType,
+            Consumer<MessageEnvelope<T>> handler)
+            throws IOException {
         long tag = message.getMessageProperties().getDeliveryTag();
         MessageEnvelope<T> envelope;
         try {
@@ -60,14 +97,10 @@ public class ReliableConsumer {
             MDC.put(CorrelationIdFilter.MDC_KEY, envelope.correlationId());
         }
         try {
-            retry.execute(() -> tx.execute(status -> {
-                if (processed.markIfNew(envelope.eventId(), consumerName)) {
-                    handler.accept(envelope);
-                } else {
-                    log.info("Mensagem {} já processada por {}; ignorada", envelope.eventId(), consumerName);
-                }
+            retry.execute(() -> {
+                handler.accept(envelope);
                 return null;
-            }));
+            });
             channel.basicAck(tag, false);
         } catch (RetryException e) {
             log.error(

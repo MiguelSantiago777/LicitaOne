@@ -115,6 +115,12 @@ shema:
     app-url: ${SHEMA_APP_URL:http://localhost:${FRONTEND_PORT:14200}}
     mail-from: ${SHEMA_ALERTS_MAIL_FROM:LicitaOne <alertas@shema.local>}
     mail-enabled: ${SHEMA_ALERTS_MAIL_ENABLED:true}
+  # Leitura de atas e contratos com IA (Fase 7, ADR 0016). Sem chave, a funcionalidade fica desligada.
+  extraction:
+    api-key: ${ANTHROPIC_API_KEY:}
+    model: ${SHEMA_EXTRACTION_MODEL:claude-opus-5-5}
+    effort: ${SHEMA_EXTRACTION_EFFORT:medium}
+    fallbacks: ${SHEMA_EXTRACTION_FALLBACKS:true}
   auth:
     secure-cookie: false
     cors-origins: ${SHEMA_CORS_ORIGINS:http://localhost:4300}
