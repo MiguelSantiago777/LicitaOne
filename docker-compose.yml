@@ -81,6 +81,11 @@ services:
       SHEMA_ADMIN_PASSWORD: ${SHEMA_ADMIN_PASSWORD}
       SHEMA_JWT_PRIVATE_KEY: ${SHEMA_JWT_PRIVATE_KEY:-}
       SHEMA_JWT_KEY_ID: ${SHEMA_JWT_KEY_ID:-dev-1}
+      # Leitura com IA (ADR 0016): sem chave, fica desligada
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      SHEMA_EXTRACTION_MODEL: ${SHEMA_EXTRACTION_MODEL:-claude-opus-5-5}
+      # Só para o E2E: leitor de demonstração, sem IA (ADR 0016)
+      SHEMA_EXTRACTION_DEMO: ${SHEMA_EXTRACTION_DEMO:-false}
       SHEMA_CORS_ORIGINS: http://localhost:${FRONTEND_PORT:-14200}
       SHEMA_AUTH_LOGINATTEMPTSPERMINUTE: ${SHEMA_LOGIN_ATTEMPTS_PER_MINUTE:-10}
       # Planilhas, relatórios e documentos no S3 (SeaweedFS, ADR 0007)

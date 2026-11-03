@@ -19,6 +19,8 @@ jobs:
         run: |
           cp .env.example .env
           echo "SHEMA_LOGIN_ATTEMPTS_PER_MINUTE=1000" >> .env
+          # Leitura com IA sem chave e sem custo: leitor de demonstração (ADR 0016)
+          echo "SHEMA_EXTRACTION_DEMO=true" >> .env
           docker compose up -d --build --wait
       # As imagens que sobem em produção: pacotes do Alpine e jars, não só os arquivos de dependência
       - name: Trivy na imagem do backend

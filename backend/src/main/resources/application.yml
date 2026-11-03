@@ -121,6 +121,8 @@ shema:
     model: ${SHEMA_EXTRACTION_MODEL:claude-opus-5-5}
     effort: ${SHEMA_EXTRACTION_EFFORT:medium}
     fallbacks: ${SHEMA_EXTRACTION_FALLBACKS:true}
+    # Só para E2E: leitor de demonstração, sem IA. Nunca em produção.
+    demo: ${SHEMA_EXTRACTION_DEMO:false}
   auth:
     secure-cookie: false
     cors-origins: ${SHEMA_CORS_ORIGINS:http://localhost:4300}

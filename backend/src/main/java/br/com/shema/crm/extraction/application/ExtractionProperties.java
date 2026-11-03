@@ -12,6 +12,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param fallbacks se o servidor da Anthropic tenta outro modelo quando o principal recusa o documento
  * @param companyName empresa dona do sistema, para o modelo achar os itens dela e para avisar se o fornecedor é outro
  * @param maxFileMb maior PDF aceito: a requisição tem limite de 32 MB, e o PDF vai em base64 (cerca de 33% maior)
+ * @param demo leitor de demonstração, sem IA (sempre a mesma leitura): só para E2E e para ver a tela sem chave
  */
 @ConfigurationProperties("shema.extraction")
 public record ExtractionProperties(
@@ -22,7 +23,8 @@ public record ExtractionProperties(
         @DefaultValue("5") int timeoutMinutes,
         @DefaultValue("true") boolean fallbacks,
         @DefaultValue("Shema Suprimentos e Serviços") String companyName,
-        @DefaultValue("20") int maxFileMb) {
+        @DefaultValue("20") int maxFileMb,
+        @DefaultValue("false") boolean demo) {
 
     public boolean hasApiKey() {
         return apiKey != null && !apiKey.isBlank();

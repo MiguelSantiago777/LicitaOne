@@ -3,6 +3,7 @@ package br.com.shema.crm.extraction.domain;
 import br.com.shema.crm.extraction.domain.RawReading.RawField;
 import br.com.shema.crm.extraction.domain.RawReading.RawItem;
 import br.com.shema.crm.shared.domain.BrFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.Normalizer;
@@ -20,6 +21,7 @@ import java.util.regex.Pattern;
  *
  * @param warnings avisos do modelo e os da conferência (valor ilegível, vigência invertida, fornecedor diferente)
  */
+@Schema(name = "ExtractionReading")
 public record ReadingResult(
         String documentType,
         Value<String> number,
@@ -41,6 +43,7 @@ public record ReadingResult(
         }
     }
 
+    @Schema(name = "ExtractionItem")
     public record Item(
             String lot, String description, String unit, BigDecimal quantity, BigDecimal unitPrice, Integer page) {}
 

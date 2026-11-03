@@ -31,6 +31,8 @@ services:
       SPRING_PROFILES_ACTIVE: docker,prod
       SHEMA_JWT_PRIVATE_KEY: ${SHEMA_JWT_PRIVATE_KEY:?defina a chave RSA (PEM) no .env.prod}
       SHEMA_JWT_KEY_ID: "${SHEMA_JWT_KEY_ID:?defina o id da chave, por exemplo prod-2026-10}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      SHEMA_EXTRACTION_MODEL: "${SHEMA_EXTRACTION_MODEL:-claude-opus-5-5}"
       SHEMA_CORS_ORIGINS: "${SHEMA_PUBLIC_URL:?defina o endereço público (https://...)}"
       SHEMA_APP_URL: ${SHEMA_PUBLIC_URL}
       MAIL_HOST: ${MAIL_HOST:?defina o servidor SMTP}

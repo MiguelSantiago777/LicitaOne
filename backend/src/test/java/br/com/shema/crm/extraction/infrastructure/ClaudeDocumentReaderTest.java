@@ -20,7 +20,7 @@ class ClaudeDocumentReaderTest {
 
     private static ExtractionProperties properties(boolean fallbacks) {
         return new ExtractionProperties(
-                "chave-de-teste", "claude-opus-5-5", "medium", 32000, 5, fallbacks, "Shema", 20);
+                "chave-de-teste", "claude-opus-5-5", "medium", 32000, 5, fallbacks, "Shema", 20, false);
     }
 
     private static ClaudeDocumentReader reader(ExtractionProperties properties) {
