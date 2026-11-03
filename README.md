@@ -1,12 +1,76 @@
 # LicitaOne
 
-CRM de licitações públicas da Shema Suprimentos e Serviços: acompanha cada licitação ganha, da vitória ao encerramento do contrato (pedidos, saldo, atas e caronas).
+CRM de licitações públicas da Shema Suprimentos e Serviços. Acompanha cada licitação ganha da vitória até o encerramento do contrato: assinatura, pedidos, saldo, documentos e, principalmente, a **ata de registro de preços** como oportunidade de carona em outros órgãos.
 
-- Especificação: [`docs/especificacao.md`](docs/especificacao.md)
-- Respostas do cliente e pontos em aberto: [`docs/decisoes.md`](docs/decisoes.md)
-- Decisões de arquitetura: [`docs/adr/`](docs/adr/README.md)
-- Andamento por fase: [`docs/fases/`](docs/fases)
-- Operação (produção, backup, incidentes, LGPD): [`docs/operacao/runbook.md`](docs/operacao/runbook.md), com [segurança (ASVS L1)](docs/operacao/seguranca.md), [performance](docs/operacao/performance.md) e [mensageria e DLQ](docs/operacao/mensageria.md)
+> O sistema se chamava ShemaCRM. Só o nome visível mudou: código, banco e filas continuam com `shema`/`shemacrm`.
+
+**Situação:** o MVP está pronto (Fases 0 a 6, com todos os itens da definição de pronto). A Fase 7 (IA para ler atas e contratos) está começando. Veja [Andamento](#andamento).
+
+## O que o sistema faz
+
+**Licitações e contratos**
+- **Ciclo de vida com máquina de estados:** Vencida → Aguardando assinatura → Contrato assinado → Em andamento → Encerrado. Cada transição é validada (por exemplo, não dá para assinar sem a data de assinatura) e fica no histórico.
+- **Tela principal com as quatro abas** do dia a dia: vencidas, assinados, em andamento e encerrados. Cada aba tem contador e soma de valores, busca, filtros (órgão, município, UF, material, valor, período, responsável) e ordenação, tudo refletido na URL.
+- **Detalhe da licitação** com as abas Resumo, Itens e pedidos, Documentos, Histórico, Tarefas e Negociação.
+- **Itens, pedidos e saldo:** o saldo é calculado por quantidade de cada item e por valor. Contratos, empenhos e dispensas.
+- **Importação da planilha atual** (.xlsx/.csv): mapeamento de colunas, pré-visualização com erro por linha, processamento em segundo plano e relatório baixável.
+
+**Atas, caronas e documentos**
+- **Documentos versionados** por licitação (Ata, Contrato, Empenho, Atestado, Edital, Outros). O arquivo é conferido pelo conteúdo, não só pela extensão.
+- **Atas com vigência própria**, independente do contrato, e itens registrados.
+- **Caronas (adesões):** registro por órgão e item, com os limites configuráveis só sinalizados. O sistema não afirma regra jurídica; a pessoa confirma.
+- **Destaque e lista de oportunidades:** "Ata válida até 2028, oportunidade de replicar", ordenada por vencimento, e um calendário de vencimento das atas.
+
+**Comercial**
+- **Funil de negociações em Kanban**, com arrastar e soltar, soma por coluna, troca para lista, filtros e faixa de tarefa atrasada. Uma negociação pode nascer de uma ata para oferecer carona.
+- **Quadros livres** (*Organização mensal*, *Licitações vencidas* e outros que a equipe criar).
+- **Tarefas** manuais e automáticas, com conclusão em massa.
+
+**Alertas e painel**
+- **Três alertas diários:**
+  - contrato assinado há mais de 30 dias sem pedido;
+  - ata vencendo em 90, 60 ou 30 dias;
+  - licitação vencida sem contrato.
+  
+  Cada alerta vira tarefa com **rascunho de e-mail ao órgão** (copiar ou abrir no cliente de e-mail; nada é enviado sozinho) e aviso interno ao responsável. Nenhum alerta duplica tarefa.
+- **Painel:** totais por estado, valor em carteira, saldo a pedir, contratos parados, atas vencendo, tarefas atrasadas e principais órgãos.
+
+**Acesso e auditoria**
+- **Perfis ADMIN, COMERCIAL e LEITURA.** O comercial só edita o que é dele.
+- **Auditoria completa** (quem alterou o quê e quando) e controle de concorrência: duas pessoas editando o mesmo registro recebem um aviso claro.
+
+## Tecnologia
+
+| Camada | O que usa |
+|---|---|
+| Backend | Java 21 (virtual threads), Spring Boot 4.1, Spring Modulith, JPA/Hibernate, Flyway, PostgreSQL |
+| Mensageria | RabbitMQ com outbox transacional, consumidores idempotentes, retry com backoff e DLQ por fila |
+| Agendamento | Spring Scheduler + ShedLock (o job roda uma vez mesmo com várias instâncias) |
+| Arquivos | Interface `FileStorage` com S3 (SeaweedFS no compose) |
+| Segurança | OAuth2 Resource Server, JWT RS256 próprio, refresh em cookie HttpOnly, senhas com bcrypt, rate limit no login, checklist OWASP ASVS nível 1 |
+| Frontend | Angular 22 (standalone, Signals, zoneless), cliente da API gerado do OpenAPI, locale pt-BR |
+| Testes | JUnit + AssertJ (domínio sem Spring), Testcontainers (Postgres e RabbitMQ reais), Playwright com auditoria axe (WCAG 2.1 AA) em 1440 e 390 px |
+| Operação | Actuator, Micrometer + Prometheus, Grafana, logs JSON com correlationId, Docker multi-stage não-root |
+| CI | GitHub Actions separados para backend, frontend e E2E, com Trivy em dependências e imagens |
+
+## Arquitetura
+
+Um único deployable Spring Boot, dividido em **módulos por contexto de negócio** (monólito modular, [ADR 0001](docs/adr/0001-monolito-modular.md)). Cada módulo expõe só a API pública. Os módulos conversam por interface ou por eventos de domínio, e um teste quebra o build se algum módulo acessar a parte interna de outro.
+
+| Módulo (`br.com.shema.crm.*`) | Responsabilidade |
+|---|---|
+| `tenders` | Órgãos, licitações e ciclo de vida |
+| `contracts` | Contratos, itens, pedidos, saldo e importação de itens |
+| `pricerecords` | Atas, caronas e documentos |
+| `deals` | Funil de negociações |
+| `boards` | Quadros kanban livres |
+| `tasks` | Tarefas manuais e de alerta |
+| `imports` | Jobs de importação de planilha |
+| `notifications` | Alertas, rascunhos e avisos por e-mail |
+| `identity` | Usuários, perfis, login e sessão |
+| `shared` | Dinheiro, datas, auditoria, outbox, erros (RFC 7807), armazenamento |
+
+Fluxos assíncronos (importação, alertas e avisos) saem pelo outbox para o RabbitMQ e voltam por consumidores idempotentes. A topologia e o reprocessamento da DLQ estão em [`docs/operacao/mensageria.md`](docs/operacao/mensageria.md).
 
 ## Subir tudo
 
@@ -69,7 +133,7 @@ cd e2e && npm ci && npx playwright install chromium && npm test   # com o sistem
 deploy/backup/test-restore.sh      # backup → apaga o ambiente → restaura → confere (só em dev: apaga os volumes)
 ```
 
-Os E2E incluem a auditoria de acessibilidade (axe, WCAG 2.1 A/AA) em todas as telas e diálogos, em 1440 e 390 px.
+Os testes de integração precisam do Docker no ar (Testcontainers). Os E2E incluem a auditoria de acessibilidade (axe, WCAG 2.1 A/AA) em todas as telas e diálogos, em 1440 e 390 px.
 
 O build quebra se:
 - um módulo acessar a parte interna de outro (`ModularityTests`);
@@ -79,18 +143,51 @@ O build quebra se:
 - uma tela ou diálogo tiver violação de acessibilidade (axe no E2E);
 - o Trivy achar vulnerabilidade crítica numa dependência ou numa imagem (CI).
 
+## Andamento
+
+Uma branch por fase, cada uma a partir da anterior. O relatório de cada fase (o que ficou pronto, testes e pendências) está em [`docs/fases/`](docs/fases).
+
+| Fase | Conteúdo | Situação |
+|---|---|---|
+| 0 | Fundação: compose, módulos, CI, login, observabilidade, layout | ✅ |
+| 1 | Órgãos, licitações, máquina de estados, quatro abas, histórico | ✅ |
+| 2 | Contratos, itens, pedidos, saldo, importação assíncrona, outbox | ✅ |
+| 3 | Documentos, atas, caronas e oportunidades | ✅ |
+| 4 | Funil (Kanban), tarefas e quadros livres | ✅ |
+| 5 | Alertas (ShedLock → RabbitMQ), DLQ, rascunhos, painel e métricas | ✅ |
+| 6 | Acessibilidade, performance, segurança (ASVS L1), backup/restore, runbook | ✅ |
+| 7 | IA: leitura de ata e contrato em PDF para preencher o cadastro ([proposta](docs/propostas/0001-ia-no-licitaone.md)) | Em andamento |
+
+**Pendências:**
+- respostas do cliente em [`docs/decisoes.md`](docs/decisoes.md);
+- primeiro deploy (servidor, domínio com TLS, SMTP);
+- antivírus nos documentos e MFA (ASVS nível 2);
+- recuperação de senha por e-mail.
+
+## Documentação
+
+| Onde | O quê |
+|---|---|
+| [`docs/especificacao.md`](docs/especificacao.md) | Especificação original do cliente |
+| [`docs/decisoes.md`](docs/decisoes.md) | Respostas do cliente, pontos em aberto e ferramentas instaladas |
+| [`docs/adr/`](docs/adr/README.md) | Decisões de arquitetura (ADRs) |
+| [`docs/fases/`](docs/fases) | Plano e relatório de cada fase |
+| [`docs/propostas/`](docs/propostas) | Propostas em discussão, ainda não aprovadas |
+| [`docs/operacao/runbook.md`](docs/operacao/runbook.md) | Produção, backup, incidentes e LGPD, com [segurança](docs/operacao/seguranca.md), [performance](docs/operacao/performance.md) e [mensageria e DLQ](docs/operacao/mensageria.md) |
+
 ## Estrutura
 
 ```
 backend/    Spring Boot 4.1 (Java 21), um módulo por contexto em br.com.shema.crm.*
 frontend/   Angular 22 (standalone, signals, zoneless)
-e2e/        Playwright: fluxos críticos e screenshots 1440 / 390
+e2e/        Playwright: fluxos críticos, acessibilidade e screenshots 1440 / 390
 deploy/     SeaweedFS, Prometheus e Grafana; scripts de backup/restore e de volume para EXPLAIN
-docs/       especificação, decisões, ADRs e notas de cada fase
+docs/       especificação, decisões, ADRs, fases, propostas e operação
+.github/    workflows do CI (backend, frontend, e2e)
 ```
 
 ## Segredos
-Nada de segredo no repositório: tudo vem do `.env` (ignorado pelo git) ou de variáveis de ambiente. Em produção, defina `SHEMA_JWT_PRIVATE_KEY` (sem ela, o backend gera uma chave temporária e as sessões caem a cada reinício):
+Nada de segredo no repositório: tudo vem do `.env` (ignorado pelo git) ou de variáveis de ambiente. Em produção, defina `SHEMA_JWT_PRIVATE_KEY` (sem ela, o backend recusa subir no perfil `prod`):
 
 ```bash
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048
