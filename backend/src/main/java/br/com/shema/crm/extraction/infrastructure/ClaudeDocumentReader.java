@@ -2,8 +2,11 @@ package br.com.shema.crm.extraction.infrastructure;
 
 import br.com.shema.crm.extraction.application.DocumentReader;
 import br.com.shema.crm.extraction.application.ExtractionProperties;
+import br.com.shema.crm.extraction.domain.RawCaronaKit;
+import br.com.shema.crm.extraction.domain.RawFollowUp;
 import br.com.shema.crm.extraction.domain.RawOrder;
 import br.com.shema.crm.extraction.domain.RawReading;
+import br.com.shema.crm.extraction.domain.RawResponse;
 import com.anthropic.client.AnthropicClient;
 import com.anthropic.client.okhttp.AnthropicOkHttpClient;
 import com.anthropic.core.JsonSchemaLocalValidation;
@@ -75,16 +78,29 @@ class ClaudeDocumentReader implements DocumentReader {
     @Override
     public Reading read(ReadRequest request) {
         Answer<RawReading> answer = call(params(request));
-        return new Reading(answer.value(), answer.model(), answer.input(), answer.output());
+        return new Reading(answer.raw(), answer.model(), answer.inputTokens(), answer.outputTokens());
     }
 
     @Override
     public OrderRead readOrder(OrderReadRequest request) {
         Answer<RawOrder> answer = call(orderParams(request));
-        return new OrderRead(answer.value(), answer.model(), answer.input(), answer.output());
+        return new OrderRead(answer.raw(), answer.model(), answer.inputTokens(), answer.outputTokens());
     }
 
-    private record Answer<T>(T value, String model, long input, long output) {}
+    @Override
+    public Answer<RawResponse> readResponse(ResponseRequest request) {
+        return call(responseParams(request));
+    }
+
+    @Override
+    public Answer<RawFollowUp> writeFollowUp(FollowUpRequest request) {
+        return call(followUpParams(request));
+    }
+
+    @Override
+    public Answer<RawCaronaKit> writeCaronaKit(CaronaKitRequest request) {
+        return call(caronaParams(request));
+    }
 
     private <T> Answer<T> call(StructuredMessageCreateParams<T> params) {
         StructuredMessage<T> message;
@@ -146,6 +162,37 @@ class ClaudeDocumentReader implements DocumentReader {
                 RawReading.class,
                 ExtractionPrompt.system(properties.companyName()),
                 List.of(ContentBlockParam.ofDocument(document), text(ExtractionPrompt.user(request.kind()))));
+    }
+
+    StructuredMessageCreateParams<RawResponse> responseParams(ResponseRequest request) {
+        return build(
+                RawResponse.class,
+                ExtractionPrompt.responseSystem(properties.companyName()),
+                List.of(
+                        text(request.context()),
+                        ContentBlockParam.ofDocument(DocumentBlockParam.builder()
+                                .source(PlainTextSource.builder()
+                                        .data(request.text())
+                                        .build())
+                                .title("Resposta do órgão")
+                                .build()),
+                        text(ExtractionPrompt.responseUser())));
+    }
+
+    StructuredMessageCreateParams<RawFollowUp> followUpParams(FollowUpRequest request) {
+        return build(
+                RawFollowUp.class,
+                ExtractionPrompt.followUpSystem(properties.companyName()),
+                List.of(
+                        text(request.context()),
+                        text(ExtractionPrompt.followUpUser(request.whatsapp(), request.tone(), request.signature()))));
+    }
+
+    StructuredMessageCreateParams<RawCaronaKit> caronaParams(CaronaKitRequest request) {
+        return build(
+                RawCaronaKit.class,
+                ExtractionPrompt.caronaSystem(properties.companyName()),
+                List.of(text(request.context()), text(ExtractionPrompt.caronaUser(request.signature()))));
     }
 
     StructuredMessageCreateParams<RawOrder> orderParams(OrderReadRequest request) {

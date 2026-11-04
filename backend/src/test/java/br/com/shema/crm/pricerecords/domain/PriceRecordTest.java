@@ -19,7 +19,9 @@ class PriceRecordTest {
 
     private static final LocalDate TODAY = LocalDate.of(2026, 10, 29);
     private static final Instant NOW = Instant.parse("2026-10-29T13:00:00Z");
-    private static final CaronaLimits LIMITS = CaronaLimits.DEFAULT;
+    /** Só os limites de órgãos e do total: os testes antigos não esbarram no limite por órgão. */
+    private static final CaronaLimits LIMITS = new CaronaLimits(4, 200, 200);
+
     private static final BigDecimal TENDER_VALUE = new BigDecimal("237000.00");
 
     private static void assertRule(Runnable action, String rule) {
@@ -102,6 +104,59 @@ class PriceRecordTest {
                 NOW);
         assertThat(confirmed.isLimitsOverridden()).isTrue();
         assertThat(confirmed.getOverrideNote()).startsWith("Registrada mesmo assim por Edwin");
+    }
+
+    @Test
+    void eachAgencyGetsHalfOfEachItemAndTheAllowanceRespectsTheTotal() {
+        PriceRecord ata = withItems();
+        UUID mesquita = UUID.randomUUID();
+        // 63 de 125 banners passa de 50% (62,5)
+        PriceRecord.CaronaCheck over = ata.checkCarona(
+                carona(mesquita, TODAY, List.of(new LineDraft(banner(ata), new BigDecimal("63")))),
+                TENDER_VALUE,
+                CaronaLimits.DEFAULT);
+        assertThat(over.warnings()).extracting(PriceRecord.LimitWarning::code).containsExactly("AGENCY_ITEM_LIMIT");
+        assertThat(over.warnings().getFirst().message()).contains("63").contains("62,5");
+
+        ata.registerCarona(
+                carona(mesquita, TODAY, List.of(new LineDraft(banner(ata), new BigDecimal("40")))),
+                TENDER_VALUE,
+                CaronaLimits.DEFAULT,
+                false,
+                "Edwin",
+                NOW);
+        assertThat(ata.hasCaronaFrom(mesquita)).isTrue();
+        // Mesquita: 62,5 - 40 = 22,5 de banner; 500 de adesivo
+        List<PriceRecord.Allowance> mine = ata.allowances(mesquita, CaronaLimits.DEFAULT);
+        assertThat(mine.get(0).agencyUsed()).isEqualByComparingTo("40");
+        assertThat(mine.get(0).maxQuantity()).isEqualByComparingTo("22.5");
+        assertThat(mine.get(1).maxQuantity()).isEqualByComparingTo("500");
+
+        // Outros três órgãos com 62,5 cada: o total chega a 227,5 de 250; para um quinto sobram 22,5
+        for (int i = 0; i < 3; i++) {
+            ata.registerCarona(
+                    carona(UUID.randomUUID(), TODAY, List.of(new LineDraft(banner(ata), new BigDecimal("62.5")))),
+                    TENDER_VALUE,
+                    CaronaLimits.DEFAULT,
+                    false,
+                    "Edwin",
+                    NOW);
+        }
+        assertThat(ata.allowances(UUID.randomUUID(), CaronaLimits.DEFAULT)
+                        .getFirst()
+                        .maxQuantity())
+                .isEqualByComparingTo("22.5");
+
+        PriceRecord semItens = ata(true);
+        assertThat(semItens.valueAllowance(mesquita, TENDER_VALUE, CaronaLimits.DEFAULT))
+                .isEqualByComparingTo("118500.00");
+        assertThat(semItens.checkCarona(
+                                new CaronaDraft(mesquita, TODAY, List.of(), new BigDecimal("120000"), null, null),
+                                TENDER_VALUE,
+                                CaronaLimits.DEFAULT)
+                        .warnings())
+                .extracting(PriceRecord.LimitWarning::code)
+                .containsExactly("AGENCY_VALUE_LIMIT");
     }
 
     @Test

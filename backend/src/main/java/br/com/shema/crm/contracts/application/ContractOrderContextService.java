@@ -3,9 +3,13 @@ package br.com.shema.crm.contracts.application;
 import br.com.shema.crm.contracts.ContractOrderContext;
 import br.com.shema.crm.contracts.domain.Contract;
 import br.com.shema.crm.contracts.domain.ContractBalance;
+import br.com.shema.crm.contracts.domain.ContractOrder;
 import br.com.shema.crm.contracts.infrastructure.ContractRepository;
 import br.com.shema.crm.tenders.TenderLifecycle;
 import br.com.shema.crm.tenders.TenderRef;
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,9 +37,24 @@ class ContractOrderContextService implements ContractOrderContext {
                 .flatMap(c -> tenders.find(c.getTenderId()).map(t -> context(c, t)));
     }
 
+    @Override
+    public List<OrderContext> openForTender(UUID tenderId) {
+        return tenders.find(tenderId)
+                .map(t -> contracts.findByTenderIdOrderBySignedAtAscCreatedAtAsc(tenderId).stream()
+                        .filter(c -> !c.isClosed())
+                        .map(c -> context(c, t))
+                        .toList())
+                .orElse(List.of());
+    }
+
     private static OrderContext context(Contract c, TenderRef t) {
-        Map<UUID, ContractBalance.ItemBalance> balances = c.balance().items().stream()
+        ContractBalance balance = c.balance();
+        Map<UUID, ContractBalance.ItemBalance> balances = balance.items().stream()
                 .collect(Collectors.toMap(ContractBalance.ItemBalance::itemId, Function.identity()));
+        LocalDate lastOrderAt = c.getOrders().stream()
+                .map(ContractOrder::getOrderedAt)
+                .max(Comparator.naturalOrder())
+                .orElse(null);
         return new OrderContext(
                 c.getId(),
                 t.id(),
@@ -45,7 +64,12 @@ class ContractOrderContextService implements ContractOrderContext {
                 c.getKind().label(),
                 c.getNumber(),
                 c.getSignedAt(),
+                c.getValidUntil(),
                 c.isClosed(),
+                balance.value(),
+                balance.ordered(),
+                balance.remaining(),
+                lastOrderAt,
                 c.getItems().stream()
                         .map(i -> new Item(
                                 i.getId(),

@@ -2,11 +2,14 @@ package br.com.shema.crm.extraction.infrastructure;
 
 import br.com.shema.crm.extraction.application.DocumentReader;
 import br.com.shema.crm.extraction.domain.Extraction;
+import br.com.shema.crm.extraction.domain.RawCaronaKit;
+import br.com.shema.crm.extraction.domain.RawFollowUp;
 import br.com.shema.crm.extraction.domain.RawOrder;
 import br.com.shema.crm.extraction.domain.RawOrder.RawOrderLine;
 import br.com.shema.crm.extraction.domain.RawReading;
 import br.com.shema.crm.extraction.domain.RawReading.RawField;
 import br.com.shema.crm.extraction.domain.RawReading.RawItem;
+import br.com.shema.crm.extraction.domain.RawResponse;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -66,6 +69,52 @@ class DemoDocumentReader implements DocumentReader {
                         new RawItem("", "Faixa em lona 3 x 0,70 m", "UN", "400", "60.00", 3),
                         new RawItem("", "Banner em lona 440g", "M²", "800", "30.00", 3)),
                 List.of());
+    }
+
+    /** Sempre "pedem no mês que vem", com a tarefa de cobrar no dia 1º do mês que vem. */
+    @Override
+    public Answer<RawResponse> readResponse(ResponseRequest request) {
+        LocalDate nextMonth = LocalDate.now().plusMonths(1).withDayOfMonth(1);
+        RawResponse raw = new RawResponse(
+                "PEDIDO_PREVISTO",
+                nextMonth.toString(),
+                false,
+                "Pedem no mês que vem, depois da liberação do orçamento.",
+                "Cobrar o pedido do mês que vem",
+                nextMonth.toString(),
+                List.of());
+        return new Answer<>(raw, MODEL, 0, 0);
+    }
+
+    @Override
+    public Answer<RawFollowUp> writeFollowUp(FollowUpRequest request) {
+        RawFollowUp raw = request.whatsapp()
+                ? new RawFollowUp(
+                        "",
+                        "Bom dia! Aqui é " + request.signature() + ", da Shema Suprimentos. Há previsão para o próximo"
+                                + " pedido do contrato? Seguimos à disposição.",
+                        List.of())
+                : new RawFollowUp(
+                        "Previsão do próximo pedido",
+                        "Prezados(as),\n\nGostaríamos de saber se há previsão para o próximo pedido do contrato, que"
+                                + " ainda tem saldo a pedir.\n\nFicamos à disposição.\n\nAtenciosamente,\n"
+                                + request.signature() + "\nShema Suprimentos",
+                        List.of());
+        return new Answer<>(raw, MODEL, 0, 0);
+    }
+
+    @Override
+    public Answer<RawCaronaKit> writeCaronaKit(CaronaKitRequest request) {
+        RawCaronaKit raw = new RawCaronaKit(
+                "Proposta de adesão à ata de registro de preços",
+                "Prezados(as),\n\nSomos fornecedores registrados numa ata de registro de preços vigente e"
+                        + " gostaríamos de oferecer a adesão ao município, pelos preços já licitados.\n\nSeguem"
+                        + " anexos o modelo de ofício para pedir a adesão ao órgão gerenciador e a nossa anuência."
+                        + "\n\nAtenciosamente,\n" + request.signature() + "\nShema Suprimentos",
+                "A adesão atende à necessidade do município pelo preço já licitado e em menos tempo que uma nova"
+                        + " licitação.",
+                List.of("Leitor de demonstração: texto fixo."));
+        return new Answer<>(raw, MODEL, 0, 0);
     }
 
     @Override

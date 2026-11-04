@@ -34,7 +34,9 @@ import org.springframework.web.client.RestClient;
         properties = {
             "shema.bootstrap-admin.email=admin@test.local",
             "shema.bootstrap-admin.password=Senha-forte-123",
-            "shema.auth.login-attempts-per-minute=1000"
+            "shema.auth.login-attempts-per-minute=1000",
+            // Este fluxo confere o limite total; o limite por órgão (Fase 10) tem teste próprio
+            "shema.caronas.max-per-agency-percent=200"
         })
 @SuppressWarnings({"unchecked", "rawtypes"})
 class PriceRecordFlowTests {

@@ -30,7 +30,7 @@ public final class PriceRecordViews {
             BigDecimal totalValue) {}
 
     @Schema(name = "PriceRecordLimitsResponse")
-    public record Limits(int maxAgencies, int maxTotalPercent) {}
+    public record Limits(int maxAgencies, int maxTotalPercent, int maxPerAgencyPercent) {}
 
     /**
      * Linha da lista de atas.

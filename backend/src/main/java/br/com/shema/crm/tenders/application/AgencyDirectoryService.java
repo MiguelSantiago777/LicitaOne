@@ -4,6 +4,7 @@ import br.com.shema.crm.tenders.AgencyDirectory;
 import br.com.shema.crm.tenders.AgencyRef;
 import br.com.shema.crm.tenders.domain.Agency;
 import br.com.shema.crm.tenders.domain.AgencyContact;
+import br.com.shema.crm.tenders.domain.Sphere;
 import br.com.shema.crm.tenders.infrastructure.AgencyContactRepository;
 import br.com.shema.crm.tenders.infrastructure.AgencyRepository;
 import java.util.Collection;
@@ -60,6 +61,23 @@ class AgencyDirectoryService implements AgencyDirectory {
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
+    }
+
+    @Override
+    public List<String> contactPhones(UUID agencyId) {
+        return contacts.findByAgencyIdOrderByPosition(agencyId).stream()
+                .map(AgencyContact::getPhone)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+    }
+
+    @Override
+    public boolean isMunicipal(UUID agencyId) {
+        return agencyId != null
+                && agencies.findById(agencyId)
+                        .map(a -> a.getSphere() == Sphere.MUNICIPAL)
+                        .orElse(false);
     }
 
     private static AgencyRef ref(Agency a) {

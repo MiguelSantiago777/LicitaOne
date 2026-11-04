@@ -1,8 +1,11 @@
 package br.com.shema.crm.extraction.application;
 
 import br.com.shema.crm.extraction.domain.Extraction;
+import br.com.shema.crm.extraction.domain.RawCaronaKit;
+import br.com.shema.crm.extraction.domain.RawFollowUp;
 import br.com.shema.crm.extraction.domain.RawOrder;
 import br.com.shema.crm.extraction.domain.RawReading;
+import br.com.shema.crm.extraction.domain.RawResponse;
 
 /**
  * Quem lê o PDF. A implementação real chama o Claude; sem chave configurada, a leitura fica desligada; os testes usam
@@ -32,6 +35,34 @@ public interface DocumentReader {
     }
 
     record OrderRead(RawOrder raw, String model, long inputTokens, long outputTokens) {}
+
+    /**
+     * Resposta do órgão para entender (Fase 9).
+     *
+     * @param text a resposta colada, como chegou
+     * @param context licitação, contratos e últimos contatos, em texto, como o modelo vê
+     */
+    record ResponseRequest(String text, String context) {}
+
+    /**
+     * Follow-up para escrever (Fase 9).
+     *
+     * @param context licitação, contratos, saldo, último pedido e últimos contatos, em texto
+     * @param tone NORMAL, CURTO ou FORMAL
+     * @param signature nome de quem vai mandar
+     */
+    record FollowUpRequest(String context, boolean whatsapp, String tone, String signature) {}
+
+    /**
+     * Kit de carona para escrever (Fase 10).
+     *
+     * @param context ata, itens com o que o município pode pedir, município e gerenciador, em texto
+     * @param signature nome de quem vai mandar
+     */
+    record CaronaKitRequest(String context, String signature) {}
+
+    /** Um texto escrito ou entendido pelo modelo e quanto custou. */
+    record Answer<T>(T raw, String model, long inputTokens, long outputTokens) {}
 
     /**
      * A leitura não deu certo por um motivo que a pessoa entende (documento recusado, grande demais, IA fora do ar).
@@ -75,5 +106,20 @@ public interface DocumentReader {
     /** Lê um pedido contra os itens de um contrato. */
     default OrderRead readOrder(OrderReadRequest request) {
         throw new ReadingFailed("Este leitor não lê pedidos.");
+    }
+
+    /** Entende a resposta de um órgão: situação, data prevista, resumo e próxima ação. */
+    default Answer<RawResponse> readResponse(ResponseRequest request) {
+        throw new ReadingFailed("Este leitor não entende respostas.");
+    }
+
+    /** Escreve um follow-up ao órgão com o contexto do contrato. */
+    default Answer<RawFollowUp> writeFollowUp(FollowUpRequest request) {
+        throw new ReadingFailed("Este leitor não escreve follow-ups.");
+    }
+
+    /** Escreve a carta de apresentação e a justificativa do kit de carona. */
+    default Answer<RawCaronaKit> writeCaronaKit(CaronaKitRequest request) {
+        throw new ReadingFailed("Este leitor não escreve o kit de carona.");
     }
 }

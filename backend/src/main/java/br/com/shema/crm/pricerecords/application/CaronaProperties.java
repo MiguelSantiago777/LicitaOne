@@ -5,8 +5,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * Limites de carona ({@code shema.caronas.*}). Os padrões vêm da resposta do cliente (4 órgãos, 200%); dependem de lei
- * e de edital, por isso ficam fora do código (seção 11 da especificação).
+ * Limites de carona ({@code shema.caronas.*}). Os padrões vêm da resposta do cliente (4 órgãos, 200%) e do limite de
+ * 50% por órgão aceito em 04/11/2026; dependem de lei e de edital, por isso ficam fora do código (seção 11 da
+ * especificação).
  *
  * @param expiringDays a partir de quantos dias para o vencimento a ata aparece como "vencendo"
  */
@@ -14,9 +15,10 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 public record CaronaProperties(
         @DefaultValue("4") int maxAgencies,
         @DefaultValue("200") int maxTotalPercent,
+        @DefaultValue("50") int maxPerAgencyPercent,
         @DefaultValue("90") int expiringDays) {
 
     public CaronaLimits limits() {
-        return new CaronaLimits(maxAgencies, maxTotalPercent);
+        return new CaronaLimits(maxAgencies, maxTotalPercent, maxPerAgencyPercent);
     }
 }

@@ -2,12 +2,18 @@ package br.com.shema.crm.extraction.infrastructure;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import br.com.shema.crm.extraction.application.DocumentReader.CaronaKitRequest;
+import br.com.shema.crm.extraction.application.DocumentReader.FollowUpRequest;
 import br.com.shema.crm.extraction.application.DocumentReader.OrderReadRequest;
 import br.com.shema.crm.extraction.application.DocumentReader.ReadRequest;
+import br.com.shema.crm.extraction.application.DocumentReader.ResponseRequest;
 import br.com.shema.crm.extraction.application.ExtractionProperties;
 import br.com.shema.crm.extraction.domain.Extraction;
+import br.com.shema.crm.extraction.domain.RawCaronaKit;
+import br.com.shema.crm.extraction.domain.RawFollowUp;
 import br.com.shema.crm.extraction.domain.RawOrder;
 import br.com.shema.crm.extraction.domain.RawReading;
+import br.com.shema.crm.extraction.domain.RawResponse;
 import com.anthropic.client.okhttp.AnthropicOkHttpClient;
 import com.anthropic.core.JsonValue;
 import com.anthropic.models.messages.StructuredMessageCreateParams;
@@ -97,5 +103,44 @@ class ClaudeDocumentReaderTest {
 
         var blocks = params.rawParams().messages().getFirst().content().asContentBlockParams();
         assertThat(blocks.get(1).isImage()).isTrue();
+    }
+
+    @Test
+    void sendsTheAgencyResponseAsATextDocumentAfterTheContext() {
+        StructuredMessageCreateParams<RawResponse> params =
+                reader(properties(true)).responseParams(new ResponseRequest("O empenho sai em março.", "Órgão: Magé"));
+
+        var blocks = params.rawParams().messages().getFirst().content().asContentBlockParams();
+        assertThat(blocks).hasSize(3);
+        assertThat(blocks.get(0).asText().text()).contains("Magé");
+        assertThat(blocks.get(1).isDocument()).isTrue();
+        assertThat(params.rawParams().outputConfig().orElseThrow().format()).isPresent();
+    }
+
+    @Test
+    void asksForTheFollowUpWithChannelToneAndSignature() {
+        StructuredMessageCreateParams<RawFollowUp> params = reader(properties(false))
+                .followUpParams(new FollowUpRequest("Órgão: Magé", true, "CURTO", "Edwin Lima"));
+
+        var blocks = params.rawParams().messages().getFirst().content().asContentBlockParams();
+        assertThat(blocks.get(1).asText().text())
+                .contains("WhatsApp")
+                .contains("mais curto")
+                .contains("Edwin Lima");
+        assertThat(params.rawParams().system().orElseThrow().asString()).contains("Nunca invente prazo");
+    }
+
+    @Test
+    void asksForTheCaronaKitWithTheOfferAndSignatureAndNoLaw() {
+        StructuredMessageCreateParams<RawCaronaKit> params = reader(properties(true))
+                .caronaParams(new CaronaKitRequest("Ata de Registro de Preços nº ARP 017/2026", "Edwin Lima"));
+
+        var blocks = params.rawParams().messages().getFirst().content().asContentBlockParams();
+        assertThat(blocks.get(0).asText().text()).contains("ARP 017/2026");
+        assertThat(blocks.get(1).asText().text()).contains("Edwin Lima");
+        assertThat(params.rawParams().system().orElseThrow().asString())
+                .contains("Não cite lei")
+                .contains("não afirme que o município pode aderir");
+        assertThat(params.rawParams().outputConfig().orElseThrow().format()).isPresent();
     }
 }

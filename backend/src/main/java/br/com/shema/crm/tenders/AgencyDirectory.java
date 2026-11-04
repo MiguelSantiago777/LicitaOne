@@ -24,4 +24,10 @@ public interface AgencyDirectory {
 
     /** E-mails dos contatos do órgão, na ordem do cadastro: destinatários dos rascunhos de follow-up. */
     List<String> contactEmails(UUID agencyId);
+
+    /** Telefones dos contatos do órgão, na ordem do cadastro: para o "Abrir no WhatsApp" do follow-up. */
+    List<String> contactPhones(UUID agencyId);
+
+    /** Se o órgão é municipal: carona em ata municipal depende da lei local (Fase 10). */
+    boolean isMunicipal(UUID agencyId);
 }

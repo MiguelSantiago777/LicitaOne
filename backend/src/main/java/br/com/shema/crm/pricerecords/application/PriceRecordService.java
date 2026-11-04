@@ -471,7 +471,8 @@ public class PriceRecordService {
                                 document.getTitle(),
                                 document.getCurrentVersion(),
                                 document.getVersions().getFirst().getFileName()),
-                new PriceRecordViews.Limits(limits.maxAgencies(), limits.maxTotalPercent()),
+                new PriceRecordViews.Limits(
+                        limits.maxAgencies(), limits.maxTotalPercent(), limits.maxPerAgencyPercent()),
                 r.agencyCount(),
                 reference,
                 r.caronasValue(),

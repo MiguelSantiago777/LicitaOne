@@ -58,6 +58,14 @@ public class PriceRecord extends AuditableEntity {
      */
     public record ItemUsage(UUID itemId, BigDecimal registered, BigDecimal used, BigDecimal limit) {}
 
+    /**
+     * Quanto um órgão ainda pode aderir de um item (Fase 10): o menor entre o que sobra do limite por órgão e o que
+     * sobra do limite total. Nunca negativo.
+     *
+     * @param agencyUsed quanto este órgão já aderiu do item
+     */
+    public record Allowance(UUID itemId, BigDecimal agencyUsed, BigDecimal maxQuantity) {}
+
     @Id
     private UUID id;
 
@@ -204,8 +212,19 @@ public class PriceRecord extends AuditableEntity {
                         "As caronas somariam " + BrFormat.money(total) + ", acima de " + limits.maxTotalPercent()
                                 + "% do valor da ata (" + BrFormat.money(limit) + ")."));
             }
+            BigDecimal agencyLimit =
+                    percentOf(referenceValue, limits.maxPerAgencyPercent()).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal agencyTotal = agencyValue(d.agencyId()).add(value);
+            if (agencyTotal.compareTo(agencyLimit) > 0) {
+                warnings.add(new LimitWarning(
+                        "AGENCY_VALUE_LIMIT",
+                        "Este órgão somaria " + BrFormat.money(agencyTotal) + ", acima de "
+                                + limits.maxPerAgencyPercent() + "% do valor da ata por órgão ("
+                                + BrFormat.money(agencyLimit) + ")."));
+            }
         } else {
             Map<UUID, BigDecimal> used = usedQuantities();
+            Map<UUID, BigDecimal> byAgency = usedQuantities(d.agencyId());
             for (Carona.Line line : lines) {
                 PriceRecordItem item = item(line.itemId());
                 BigDecimal limit = percentOf(item.getQuantity(), limits.maxTotalPercent());
@@ -217,6 +236,16 @@ public class PriceRecord extends AuditableEntity {
                             "\"" + item.getDescription() + "\": as caronas somariam " + BrFormat.quantity(total)
                                     + ", acima de " + limits.maxTotalPercent() + "% do registrado ("
                                     + BrFormat.quantity(limit) + ")."));
+                }
+                BigDecimal agencyLimit = percentOf(item.getQuantity(), limits.maxPerAgencyPercent());
+                BigDecimal agencyTotal =
+                        byAgency.getOrDefault(item.getId(), BigDecimal.ZERO).add(line.quantity());
+                if (agencyTotal.compareTo(agencyLimit) > 0) {
+                    warnings.add(new LimitWarning(
+                            "AGENCY_ITEM_LIMIT",
+                            "\"" + item.getDescription() + "\": este órgão somaria " + BrFormat.quantity(agencyTotal)
+                                    + ", acima de " + limits.maxPerAgencyPercent() + "% do registrado por órgão ("
+                                    + BrFormat.quantity(agencyLimit) + ")."));
                 }
             }
         }
@@ -312,14 +341,62 @@ public class PriceRecord extends AuditableEntity {
                 .toList();
     }
 
+    /**
+     * Quanto o órgão ainda pode aderir de cada item, na ordem da ata (Fase 10): base do kit de carona.
+     */
+    public List<Allowance> allowances(UUID agencyId, CaronaLimits limits) {
+        Map<UUID, BigDecimal> used = usedQuantities();
+        Map<UUID, BigDecimal> byAgency = usedQuantities(agencyId);
+        return items.stream()
+                .map(i -> {
+                    BigDecimal agencyUsed = byAgency.getOrDefault(i.getId(), BigDecimal.ZERO.setScale(3));
+                    BigDecimal agencyRoom = percentOf(i.getQuantity(), limits.maxPerAgencyPercent())
+                            .subtract(agencyUsed);
+                    BigDecimal totalRoom = percentOf(i.getQuantity(), limits.maxTotalPercent())
+                            .subtract(used.getOrDefault(i.getId(), BigDecimal.ZERO));
+                    BigDecimal max = agencyRoom.min(totalRoom).max(BigDecimal.ZERO);
+                    return new Allowance(i.getId(), agencyUsed, max.setScale(3, RoundingMode.HALF_UP));
+                })
+                .toList();
+    }
+
+    /** Ata sem itens: quanto o órgão ainda pode aderir em valor. */
+    public BigDecimal valueAllowance(UUID agencyId, BigDecimal referenceValue, CaronaLimits limits) {
+        BigDecimal agencyRoom =
+                percentOf(referenceValue, limits.maxPerAgencyPercent()).subtract(agencyValue(agencyId));
+        BigDecimal totalRoom =
+                percentOf(referenceValue, limits.maxTotalPercent()).subtract(caronasValue());
+        return agencyRoom.min(totalRoom).max(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /** Se o órgão já tem carona nesta ata. */
+    public boolean hasCaronaFrom(UUID agencyId) {
+        return caronas.stream().anyMatch(c -> c.getAgencyId().equals(agencyId));
+    }
+
     private Map<UUID, BigDecimal> usedQuantities() {
+        return usedQuantities(null);
+    }
+
+    /** Quantidades aderidas por item; com {@code agencyId}, só as desse órgão. */
+    private Map<UUID, BigDecimal> usedQuantities(UUID agencyId) {
         Map<UUID, BigDecimal> used = new HashMap<>();
         for (Carona c : caronas) {
+            if (agencyId != null && !c.getAgencyId().equals(agencyId)) {
+                continue;
+            }
             for (Carona.Line l : c.getLines()) {
                 used.merge(l.itemId(), l.quantity(), BigDecimal::add);
             }
         }
         return used;
+    }
+
+    private BigDecimal agencyValue(UUID agencyId) {
+        return caronas.stream()
+                .filter(c -> c.getAgencyId().equals(agencyId))
+                .map(Carona::getValue)
+                .reduce(BigDecimal.ZERO.setScale(2), BigDecimal::add);
     }
 
     /** Junta linhas repetidas do mesmo item e confere que cada item é desta ata. */

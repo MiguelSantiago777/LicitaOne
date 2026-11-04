@@ -123,6 +123,17 @@ shema:
     fallbacks: ${SHEMA_EXTRACTION_FALLBACKS:true}
     # Só para E2E: leitor de demonstração, sem IA. Nunca em produção.
     demo: ${SHEMA_EXTRACTION_DEMO:false}
+  # Dados da empresa no cabeçalho e na anuência do kit de carona (Fase 10). Em branco, o texto mostra o campo entre
+  # colchetes para preencher, e a tela avisa.
+  company:
+    legal-name: ${SHEMA_COMPANY_LEGAL_NAME:Shema Suprimentos e Serviços}
+    cnpj: ${SHEMA_COMPANY_CNPJ:}
+    address: ${SHEMA_COMPANY_ADDRESS:}
+    city: ${SHEMA_COMPANY_CITY:}
+    representative: ${SHEMA_COMPANY_REPRESENTATIVE:}
+    representative-role: ${SHEMA_COMPANY_REPRESENTATIVE_ROLE:}
+    email: ${SHEMA_COMPANY_EMAIL:}
+    phone: ${SHEMA_COMPANY_PHONE:}
   auth:
     secure-cookie: false
     cors-origins: ${SHEMA_CORS_ORIGINS:http://localhost:4300}
