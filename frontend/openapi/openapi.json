@@ -1521,6 +1521,48 @@
         }
       }
     },
+    "/api/v1/tenders/{tenderId}/follow-up-draft": {
+      "post": {
+        "tags": [
+          "extractions"
+        ],
+        "summary": "Escreve com IA um follow-up ao órgão com o contexto do contrato; não envia nem grava",
+        "operationId": "writeFollowUpDraft",
+        "parameters": [
+          {
+            "name": "tenderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FollowUpDraftRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowUpDraftResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tenders/{tenderId}/contracts": {
       "get": {
         "tags": [
@@ -1589,6 +1631,123 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ContractResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenders/{tenderId}/contacts": {
+      "get": {
+        "tags": [
+          "tenders"
+        ],
+        "summary": "Contatos com o órgão registrados na licitação",
+        "operationId": "tenderContacts",
+        "parameters": [
+          {
+            "name": "tenderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TenderContactResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "tenders"
+        ],
+        "summary": "Registra um contato com o órgão",
+        "operationId": "registerTenderContact",
+        "parameters": [
+          {
+            "name": "tenderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TenderContactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderContactResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenders/{tenderId}/contacts/interpretation": {
+      "post": {
+        "tags": [
+          "extractions"
+        ],
+        "summary": "Entende com IA a resposta do órgão (situação, data prevista, resumo, próxima ação); não grava nada",
+        "operationId": "interpretAgencyResponse",
+        "parameters": [
+          {
+            "name": "tenderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgencyResponseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseReadingResponse"
                 }
               }
             }
@@ -2009,6 +2168,91 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/CaronaCheckResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/price-records/{id}/carona-kit": {
+      "post": {
+        "tags": [
+          "extractions"
+        ],
+        "summary": "Gera o kit de carona (apresentação, modelo de ofício e anuência); não envia nem grava",
+        "operationId": "writeCaronaKit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaronaKitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaronaKitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/price-records/{id}/carona-kit/docx": {
+      "post": {
+        "tags": [
+          "extractions"
+        ],
+        "summary": "Uma carta do kit de carona em .docx, com o texto revisado",
+        "operationId": "caronaLetterDocx",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaronaLetterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             }
@@ -3462,6 +3706,47 @@
         }
       }
     },
+    "/api/v1/price-records/{id}/carona-offer": {
+      "get": {
+        "tags": [
+          "extractions"
+        ],
+        "summary": "O que oferecer de uma ata a um município: quanto ele pode pedir de cada item e avisos",
+        "operationId": "caronaOffer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "agencyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaronaOfferResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/price-records/prospects": {
       "get": {
         "tags": [
@@ -4134,6 +4419,40 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/tenders/{tenderId}/contacts/{contactId}": {
+      "delete": {
+        "tags": [
+          "tenders"
+        ],
+        "summary": "Apaga um contato registrado por engano",
+        "operationId": "removeTenderContact",
+        "parameters": [
+          {
+            "name": "tenderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -5092,10 +5411,15 @@
           "maxTotalPercent": {
             "type": "integer",
             "format": "int32"
+          },
+          "maxPerAgencyPercent": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "required": [
           "maxAgencies",
+          "maxPerAgencyPercent",
           "maxTotalPercent"
         ]
       },
@@ -6655,6 +6979,66 @@
           "tender"
         ]
       },
+      "FollowUpDraftRequest": {
+        "type": "object",
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "channel": {
+            "type": "string",
+            "pattern": "EMAIL|WHATSAPP"
+          },
+          "tone": {
+            "type": "string",
+            "pattern": "NORMAL|CURTO|FORMAL"
+          }
+        },
+        "required": [
+          "channel"
+        ]
+      },
+      "FollowUpDraft": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "FollowUpDraftResponse": {
+        "type": "object",
+        "properties": {
+          "draft": {
+            "$ref": "#/components/schemas/FollowUpDraft"
+          },
+          "to": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "draft",
+          "model",
+          "phone",
+          "to"
+        ]
+      },
       "SignContractRequest": {
         "type": "object",
         "properties": {
@@ -6675,6 +7059,195 @@
         },
         "required": [
           "contract"
+        ]
+      },
+      "TenderContactRequest": {
+        "type": "object",
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "EMAIL",
+              "WHATSAPP",
+              "TELEFONE",
+              "REUNIAO",
+              "OUTRO"
+            ]
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "PEDIDO_PREVISTO",
+              "SEM_PREVISAO",
+              "PEDIDO_A_CAMINHO",
+              "NAO_VAI_PEDIR",
+              "PEDE_DOCUMENTO",
+              "OUTRO"
+            ]
+          },
+          "contactedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "suggestedByAi": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "channel",
+          "contactedAt",
+          "summary"
+        ]
+      },
+      "TenderContactResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contractId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "EMAIL",
+              "WHATSAPP",
+              "TELEFONE",
+              "REUNIAO",
+              "OUTRO"
+            ]
+          },
+          "channelLabel": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "PEDIDO_PREVISTO",
+              "SEM_PREVISAO",
+              "PEDIDO_A_CAMINHO",
+              "NAO_VAI_PEDIR",
+              "PEDE_DOCUMENTO",
+              "OUTRO"
+            ]
+          },
+          "outcomeLabel": {
+            "type": "string"
+          },
+          "contactedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "suggestedByAi": {
+            "type": "boolean"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "canRemove": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canRemove",
+          "channel",
+          "channelLabel",
+          "contactedAt",
+          "contractId",
+          "createdAt",
+          "id",
+          "outcome",
+          "outcomeLabel",
+          "suggestedByAi",
+          "summary",
+          "userName"
+        ]
+      },
+      "AgencyResponseRequest": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 21000,
+            "minLength": 0
+          },
+          "contactedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "channel": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "ResponseReading": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "string"
+          },
+          "expectedDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "expectedDateIsVague": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "taskTitle": {
+            "type": "string"
+          },
+          "taskDueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ResponseReadingResponse": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/ResponseReading"
+          },
+          "model": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "model",
+          "result"
         ]
       },
       "TransitionRequest": {
@@ -6866,6 +7439,150 @@
         "required": [
           "code",
           "message"
+        ]
+      },
+      "CaronaKitLineRequest": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "itemId"
+        ]
+      },
+      "CaronaKitRequest": {
+        "type": "object",
+        "properties": {
+          "agencyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CaronaKitLineRequest"
+            },
+            "maxItems": 500,
+            "minItems": 0
+          },
+          "value": {
+            "type": "number"
+          },
+          "useAi": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "agencyId"
+        ]
+      },
+      "CaronaKitResponse": {
+        "type": "object",
+        "properties": {
+          "kit": {
+            "$ref": "#/components/schemas/CaronaKitTextsResponse"
+          },
+          "to": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kit",
+          "model",
+          "to"
+        ]
+      },
+      "CaronaKitTextsResponse": {
+        "type": "object",
+        "properties": {
+          "presentation": {
+            "$ref": "#/components/schemas/CaronaLetterResponse"
+          },
+          "request": {
+            "$ref": "#/components/schemas/CaronaLetterResponse"
+          },
+          "consent": {
+            "$ref": "#/components/schemas/CaronaLetterResponse"
+          },
+          "total": {
+            "type": "number"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "writtenByAi": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "consent",
+          "presentation",
+          "request",
+          "total",
+          "warnings",
+          "writtenByAi"
+        ]
+      },
+      "CaronaLetterResponse": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "letterhead": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "body",
+          "kind",
+          "letterhead",
+          "subject",
+          "title"
+        ]
+      },
+      "CaronaLetterRequest": {
+        "type": "object",
+        "properties": {
+          "agencyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "pattern": "APRESENTACAO|SOLICITACAO|ANUENCIA"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 20000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "agencyId",
+          "kind",
+          "text"
         ]
       },
       "ChangeOwnPassword": {
@@ -8303,6 +9020,200 @@
           "tender",
           "usedPercent",
           "validUntil"
+        ]
+      },
+      "AgencySummaryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city",
+          "id",
+          "name",
+          "state"
+        ]
+      },
+      "CaronaOfferDetailResponse": {
+        "type": "object",
+        "properties": {
+          "priceRecordId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "signedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date"
+          },
+          "daysLeft": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tenderIdentification": {
+            "type": "string"
+          },
+          "object": {
+            "type": "string"
+          },
+          "manager": {
+            "$ref": "#/components/schemas/AgencySummaryResponse"
+          },
+          "managerMunicipal": {
+            "type": "boolean"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/AgencySummaryResponse"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CaronaOfferItemResponse"
+            }
+          },
+          "maxValue": {
+            "type": "number"
+          },
+          "agencyCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxAgencies": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxPerAgencyPercent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CaronaOfferWarningResponse"
+            }
+          },
+          "canEdit": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "agencyCount",
+          "canEdit",
+          "candidate",
+          "daysLeft",
+          "items",
+          "manager",
+          "managerMunicipal",
+          "maxAgencies",
+          "maxPerAgencyPercent",
+          "maxValue",
+          "number",
+          "object",
+          "priceRecordId",
+          "signedAt",
+          "tenderId",
+          "tenderIdentification",
+          "validUntil",
+          "warnings"
+        ]
+      },
+      "CaronaOfferItemResponse": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lot": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "registered": {
+            "type": "number"
+          },
+          "unitPrice": {
+            "type": "number"
+          },
+          "agencyUsed": {
+            "type": "number"
+          },
+          "maxQuantity": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "agencyUsed",
+          "description",
+          "itemId",
+          "lot",
+          "maxQuantity",
+          "registered",
+          "unit",
+          "unitPrice"
+        ]
+      },
+      "CaronaOfferResponse": {
+        "type": "object",
+        "properties": {
+          "offer": {
+            "$ref": "#/components/schemas/CaronaOfferDetailResponse"
+          },
+          "companyMissing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "aiEnabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "aiEnabled",
+          "companyMissing",
+          "offer"
+        ]
+      },
+      "CaronaOfferWarningResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
         ]
       },
       "ProspectResponse": {

@@ -16,6 +16,7 @@ import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { DocumentsService } from '../../api/generated/documents/documents.service';
 import type {
+  AgencyRefResponse,
   CaronaResponse,
   ExtractionItem,
   PriceRecordResponse,
@@ -28,6 +29,7 @@ import { Panel } from '../../shared/ui/panel';
 import { AiReading, DocumentAiFill } from './document-ai-fill';
 import { AtaItemsDialog } from './ata-items-dialog';
 import { CaronaDialog, CaronaPreset } from './carona-dialog';
+import { CaronaKitDialog } from './carona-kit-dialog';
 import { saveBlob } from './documents-section';
 import { formatQty, situationLabel, situationTone } from './price-record-meta';
 
@@ -51,6 +53,7 @@ const WON = ['VENCIDA', 'AGUARDANDO_ASSINATURA', 'CONTRATO_ASSINADO', 'EM_ANDAME
     DocumentAiFill,
     AtaItemsDialog,
     CaronaDialog,
+    CaronaKitDialog,
   ],
   templateUrl: './ata-section.html',
   styleUrl: './ata-section.scss',
@@ -63,6 +66,8 @@ export class AtaSection {
   readonly tender = input.required<TenderResponse>();
   /** "Registrar carona" vindo de uma negociação ganha: abre o diálogo já preenchido. */
   readonly caronaPreset = input<CaronaPreset | null>(null);
+  /** "Kit de carona" vindo de uma negociação (Fase 10): abre o kit com o município dela. */
+  readonly kitAgency = input<AgencyRefResponse | null>(null);
   /** Ata criada, alterada ou apagada (o cabeçalho e o histórico recarregam). */
   readonly changed = output<void>();
 
@@ -94,6 +99,9 @@ export class AtaSection {
   protected readonly itemsOpen = signal(false);
   protected readonly caronaOpen = signal(false);
   protected readonly activePreset = signal<CaronaPreset | null>(null);
+  protected readonly kitOpen = signal(false);
+  protected readonly kitPreset = signal<AgencyRefResponse | null>(null);
+  private kitOpenedFor: string | null = null;
   protected readonly confirmingCarona = signal<string | null>(null);
   protected readonly confirmingDelete = signal(false);
   protected readonly saving = signal(false);
@@ -120,6 +128,25 @@ export class AtaSection {
         this.openCarona(preset);
       }
     });
+    // Chegou de uma negociação aberta: abre o kit de carona uma vez, com o município dela
+    effect(() => {
+      const agency = this.kitAgency();
+      const ata = this.ata.value();
+      if (agency && ata && this.canOffer(ata) && this.kitOpenedFor !== agency.id) {
+        this.kitOpenedFor = agency.id;
+        this.openKit(agency);
+      }
+    });
+  }
+
+  /** Dá para oferecer carona: permite adesão e ainda vale. */
+  protected canOffer(ata: PriceRecordResponse): boolean {
+    return ata.allowsAdhesion && ata.situation !== 'VENCIDA';
+  }
+
+  protected openKit(agency: AgencyRefResponse | null = null): void {
+    this.kitPreset.set(agency);
+    this.kitOpen.set(true);
   }
 
   protected openForm(ata: PriceRecordResponse | null): void {

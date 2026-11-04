@@ -26,6 +26,8 @@ import { saveBlob } from '../../price-records/documents-section';
 import { CloseContractDialog } from './close-contract-dialog';
 import { ImportWizard } from './import-wizard';
 import { ItemsEditor } from './items-editor';
+import { Panel } from '../../../shared/ui/panel';
+import { FollowUpWriter } from '../follow-up-writer';
 import { OrderDialog } from './order-dialog';
 import { SignContractDialog } from './sign-contract-dialog';
 
@@ -47,6 +49,8 @@ const ACCEPTS_CONTRACTS = ['VENCIDA', 'AGUARDANDO_ASSINATURA', 'CONTRATO_ASSINAD
     CloseContractDialog,
     ItemsEditor,
     ImportWizard,
+    Panel,
+    FollowUpWriter,
   ],
   templateUrl: './contracts-tab.html',
   styleUrl: './contracts-tab.scss',
@@ -59,6 +63,13 @@ export class ContractsTab {
   readonly tender = input.required<TenderResponse>();
   /** Muda quando o cabeçalho do detalhe pede "Registrar contrato": abre o diálogo. */
   readonly signRequest = input(0);
+  /**
+   * Resposta do órgão que já é o pedido (registro de contato, Fase 9): abre "Registrar pedido" com o texto para a IA.
+   * Muda a cada pedido; contrato nulo usa o único contrato aberto com itens.
+   */
+  readonly orderRequest = input<{ contractId: string | null; text: string; seq: number } | null>(
+    null,
+  );
   /** Algo mudou nos contratos que pode ter mudado a licitação (situação, datas, versão). */
   readonly changed = output<void>();
 
@@ -69,6 +80,16 @@ export class ContractsTab {
   protected readonly closing = signal<ContractResponse | null>(null);
   protected readonly editingItems = signal<ContractResponse | null>(null);
   protected readonly importing = signal<ContractResponse | null>(null);
+  /** Contrato do follow-up escrito com IA (Fase 9). */
+  protected readonly followUp = signal<ContractResponse | null>(null);
+  /** Texto do pedido vindo de um contato, para o diálogo de pedido abrir já em "Mensagem colada". */
+  protected readonly orderText = signal<string | null>(null);
+  protected readonly followUpSubtitle = computed(() => {
+    const c = this.followUp();
+    return c
+      ? `${this.tender().agency.name} · ${c.kindLabel}${c.number ? ' ' + c.number : ''}`
+      : null;
+  });
   /** Itens lidos pela IA no PDF do contrato, oferecidos no editor de itens depois de salvar. */
   protected readonly suggestedItems = signal<ExtractionItem[] | null>(null);
   /** Pedido aguardando a confirmação para ser apagado (confirmação na própria linha, sem diálogo do navegador). */
@@ -103,6 +124,24 @@ export class ContractsTab {
   constructor() {
     effect(() => {
       if (this.signRequest() > 0) untracked(() => this.signing.set(true));
+    });
+    effect(() => {
+      const request = this.orderRequest();
+      const list = this.contracts.value();
+      if (!request || !list) return;
+      untracked(() => {
+        const open = list.filter((c) => !c.closedAt && c.canEdit && c.items.length);
+        const target =
+          open.find((c) => c.id === request.contractId) ?? (open.length === 1 ? open[0] : null);
+        if (!target) {
+          this.actionError.set(
+            'Escolha o contrato e clique em Registrar pedido → Mensagem colada para a IA ler o pedido.',
+          );
+          return;
+        }
+        this.orderText.set(request.text);
+        this.ordering.set(target);
+      });
     });
   }
 

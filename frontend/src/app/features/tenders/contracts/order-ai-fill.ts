@@ -228,6 +228,8 @@ export class OrderAiFill {
   readonly tenderId = input.required<string>();
   /** Documentos da licitação; só os de pedido (Empenho, Outros) em PDF, JPEG ou PNG entram. */
   readonly documents = input<DocumentResponse[]>([]);
+  /** Texto já colado em outro lugar (registro de contato): abre em "Mensagem colada" com ele. */
+  readonly presetText = input<string | null>(null);
   readonly done = output<OrderReadingResponse>();
 
   protected readonly maxText = MAX_TEXT;
@@ -250,6 +252,12 @@ export class OrderAiFill {
   private polling?: Subscription;
 
   constructor() {
+    effect(() => {
+      const preset = this.presetText();
+      if (!preset) return;
+      this.mode.set('text');
+      this.text.set(preset);
+    });
     effect(() => {
       const docs = this.readable();
       if (docs.some((d) => d.id === this.documentId())) return;

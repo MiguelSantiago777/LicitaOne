@@ -75,32 +75,32 @@ test('documento, ata, itens e caronas com limite sinalizado; a ata vigente apare
   await expect(items).toBeHidden();
   await expect(ata.getByText('0 de 200')).toBeVisible();
 
-  // carona dentro do limite
+  // carona dentro dos limites (até 50% do item por órgão)
   await ata.getByRole('button', { name: 'Registrar carona' }).click();
   const carona = page.getByRole('dialog', { name: 'Registrar carona' });
   // órgãos estaduais: nunca aparecem em "municípios sem ata", que o outro teste confere ao mesmo tempo
   await carona.getByLabel('Órgão que aderiu').fill('SEGOV');
   await carona.getByRole('option', { name: /SEGOV · Secretaria de Governo/ }).click();
-  await carona.getByLabel(/Kit escolar fundamental/).fill('150');
+  await carona.getByLabel(/Kit escolar fundamental/).fill('50');
   await expect(carona.getByText('Dentro dos limites.')).toBeVisible();
-  await expect(carona.getByText('R$ 6.390,00')).toBeVisible();
+  await expect(carona.getByText('R$ 2.130,00')).toBeVisible();
   await carona.getByRole('button', { name: 'Registrar carona' }).click();
   await expect(carona).toBeHidden();
   await expect(ata.getByText('SEGOV · Secretaria de Governo')).toBeVisible();
 
-  // passa de 200% do item: só registra marcando "registrar mesmo assim"
+  // passa de 50% do item para um órgão só: só registra marcando "registrar mesmo assim"
   await ata.getByRole('button', { name: 'Registrar carona' }).click();
   await carona.getByLabel('Órgão que aderiu').fill('Casa Civil');
   await carona.getByRole('option', { name: /Casa Civil/ }).click();
   await carona.getByLabel(/Kit escolar fundamental/).fill('100');
-  await expect(carona.getByText(/acima de 200% do registrado/)).toBeVisible();
+  await expect(carona.getByText(/acima de 50% do registrado por órgão/)).toBeVisible();
   const register = carona.getByRole('button', { name: 'Registrar carona' });
   await expect(register).toBeDisabled();
   await carona.getByLabel(/Registrar mesmo assim/).check();
   await register.click();
   await expect(carona).toBeHidden();
   await expect(ata.getByText('Passou dos limites, registrada com confirmação')).toBeVisible();
-  await expect(ata.getByText('250 de 200')).toBeVisible();
+  await expect(ata.getByText('150 de 200')).toBeVisible();
 
   // histórico da licitação registra ata, carona e documento (é permanente: rodadas anteriores também aparecem)
   await page.getByRole('tab', { name: 'Histórico' }).click();

@@ -1,0 +1,134 @@
+@use './carona-dialog';
+
+.kit {
+  display: grid;
+  gap: 16px;
+}
+.warnings {
+  margin: 0;
+  list-style: none;
+}
+.warnings li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 550;
+}
+.warnings app-icon {
+  flex: none;
+  margin-top: 2px;
+}
+.gen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.gen .ai-status {
+  margin-right: auto;
+}
+.ai-status:empty {
+  display: none;
+}
+.ai-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--violet);
+  font-size: 13px;
+  font-weight: 550;
+}
+.spinner {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid color-mix(in srgb, var(--violet) 30%, transparent);
+  border-top-color: var(--violet);
+  border-radius: 50%;
+  animation: kit-spin 0.8s linear infinite;
+}
+@keyframes kit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.letters {
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.badge.ai {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--violet-bg);
+  color: var(--violet);
+}
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  margin-bottom: -1px;
+  padding: 8px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tab[aria-selected='true'] {
+  border-bottom-color: var(--brand);
+  color: var(--text);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.letter {
+  display: grid;
+  gap: 10px;
+}
+.letter .textarea {
+  font-size: 13px;
+}
+.meta {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.meta-label {
+  margin-right: 6px;
+  color: var(--text-3);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.done {
+  margin-right: auto;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 550;
+}
+.footer-note {
+  margin-right: auto;
+  color: var(--text-3);
+  font-size: 12px;
+}

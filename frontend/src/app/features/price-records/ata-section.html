@@ -21,6 +21,11 @@
       </div>
       @if (a.canEdit) {
         <div class="ata-actions">
+          @if (canOffer(a)) {
+            <button type="button" class="btn sm" (click)="openKit()">
+              <app-icon name="sparkles" [size]="16" />Kit de carona
+            </button>
+          }
           @if (a.allowsAdhesion) {
             <button type="button" class="btn sm primary" (click)="openCarona()">
               <app-icon name="handshake" [size]="16" />Registrar carona
@@ -234,6 +239,13 @@
     [preset]="activePreset()"
     (closed)="caronaOpen.set(false); activePreset.set(null)"
     (saved)="accept($event)"
+  />
+  <app-carona-kit-dialog
+    [open]="kitOpen()"
+    [record]="a"
+    [presetAgency]="kitPreset()"
+    (closed)="kitOpen.set(false); kitPreset.set(null)"
+    (documentSaved)="changed.emit()"
   />
 } @else {
   <section class="card empty no-ata">

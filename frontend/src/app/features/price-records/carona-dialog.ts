@@ -151,7 +151,8 @@ export interface CaronaPreset {
                     <app-icon name="alert" [size]="16" />Passa dos limites configurados ({{
                       r.limits.maxAgencies
                     }}
-                    órgãos e {{ r.limits.maxTotalPercent }}%). Confira com o jurídico antes de
+                    órgãos, {{ r.limits.maxPerAgencyPercent }}% por órgão e
+                    {{ r.limits.maxTotalPercent }}% no total). Confira com o jurídico antes de
                     registrar.
                   </p>
                   <ul>

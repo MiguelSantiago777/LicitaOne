@@ -27,6 +27,7 @@ import { ApiError } from '../../core/http/api-error';
 import { fromLocalDateTimeInput, toLocalDateTimeInput } from '../../shared/format';
 import { Icon } from '../../shared/ui/icon';
 import { Panel } from '../../shared/ui/panel';
+import { FollowUpWriter } from '../tenders/follow-up-writer';
 import { EmailDraft } from './email-draft';
 
 /** O que já vem preenchido numa tarefa nova (ex.: "Criar tarefa" no card da negociação). */
@@ -50,7 +51,7 @@ function tomorrowAtNine(): string {
  */
 @Component({
   selector: 'app-task-dialog',
-  imports: [CurrencyPipe, FormsModule, Icon, Panel, EmailDraft],
+  imports: [CurrencyPipe, FormsModule, Icon, Panel, EmailDraft, FollowUpWriter],
   template: `
     <app-panel
       [open]="open()"
@@ -79,6 +80,9 @@ function tomorrowAtNine(): string {
           }
           @if (task()?.emailDraft; as draft) {
             <app-email-draft [draft]="draft" />
+          }
+          @if (task()?.tender && task()!.canEdit && task()!.status !== 'CONCLUIDA') {
+            <app-follow-up-writer [tenderId]="task()!.tender!.id" />
           }
           @if (task() && !task()!.canEdit) {
             <p class="hint">Só o responsável ou um administrador altera esta tarefa.</p>

@@ -13,10 +13,19 @@ import { Injectable, inject } from '@angular/core';
 import type { Observable } from 'rxjs';
 
 import type {
+  AgencyResponseRequest,
+  CaronaKitRequest,
+  CaronaKitResponse,
+  CaronaLetterRequest,
+  CaronaOfferParams,
+  CaronaOfferResponse,
   ExtractionResponse,
   ExtractionSettingsResponse,
+  FollowUpDraftRequest,
+  FollowUpDraftResponse,
   OrderReadingRequest,
   OrderReadingResponse,
+  ResponseReadingResponse,
 } from '../model';
 
 import type { HttpHeaders, HttpResponse as AngularHttpResponse } from '@angular/common/http';
@@ -57,9 +66,275 @@ type HttpClientObserveOptions = HttpClientOptions & {
   readonly observe?: 'body' | 'events' | 'response';
 };
 
+type AngularHttpParamValue = string | number | boolean | Array<string | number | boolean>;
+type AngularHttpParamValueWithNullable = AngularHttpParamValue | null;
+
+function filterParams(
+  params: Record<string, unknown>,
+  requiredNullableKeys?: ReadonlySet<string>,
+  preserveRequiredNullables?: false,
+  passthroughKeys?: undefined,
+): Record<string, AngularHttpParamValue>;
+function filterParams(
+  params: Record<string, unknown>,
+  requiredNullableKeys: ReadonlySet<string> | undefined,
+  preserveRequiredNullables: true,
+  passthroughKeys?: undefined,
+): Record<string, AngularHttpParamValueWithNullable>;
+function filterParams(
+  params: Record<string, unknown>,
+  requiredNullableKeys: ReadonlySet<string> | undefined,
+  preserveRequiredNullables: boolean | undefined,
+  passthroughKeys: ReadonlySet<string>,
+): Record<string, unknown>;
+function filterParams(
+  params: Record<string, unknown>,
+  requiredNullableKeys: ReadonlySet<string> = new Set(),
+  preserveRequiredNullables = false,
+  passthroughKeys: ReadonlySet<string> = new Set(),
+): Record<string, unknown> {
+  const filteredParams: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(params)) {
+    if (passthroughKeys.has(key)) {
+      if (value !== undefined) {
+        filteredParams[key] = value;
+      }
+      continue;
+    }
+    if (Array.isArray(value)) {
+      const filtered = value
+        .filter(
+          (item) =>
+            item != null &&
+            (typeof item === 'string' ||
+              typeof item === 'number' ||
+              typeof item === 'boolean' ||
+              (item instanceof Date && !Number.isNaN(item.getTime()))),
+        )
+        .map((item) => (item instanceof Date ? item.toISOString() : item)) as Array<
+        string | number | boolean
+      >;
+      if (filtered.length) {
+        filteredParams[key] = filtered;
+      }
+    } else if (value === null && requiredNullableKeys.has(key)) {
+      // With a paramsSerializer (preserveRequiredNullables) the literal null
+      // is passed through for it to consume; without one, emit an empty
+      // string so the required key still reaches the wire as `?key=`
+      // instead of being silently dropped. See #3712.
+      filteredParams[key] = preserveRequiredNullables ? null : '';
+    } else if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      // useDates produces Date query params; serialize to ISO so they reach
+      // the wire instead of being dropped by the primitive check below. See #3856.
+      filteredParams[key] = value.toISOString();
+    } else if (
+      value != null &&
+      (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+    ) {
+      filteredParams[key] = value;
+    }
+  }
+  return filteredParams;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ExtractionsService {
   private readonly http = inject(HttpClient);
+  /**
+   * @summary Escreve com IA um follow-up ao órgão com o contexto do contrato; não envia nem grava
+   */
+  writeFollowUpDraft<TData = FollowUpDraftResponse>(
+    tenderId: string,
+    followUpDraftRequest: FollowUpDraftRequest,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  writeFollowUpDraft<TData = FollowUpDraftResponse>(
+    tenderId: string,
+    followUpDraftRequest: FollowUpDraftRequest,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  writeFollowUpDraft<TData = FollowUpDraftResponse>(
+    tenderId: string,
+    followUpDraftRequest: FollowUpDraftRequest,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  writeFollowUpDraft<TData = FollowUpDraftResponse>(
+    tenderId: string,
+    followUpDraftRequest: FollowUpDraftRequest,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+        `/api/v1/tenders/${tenderId}/follow-up-draft`,
+        followUpDraftRequest,
+        {
+          ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+          observe: 'events',
+        },
+      );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+        `/api/v1/tenders/${tenderId}/follow-up-draft`,
+        followUpDraftRequest,
+        {
+          ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+          observe: 'response',
+        },
+      );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/tenders/${tenderId}/follow-up-draft`,
+      followUpDraftRequest,
+      {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      },
+    );
+  }
+  /**
+   * @summary Entende com IA a resposta do órgão (situação, data prevista, resumo, próxima ação); não grava nada
+   */
+  interpretAgencyResponse<TData = ResponseReadingResponse>(
+    tenderId: string,
+    agencyResponseRequest: AgencyResponseRequest,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  interpretAgencyResponse<TData = ResponseReadingResponse>(
+    tenderId: string,
+    agencyResponseRequest: AgencyResponseRequest,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  interpretAgencyResponse<TData = ResponseReadingResponse>(
+    tenderId: string,
+    agencyResponseRequest: AgencyResponseRequest,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  interpretAgencyResponse<TData = ResponseReadingResponse>(
+    tenderId: string,
+    agencyResponseRequest: AgencyResponseRequest,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+        `/api/v1/tenders/${tenderId}/contacts/interpretation`,
+        agencyResponseRequest,
+        {
+          ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+          observe: 'events',
+        },
+      );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+        `/api/v1/tenders/${tenderId}/contacts/interpretation`,
+        agencyResponseRequest,
+        {
+          ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+          observe: 'response',
+        },
+      );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/tenders/${tenderId}/contacts/interpretation`,
+      agencyResponseRequest,
+      {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      },
+    );
+  }
+  /**
+   * @summary Gera o kit de carona (apresentação, modelo de ofício e anuência); não envia nem grava
+   */
+  writeCaronaKit<TData = CaronaKitResponse>(
+    id: string,
+    caronaKitRequest: CaronaKitRequest,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  writeCaronaKit<TData = CaronaKitResponse>(
+    id: string,
+    caronaKitRequest: CaronaKitRequest,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  writeCaronaKit<TData = CaronaKitResponse>(
+    id: string,
+    caronaKitRequest: CaronaKitRequest,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  writeCaronaKit<TData = CaronaKitResponse>(
+    id: string,
+    caronaKitRequest: CaronaKitRequest,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(`/api/v1/price-records/${id}/carona-kit`, caronaKitRequest, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      });
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(`/api/v1/price-records/${id}/carona-kit`, caronaKitRequest, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      });
+    }
+
+    return this.http.post<TData>(`/api/v1/price-records/${id}/carona-kit`, caronaKitRequest, {
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+    });
+  }
+  /**
+   * @summary Uma carta do kit de carona em .docx, com o texto revisado
+   */
+  caronaLetterDocx(
+    id: string,
+    caronaLetterRequest: CaronaLetterRequest,
+    options?: HttpClientBodyOptions,
+  ): Observable<Blob>;
+  caronaLetterDocx(
+    id: string,
+    caronaLetterRequest: CaronaLetterRequest,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<Blob>>;
+  caronaLetterDocx(
+    id: string,
+    caronaLetterRequest: CaronaLetterRequest,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<Blob>>;
+  caronaLetterDocx(
+    id: string,
+    caronaLetterRequest: CaronaLetterRequest,
+    options?: HttpClientObserveOptions,
+  ): Observable<Blob | HttpEvent<Blob> | AngularHttpResponse<Blob>> {
+    if (options?.observe === 'events') {
+      return this.http.post(`/api/v1/price-records/${id}/carona-kit/docx`, caronaLetterRequest, {
+        responseType: 'blob',
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }) as Observable<HttpEvent<Blob>>;
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post(`/api/v1/price-records/${id}/carona-kit/docx`, caronaLetterRequest, {
+        responseType: 'blob',
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }) as Observable<AngularHttpResponse<Blob>>;
+    }
+
+    return this.http.post(`/api/v1/price-records/${id}/carona-kit/docx`, caronaLetterRequest, {
+      responseType: 'blob',
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+    }) as Observable<Blob>;
+  }
   /**
    * @summary Pede para a IA ler a versão atual do documento (processada em segundo plano)
    */
@@ -151,6 +426,53 @@ export class ExtractionsService {
         observe: 'body',
       },
     );
+  }
+  /**
+   * @summary O que oferecer de uma ata a um município: quanto ele pode pedir de cada item e avisos
+   */
+  caronaOffer<TData = CaronaOfferResponse>(
+    id: string,
+    params: CaronaOfferParams,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  caronaOffer<TData = CaronaOfferResponse>(
+    id: string,
+    params: CaronaOfferParams,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  caronaOffer<TData = CaronaOfferResponse>(
+    id: string,
+    params: CaronaOfferParams,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  caronaOffer<TData = CaronaOfferResponse>(
+    id: string,
+    params: CaronaOfferParams,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    const filteredParams = filterParams({ ...params, ...options?.params }, new Set<string>([]));
+
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(`/api/v1/price-records/${id}/carona-offer`, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+        params: filteredParams,
+      });
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(`/api/v1/price-records/${id}/carona-offer`, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+        params: filteredParams,
+      });
+    }
+
+    return this.http.get<TData>(`/api/v1/price-records/${id}/carona-offer`, {
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+      params: filteredParams,
+    });
   }
   /**
    * @summary Situação e resultado de uma leitura de pedido
@@ -302,8 +624,13 @@ export class ExtractionsService {
   }
 }
 
+export type WriteFollowUpDraftClientResult = NonNullable<FollowUpDraftResponse>;
+export type InterpretAgencyResponseClientResult = NonNullable<ResponseReadingResponse>;
+export type WriteCaronaKitClientResult = NonNullable<CaronaKitResponse>;
+export type CaronaLetterDocxClientResult = NonNullable<Blob>;
 export type RequestExtractionClientResult = NonNullable<ExtractionResponse>;
 export type RequestOrderReadingClientResult = NonNullable<OrderReadingResponse>;
+export type CaronaOfferClientResult = NonNullable<CaronaOfferResponse>;
 export type GetOrderReadingClientResult = NonNullable<OrderReadingResponse>;
 export type GetExtractionClientResult = NonNullable<ExtractionResponse>;
 export type GetExtractionSettingsClientResult = NonNullable<ExtractionSettingsResponse>;

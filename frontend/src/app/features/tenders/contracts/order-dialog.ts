@@ -55,6 +55,7 @@ import { OrderAiFill } from './order-ai-fill';
             <app-order-ai-fill
               [contractId]="c.id"
               [tenderId]="c.tenderId"
+              [presetText]="presetText()"
               [documents]="documents.value() ?? []"
               (done)="applyAi($event)"
             />
@@ -281,6 +282,8 @@ export class OrderDialog {
 
   readonly contract = input<ContractResponse | null>(null);
   readonly agencyName = input<string | null>(null);
+  /** Texto do pedido vindo de um contato registrado: a caixa da IA abre em "Mensagem colada" com ele. */
+  readonly presetText = input<string | null>(null);
   readonly closed = output<void>();
   readonly saved = output<ContractResponse>();
 

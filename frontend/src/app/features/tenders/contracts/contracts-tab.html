@@ -75,6 +75,9 @@
             <button type="button" class="btn sm" (click)="importing.set(c)">
               <app-icon name="imports" [size]="16" />Importar planilha
             </button>
+            <button type="button" class="btn sm" (click)="followUp.set(c)">
+              <app-icon name="sparkles" [size]="16" />Follow-up
+            </button>
             <button type="button" class="btn sm" (click)="editingItems.set(c)">Itens</button>
             <button type="button" class="btn sm ghost" (click)="editingContract.set(c)">
               Editar
@@ -283,7 +286,8 @@
 <app-order-dialog
   [contract]="ordering()"
   [agencyName]="tender().agency.name"
-  (closed)="ordering.set(null)"
+  [presetText]="orderText()"
+  (closed)="ordering.set(null); orderText.set(null)"
   (saved)="onContractSaved($event)"
 />
 <app-close-contract-dialog
@@ -305,3 +309,17 @@
   (closed)="importing.set(null)"
   (imported)="onImported()"
 />
+<app-panel
+  [open]="!!followUp()"
+  title="Follow-up ao órgão"
+  [subtitle]="followUpSubtitle()"
+  [width]="600"
+  (closed)="followUp.set(null)"
+>
+  @if (followUp(); as c) {
+    <app-follow-up-writer [tenderId]="tender().id" [contractId]="c.id" />
+  }
+  <ng-container panel-footer>
+    <button type="button" class="btn" (click)="followUp.set(null)">Fechar</button>
+  </ng-container>
+</app-panel>

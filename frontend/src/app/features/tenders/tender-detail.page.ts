@@ -19,6 +19,7 @@ import type {
   ContractEventResponse,
   NextStatusResponse,
   PriceRecordEventResponse,
+  TenderContactResponse,
   TenderEventResponse,
   TenderResponse,
 } from '../../api/generated/model';
@@ -29,6 +30,7 @@ import { Icon } from '../../shared/ui/icon';
 import { AtaSection } from '../price-records/ata-section';
 import { CaronaPreset } from '../price-records/carona-dialog';
 import { DocumentsSection } from '../price-records/documents-section';
+import { ContactDialog, OrderFromText } from './contact-dialog';
 import { ContractsTab } from './contracts/contracts-tab';
 import { TenderDealsTab, TenderTasksTab } from './tender-work-tabs';
 import { TenderForm } from './tender-form';
@@ -38,7 +40,8 @@ import { TransitionDialog } from './transition-dialog';
 type HistoryItem =
   | { source: 'tender'; at: string; tender: TenderEventResponse }
   | { source: 'contract'; at: string; contract: ContractEventResponse }
-  | { source: 'record'; at: string; record: PriceRecordEventResponse };
+  | { source: 'record'; at: string; record: PriceRecordEventResponse }
+  | { source: 'contact'; at: string; contact: TenderContactResponse };
 
 type DetailTab = 'resumo' | 'itens' | 'documentos' | 'historico' | 'tarefas' | 'negociacao';
 const TABS: DetailTab[] = ['resumo', 'itens', 'documentos', 'historico', 'tarefas', 'negociacao'];
@@ -58,6 +61,7 @@ const TABS: DetailTab[] = ['resumo', 'itens', 'documentos', 'historico', 'tarefa
     TenderDealsTab,
     AtaSection,
     DocumentsSection,
+    ContactDialog,
   ],
   templateUrl: './tender-detail.page.html',
   styleUrl: './tender-detail.page.scss',
@@ -119,10 +123,30 @@ export class TenderDetailPage {
         .pipe(map((d): CaronaPreset => ({ dealId: d.id, agency: d.agency ?? undefined }))),
   });
   protected readonly caronaPreset = computed(() => this.caronaDeal.value() ?? null);
+  /** ?kit=<negociação> (Fase 10): o kit de carona abre com o município da negociação. */
+  private readonly kitDeal = rxResource({
+    params: () => this.route.snapshot.queryParamMap.get('kit') ?? undefined,
+    stream: ({ params }) => this.dealsApi.getDeal(params).pipe(map((d) => d.agency ?? null)),
+  });
+  protected readonly kitAgency = computed(() => this.kitDeal.value() ?? null);
   protected readonly contractHistory = rxResource({
     params: () => (this.tab() === 'historico' ? this.id() : undefined),
     stream: ({ params }) => this.contractsApi.tenderContractsHistory(params),
   });
+  /** Contatos com o órgão (Fase 9), na mesma linha do tempo. */
+  protected readonly contacts = rxResource({
+    params: () => (this.tab() === 'historico' ? this.id() : undefined),
+    stream: ({ params }) => this.api.tenderContacts(params),
+  });
+  protected readonly contactOpen = signal(false);
+  protected readonly confirmingContact = signal<string | null>(null);
+  protected readonly contactError = signal<string | null>(null);
+  /** Resposta do órgão que já é o pedido: a aba de contratos abre "Registrar pedido" com o texto. */
+  protected readonly orderRequest = signal<{
+    contractId: string | null;
+    text: string;
+    seq: number;
+  } | null>(null);
 
   /** Histórico da licitação e dos contratos numa linha do tempo só, do mais recente para o mais antigo. */
   protected readonly historyItems = computed<HistoryItem[]>(() => {
@@ -141,7 +165,12 @@ export class TenderDetailPage {
       at: e.occurredAt,
       record: e,
     }));
-    return [...tenderEvents, ...contractEvents, ...recordEvents].sort((a, b) =>
+    const contacts: HistoryItem[] = (this.contacts.value() ?? []).map((c) => ({
+      source: 'contact',
+      at: c.createdAt,
+      contact: c,
+    }));
+    return [...tenderEvents, ...contractEvents, ...recordEvents, ...contacts].sort((a, b) =>
       b.at.localeCompare(a.at),
     );
   });
@@ -188,6 +217,32 @@ export class TenderDetailPage {
     this.tender.reload();
     this.history.reload();
     this.contractHistory.reload();
+  }
+
+  protected onContactSaved(): void {
+    this.contactOpen.set(false);
+    this.contacts.reload();
+  }
+
+  protected removeContact(contactId: string): void {
+    this.contactError.set(null);
+    this.api.removeTenderContact(this.id(), contactId).subscribe({
+      next: () => {
+        this.confirmingContact.set(null);
+        this.contacts.reload();
+      },
+      error: (err: unknown) => {
+        this.confirmingContact.set(null);
+        this.contactError.set(err instanceof ApiError ? err.detail : 'Não foi possível apagar.');
+      },
+    });
+  }
+
+  /** A resposta do órgão já é o pedido: vai para "Itens e pedidos" e abre o pedido com o texto (Fase 8). */
+  protected orderFromContact(request: OrderFromText): void {
+    this.contactOpen.set(false);
+    this.tab.set('itens');
+    this.orderRequest.set({ ...request, seq: (this.orderRequest()?.seq ?? 0) + 1 });
   }
 
   protected onAtaChanged(): void {

@@ -201,6 +201,14 @@
                   (click)="$event.stopPropagation()"
                   ><app-icon name="handshake" [size]="14" />Registrar carona na ata</a
                 >
+              } @else if (deal.status === 'EM_ANDAMENTO' && deal.tender && deal.agency) {
+                <a
+                  class="carona-link"
+                  [routerLink]="['/licitacoes', deal.tender.id]"
+                  [queryParams]="{ aba: 'documentos', kit: deal.id }"
+                  (click)="$event.stopPropagation()"
+                  ><app-icon name="sparkles" [size]="14" />Kit de carona</a
+                >
               }
               @if (deal.overdueTask; as late) {
                 <p class="overdue">

@@ -19,6 +19,8 @@ import type {
   SearchTendersParams,
   StatusTotalResponse,
   SuggestionsResponse,
+  TenderContactRequest,
+  TenderContactResponse,
   TenderEventResponse,
   TenderResponse,
   TenderSummaryParams,
@@ -298,6 +300,86 @@ export class TendersService {
     });
   }
   /**
+   * @summary Contatos com o órgão registrados na licitação
+   */
+  tenderContacts<TData = TenderContactResponse[]>(
+    tenderId: string,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  tenderContacts<TData = TenderContactResponse[]>(
+    tenderId: string,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  tenderContacts<TData = TenderContactResponse[]>(
+    tenderId: string,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  tenderContacts<TData = TenderContactResponse[]>(
+    tenderId: string,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(`/api/v1/tenders/${tenderId}/contacts`, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      });
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(`/api/v1/tenders/${tenderId}/contacts`, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      });
+    }
+
+    return this.http.get<TData>(`/api/v1/tenders/${tenderId}/contacts`, {
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+    });
+  }
+  /**
+   * @summary Registra um contato com o órgão
+   */
+  registerTenderContact<TData = TenderContactResponse>(
+    tenderId: string,
+    tenderContactRequest: TenderContactRequest,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  registerTenderContact<TData = TenderContactResponse>(
+    tenderId: string,
+    tenderContactRequest: TenderContactRequest,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  registerTenderContact<TData = TenderContactResponse>(
+    tenderId: string,
+    tenderContactRequest: TenderContactRequest,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  registerTenderContact<TData = TenderContactResponse>(
+    tenderId: string,
+    tenderContactRequest: TenderContactRequest,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(`/api/v1/tenders/${tenderId}/contacts`, tenderContactRequest, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      });
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(`/api/v1/tenders/${tenderId}/contacts`, tenderContactRequest, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      });
+    }
+
+    return this.http.post<TData>(`/api/v1/tenders/${tenderId}/contacts`, tenderContactRequest, {
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+    });
+  }
+  /**
    * @summary Muda a situação da licitação
    */
   transitionTender<TData = TenderResponse>(
@@ -497,14 +579,59 @@ export class TendersService {
       observe: 'body',
     });
   }
+  /**
+   * @summary Apaga um contato registrado por engano
+   */
+  removeTenderContact<TData = void>(
+    tenderId: string,
+    contactId: string,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  removeTenderContact<TData = void>(
+    tenderId: string,
+    contactId: string,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  removeTenderContact<TData = void>(
+    tenderId: string,
+    contactId: string,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  removeTenderContact<TData = void>(
+    tenderId: string,
+    contactId: string,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.delete<TData>(`/api/v1/tenders/${tenderId}/contacts/${contactId}`, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      });
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.delete<TData>(`/api/v1/tenders/${tenderId}/contacts/${contactId}`, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      });
+    }
+
+    return this.http.delete<TData>(`/api/v1/tenders/${tenderId}/contacts/${contactId}`, {
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+    });
+  }
 }
 
 export type GetTenderClientResult = NonNullable<TenderResponse>;
 export type UpdateTenderClientResult = NonNullable<TenderResponse>;
 export type SearchTendersClientResult = NonNullable<PageResponseTenderResponse>;
 export type CreateTenderClientResult = NonNullable<TenderResponse>;
+export type TenderContactsClientResult = NonNullable<TenderContactResponse[]>;
+export type RegisterTenderContactClientResult = NonNullable<TenderContactResponse>;
 export type TransitionTenderClientResult = NonNullable<TenderResponse>;
 export type TenderHistoryClientResult = NonNullable<TenderEventResponse[]>;
 export type TopAgenciesClientResult = NonNullable<AgencyTotalResponse[]>;
 export type TenderSummaryClientResult = NonNullable<StatusTotalResponse[]>;
 export type TenderSuggestionsClientResult = NonNullable<SuggestionsResponse>;
+export type RemoveTenderContactClientResult = NonNullable<void>;

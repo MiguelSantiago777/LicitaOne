@@ -246,3 +246,22 @@
   background: var(--violet-bg);
   color: var(--violet);
 }
+
+/* Contatos com o órgão (Fase 9) */
+.history-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+.h-icon.contact {
+  background: var(--violet-bg);
+  color: var(--violet);
+}
+.contact-summary {
+  margin-top: 2px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.danger-text {
+  color: var(--red);
+}

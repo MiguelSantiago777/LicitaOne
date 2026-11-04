@@ -189,12 +189,28 @@
       <app-contracts-tab
         [tender]="t"
         [signRequest]="signRequest()"
+        [orderRequest]="orderRequest()"
         (changed)="onContractsChanged()"
       />
     }
     @case ('historico') {
+      @if (t.canEdit) {
+        <div class="history-actions">
+          <button type="button" class="btn sm primary" (click)="contactOpen.set(true)">
+            <app-icon name="plus" [size]="16" />Registrar contato
+          </button>
+        </div>
+      }
+      @if (contactError(); as message) {
+        <div class="alert" role="alert">{{ message }}</div>
+      }
       <section class="card">
-        @if (history.isLoading() || contractHistory.isLoading() || recordHistory.isLoading()) {
+        @if (
+          history.isLoading() ||
+          contractHistory.isLoading() ||
+          recordHistory.isLoading() ||
+          contacts.isLoading()
+        ) {
           <div class="card-body"><span class="sk w-60"></span></div>
         } @else {
           <ol class="history">
@@ -246,6 +262,58 @@
                       </ul>
                     }
                     <p class="cell-sub num">{{ e.occurredAt | date: "dd/MM/yyyy 'às' HH:mm" }}</p>
+                  </div>
+                </li>
+              } @else if (item.source === 'contact') {
+                @let c = item.contact;
+                <li>
+                  <span class="h-icon contact"><app-icon name="mail" [size]="14" /></span>
+                  <div class="h-body">
+                    <p>
+                      <strong>{{ c.userName ?? 'Sistema' }}</strong> registrou contato por
+                      {{ c.channelLabel }}
+                      @if (c.outcomeLabel) {
+                        <span class="badge">{{ c.outcomeLabel }}</span>
+                      }
+                      <span class="cell-sub"> · {{ c.contactedAt | date: 'dd/MM/yyyy' }}</span>
+                    </p>
+                    <p class="contact-summary">{{ c.summary }}</p>
+                    @if (c.suggestedByAi) {
+                      <p class="cell-sub">
+                        Situação e resumo sugeridos pela IA e conferidos por {{ c.userName }}
+                      </p>
+                    }
+                    <p class="cell-sub num">
+                      {{ c.createdAt | date: "dd/MM/yyyy 'às' HH:mm" }}
+                      @if (c.canRemove) {
+                        @if (confirmingContact() === c.id) {
+                          · Apagar este contato?
+                          <button
+                            type="button"
+                            class="link inline danger-text"
+                            (click)="removeContact(c.id)"
+                          >
+                            Apagar
+                          </button>
+                          <button
+                            type="button"
+                            class="link inline"
+                            (click)="confirmingContact.set(null)"
+                          >
+                            Cancelar
+                          </button>
+                        } @else {
+                          ·
+                          <button
+                            type="button"
+                            class="link inline"
+                            (click)="confirmingContact.set(c.id)"
+                          >
+                            Apagar
+                          </button>
+                        }
+                      }
+                    </p>
                   </div>
                 </li>
               } @else if (item.source === 'record') {
@@ -340,7 +408,12 @@
     }
     @case ('documentos') {
       <div class="documents-tab">
-        <app-ata-section [tender]="t" [caronaPreset]="caronaPreset()" (changed)="onAtaChanged()" />
+        <app-ata-section
+          [tender]="t"
+          [caronaPreset]="caronaPreset()"
+          [kitAgency]="kitAgency()"
+          (changed)="onAtaChanged()"
+        />
         <app-documents-section [tenderId]="t.id" [canEdit]="t.canEdit" />
       </div>
     }
@@ -357,5 +430,14 @@
     [target]="transitionTarget()"
     (closed)="transitionTarget.set(null)"
     (saved)="onSaved($event)"
+  />
+}
+@if (tender.value(); as t) {
+  <app-contact-dialog
+    [open]="contactOpen()"
+    [tender]="t"
+    (closed)="contactOpen.set(false)"
+    (saved)="onContactSaved()"
+    (orderFromText)="orderFromContact($event)"
   />
 }

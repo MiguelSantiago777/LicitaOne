@@ -9,4 +9,5 @@
 export interface PriceRecordLimitsResponse {
   maxAgencies: number;
   maxTotalPercent: number;
+  maxPerAgencyPercent: number;
 }
