@@ -4,7 +4,7 @@ CRM de licitações públicas da Shema Suprimentos e Serviços. Acompanha cada l
 
 > O sistema se chamava ShemaCRM. Só o nome visível mudou: código, banco e filas continuam com `shema`/`shemacrm`.
 
-**Situação:** o MVP está pronto (Fases 0 a 6, com todos os itens da definição de pronto). Na Fase 7, a leitura da ata com IA está pronta e aguarda a chave da API e a autorização do cliente. Veja [Andamento](#andamento).
+**Situação:** o MVP está pronto (Fases 0 a 6, com todos os itens da definição de pronto). Nas Fases 7 e 8, a IA preenche ata, contrato e pedido (por PDF, foto ou mensagem); falta a chave da API em produção. Veja [Andamento](#andamento).
 
 ## O que o sistema faz
 
@@ -19,7 +19,8 @@ CRM de licitações públicas da Shema Suprimentos e Serviços. Acompanha cada l
 - **Documentos versionados** por licitação (Ata, Contrato, Empenho, Atestado, Edital, Outros). O arquivo é conferido pelo conteúdo, não só pela extensão.
 - **Atas com vigência própria**, independente do contrato, e itens registrados.
 - **Caronas (adesões):** registro por órgão e item, com os limites configuráveis só sinalizados. O sistema não afirma regra jurídica; a pessoa confirma.
-- **Preencher com IA:** a IA lê o PDF da ata e preenche número, datas, "permite adesão" e itens, com a página de onde saiu cada valor e avisos do que não conseguiu ler. A pessoa confere e salva; o histórico registra que os dados vieram da IA. Desligado sem `ANTHROPIC_API_KEY`.
+- **Preencher com IA:** a IA lê o PDF da ata ou do contrato e preenche número, datas, valor, "permite adesão" e itens, com a página de onde saiu cada valor e avisos do que não conseguiu ler. A pessoa confere e salva; o histórico registra que os dados vieram da IA. Desligado sem `ANTHROPIC_API_KEY`.
+- **Pedido com IA:** o ofício, a AF, o empenho, a foto do papel ou a mensagem do órgão viram um pedido em rascunho. A IA relaciona cada linha com um item do contrato e avisa o que passa do saldo, o que tem outro preço e o que não é do contrato. O pedido guarda o documento de origem.
 - **Destaque e lista de oportunidades:** "Ata válida até 2028, oportunidade de replicar", ordenada por vencimento, e um calendário de vencimento das atas.
 
 **Comercial**
@@ -64,7 +65,7 @@ Um único deployable Spring Boot, dividido em **módulos por contexto de negóci
 | `tenders` | Órgãos, licitações e ciclo de vida |
 | `contracts` | Contratos, itens, pedidos, saldo e importação de itens |
 | `pricerecords` | Atas, caronas e documentos |
-| `extraction` | Leitura de atas e contratos com IA (só sugere; a pessoa confere) |
+| `extraction` | Leitura de atas, contratos e pedidos com IA (só sugere; a pessoa confere) |
 | `deals` | Funil de negociações |
 | `boards` | Quadros kanban livres |
 | `tasks` | Tarefas manuais e de alerta |
@@ -159,7 +160,8 @@ Uma branch por fase, cada uma a partir da anterior. O relatório de cada fase (o
 | 4 | Funil (Kanban), tarefas e quadros livres | ✅ |
 | 5 | Alertas (ShedLock → RabbitMQ), DLQ, rascunhos, painel e métricas | ✅ |
 | 6 | Acessibilidade, performance, segurança (ASVS L1), backup/restore, runbook | ✅ |
-| 7 | IA: "Preencher com IA" lê o PDF da ata e preenche o formulário e os itens ([ADR 0016](docs/adr/0016-leitura-com-ia.md)) | ✅ ata (falta medir com atas reais e liberar o envio) |
+| 7 | IA: "Preencher com IA" lê o PDF da ata e preenche o formulário e os itens ([ADR 0016](docs/adr/0016-leitura-com-ia.md)) | ✅ (falta medir com atas reais) |
+| 8 | IA: contrato pelo PDF e pedido por PDF, foto ou mensagem ([ADR 0017](docs/adr/0017-pedido-com-ia.md)) | ✅ (falta medir com pedidos reais) |
 
 **Pendências:**
 - respostas do cliente em [`docs/decisoes.md`](docs/decisoes.md);

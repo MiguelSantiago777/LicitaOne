@@ -80,3 +80,7 @@ O usuário autorizou seguir sem esperar o cliente. Assumimos o seguinte; tudo po
 - Os identificadores internos continuam `shema`/`shemacrm`: pacote Java `br.com.shema.crm`, banco, filas e exchanges `shemacrm.*`, nomes dos containers e da pasta. Trocar esses nomes exigiria migrar banco e mensageria, sem ganho visível. Fica para quando houver ambiente de produção, se for desejado.
 - "Shema Suprimentos" continua abaixo do logo: é o nome da empresa cliente.
 
+### Envio à IA autorizado (04/11/2026)
+- O usuário autorizou enviar à Anthropic atas, contratos, pedidos (PDF e foto) e mensagens coladas, para a leitura com IA (ADRs 0016 e 0017).
+- Mensagens coladas podem ter dado pessoal de servidor: o texto fica no banco só até a leitura terminar e nunca vai para os logs.
+- Um ofício ou e-mail que pede itens de mais de um contrato é exceção. Segundo a pesquisa registrada no [plano da Fase 8](fases/fase-8-plano.md), empenho e AF saem de uma ata ou contrato só. Cada leitura serve um contrato, e o que não é dele fica de fora, com aviso.

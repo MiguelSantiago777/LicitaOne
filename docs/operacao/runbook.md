@@ -65,7 +65,7 @@ Requisitos:
 | `SHEMA_ALERTS_TENDER_WITHOUT_CONTRACT_DAYS` | licitação vencida sem contrato (⚠ a confirmar com o cliente) | 30 |
 | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` | armazenamento de arquivos | SeaweedFS local |
 | `SHEMA_LOGIN_ATTEMPTS_PER_MINUTE` | limite de tentativas de login por IP | 10 |
-| `ANTHROPIC_API_KEY` | leitura de atas com IA (ADR 0016); em branco, a funcionalidade fica desligada. ⚠ Só ligar com a autorização do cliente para enviar os PDFs à Anthropic | — |
+| `ANTHROPIC_API_KEY` | leitura com IA de atas, contratos e pedidos (ADRs 0016 e 0017); em branco, a funcionalidade fica desligada. O envio de documentos e mensagens à Anthropic foi autorizado em 04/11/2026 | — |
 | `SHEMA_EXTRACTION_MODEL` | modelo da leitura com IA | `claude-opus-5-5` |
 | `SHEMA_EXTRACTION_DEMO` | leitor de demonstração, sem IA (só E2E); o backend não sobe com ele no perfil prod | `false` |
 
@@ -146,7 +146,8 @@ deploy/backup/restore.sh /caminho/dos/backups/20261029-150000
 | Upload de documento falha | S3 fora ou disco cheio | `docker compose ps s3` e espaço em disco |
 | Pessoa bloqueada após errar a senha | 5 erros: bloqueio de 15 min | esperar, ou o administrador define uma senha nova (Usuários → Definir senha) |
 | Leitura com IA termina com "A chave da IA foi recusada" | `ANTHROPIC_API_KEY` errada, revogada ou sem crédito | troque a chave e reinicie o backend; as leituras com falha podem ser pedidas de novo |
-| Leitura com IA demora ou falha com "IA ocupada ou fora do ar" | limite de uso ou instabilidade da API (o SDK já tentou de novo) | pedir de novo depois; métricas `shema.extraction.failed` e `shema.extraction.tokens` no Prometheus |
+| Leitura com IA demora ou falha com "IA ocupada ou fora do ar" | limite de uso ou instabilidade da API (o SDK já tentou de novo) | pedir de novo depois; métricas `shema.extraction.failed` e `shema.extraction.tokens` (etiqueta `kind`: `DOCUMENTO` ou `PEDIDO`) no Prometheus. Filas: `shemacrm.extraction.extraction-requested` e `shemacrm.extraction.order-reading-requested`, cada uma com DLQ |
+| "Não deu para abrir a imagem" no pedido por foto | arquivo corrompido ou formato que a IA não lê | pedir a foto em JPEG ou PNG, ou o PDF; o texto colado é outra opção |
 | Sessões caem a cada reinício | backend sem `SHEMA_JWT_PRIVATE_KEY` (só acontece fora do perfil prod) | defina a chave |
 
 ## 8. Rotinas de segurança

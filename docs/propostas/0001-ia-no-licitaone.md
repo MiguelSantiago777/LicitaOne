@@ -1,6 +1,6 @@
 # Proposta 0001 — IA no LicitaOne
 
-- **Status:** item 1 (leitura da ata) aprovado e feito na Fase 7 ([relatório](../fases/fase-7.md), [ADR 0016](../adr/0016-leitura-com-ia.md)); os outros seguem em discussão
+- **Status:** item 1 (leitura da ata) aprovado e feito na Fase 7 ([relatório](../fases/fase-7.md), [ADR 0016](../adr/0016-leitura-com-ia.md)); o contrato na tela e o item 2 (pedido por PDF, foto ou mensagem) feitos na Fase 8 ([relatório](../fases/fase-8.md), [ADR 0017](../adr/0017-pedido-com-ia.md)); os outros seguem em discussão
 - **Data:** 03/11/2026
 - **Origem:** conversa com o time em 03/11/2026 sobre funcionalidades para diferenciar o produto
 
@@ -85,5 +85,5 @@ Um script de avaliação compara o que a IA leu com o cadastro feito à mão em 
 
 - [ ] Cliente valida se a direção faz sentido para o time comercial.
 - [ ] Conseguir 2 ou 3 atas e pedidos reais em PDF ou foto para um protótipo de extração.
-- [ ] Escolher fornecedor e modelo de IA, com custo por documento (vira ADR quando aprovado).
-- [ ] Confirmar a política de envio de documentos a um serviço externo de IA.
+- [x] Escolher fornecedor e modelo de IA (Claude, ADR 0016); o custo por documento sai da métrica de tokens.
+- [x] Confirmar a política de envio de documentos a um serviço externo de IA (autorizado em 04/11/2026).

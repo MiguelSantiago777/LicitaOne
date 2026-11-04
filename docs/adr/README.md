@@ -20,3 +20,4 @@ Cada decisão relevante tem um arquivo `NNNN-titulo.md` com contexto, decisão e
 | [0014](0014-atas-caronas-e-documentos.md) | Atas, caronas e documentos | Aceito |
 | [0015](0015-alertas-e-painel.md) | Alertas (job com ShedLock, filas, rascunhos) e painel | Aceito |
 | [0016](0016-leitura-com-ia.md) | Leitura de atas e contratos com IA | Aceito |
+| [0017](0017-pedido-com-ia.md) | Pedido a partir de PDF, foto ou mensagem com IA | Aceito |
