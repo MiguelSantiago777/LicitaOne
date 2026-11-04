@@ -69,7 +69,9 @@ Requisitos:
 | `SHEMA_EXTRACTION_MODEL` | modelo da leitura com IA | `claude-opus-5-5` |
 | `SHEMA_EXTRACTION_DEMO` | leitor de demonstração, sem IA (só E2E); o backend não sobe com ele no perfil prod | `false` |
 
-Os limites de carona ficam em `shema.caronas.*`: até 4 órgãos e 200% (ADR 0014).
+Os limites de carona ficam em `shema.caronas.*`: até 4 órgãos, 50% de cada item por órgão e 200% no total (ADRs 0014 e 0019).
+
+Os dados da empresa no kit de carona (razão social, CNPJ, endereço, cidade, representante e cargo, e-mail e telefone) ficam em `SHEMA_COMPANY_*` (ADR 0019). O `.env.example` traz exemplos: troque antes do primeiro uso. Campo em branco aparece entre colchetes nas cartas.
 
 ## 4. Atualizar a versão
 ```bash
@@ -146,7 +148,7 @@ deploy/backup/restore.sh /caminho/dos/backups/20261029-150000
 | Upload de documento falha | S3 fora ou disco cheio | `docker compose ps s3` e espaço em disco |
 | Pessoa bloqueada após errar a senha | 5 erros: bloqueio de 15 min | esperar, ou o administrador define uma senha nova (Usuários → Definir senha) |
 | Leitura com IA termina com "A chave da IA foi recusada" | `ANTHROPIC_API_KEY` errada, revogada ou sem crédito | troque a chave e reinicie o backend; as leituras com falha podem ser pedidas de novo |
-| Leitura com IA demora ou falha com "IA ocupada ou fora do ar" | limite de uso ou instabilidade da API (o SDK já tentou de novo) | pedir de novo depois; métricas `shema.extraction.failed` e `shema.extraction.tokens` (etiqueta `kind`: `DOCUMENTO` ou `PEDIDO`) no Prometheus. Filas: `shemacrm.extraction.extraction-requested` e `shemacrm.extraction.order-reading-requested`, cada uma com DLQ |
+| Leitura com IA demora ou falha com "IA ocupada ou fora do ar" | limite de uso ou instabilidade da API (o SDK já tentou de novo) | pedir de novo depois; métricas `shema.extraction.failed` e `shema.extraction.tokens` (etiqueta `kind`: `DOCUMENTO`, `PEDIDO`, `RESPOSTA`, `RASCUNHO` ou `CARONA`) no Prometheus. Filas: `shemacrm.extraction.extraction-requested` e `shemacrm.extraction.order-reading-requested`, cada uma com DLQ |
 | "Não deu para abrir a imagem" no pedido por foto | arquivo corrompido ou formato que a IA não lê | pedir a foto em JPEG ou PNG, ou o PDF; o texto colado é outra opção |
 | Sessões caem a cada reinício | backend sem `SHEMA_JWT_PRIVATE_KEY` (só acontece fora do perfil prod) | defina a chave |
 

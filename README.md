@@ -4,7 +4,7 @@ CRM de licitações públicas da Shema Suprimentos e Serviços. Acompanha cada l
 
 > O sistema se chamava ShemaCRM. Só o nome visível mudou: código, banco e filas continuam com `shema`/`shemacrm`.
 
-**Situação:** o MVP está pronto (Fases 0 a 6, com todos os itens da definição de pronto). Nas Fases 7 e 8, a IA preenche ata, contrato e pedido (por PDF, foto ou mensagem); falta a chave da API em produção. Veja [Andamento](#andamento).
+**Situação:** o MVP está pronto (Fases 0 a 6, com todos os itens da definição de pronto). Nas Fases 7 a 10, a IA preenche ata, contrato e pedido (por PDF, foto ou mensagem), entende a resposta do órgão, escreve o follow-up e o kit de carona; falta a chave da API em produção. Veja [Andamento](#andamento).
 
 ## O que o sistema faz
 
@@ -27,6 +27,9 @@ CRM de licitações públicas da Shema Suprimentos e Serviços. Acompanha cada l
 - **Funil de negociações em Kanban**, com arrastar e soltar, soma por coluna, troca para lista, filtros e faixa de tarefa atrasada. Uma negociação pode nascer de uma ata para oferecer carona.
 - **Quadros livres** (*Organização mensal*, *Licitações vencidas* e outros que a equipe criar).
 - **Tarefas** manuais e automáticas, com conclusão em massa.
+- **Registro de contato** com o órgão no histórico (canal, data, situação, o que foi conversado). A IA entende a resposta colada e sugere a próxima tarefa.
+- **Follow-up com IA:** e-mail ou WhatsApp citando contrato, saldo, último pedido e últimos contatos, com copiar, abrir no e-mail e abrir no WhatsApp. O sistema não envia nada.
+- **Kit de carona:** para cada município candidato, quanto ele pode pedir de cada item (50% por município, sem passar dos 200%), a carta de apresentação (com IA), o modelo de ofício de solicitação e o ofício de anuência, em .docx.
 
 **Alertas e painel**
 - **Três alertas diários:**
@@ -162,6 +165,8 @@ Uma branch por fase, cada uma a partir da anterior. O relatório de cada fase (o
 | 6 | Acessibilidade, performance, segurança (ASVS L1), backup/restore, runbook | ✅ |
 | 7 | IA: "Preencher com IA" lê o PDF da ata e preenche o formulário e os itens ([ADR 0016](docs/adr/0016-leitura-com-ia.md)) | ✅ (falta medir com atas reais) |
 | 8 | IA: contrato pelo PDF e pedido por PDF, foto ou mensagem ([ADR 0017](docs/adr/0017-pedido-com-ia.md)) | ✅ (falta medir com pedidos reais) |
+| 9 | Registro de contato, resposta do órgão e follow-up com IA ([ADR 0018](docs/adr/0018-follow-up-com-ia.md)) | ✅ |
+| 10 | Kit de carona: apresentação, ofício de solicitação e anuência ([ADR 0019](docs/adr/0019-kit-de-carona.md)) | ✅ (falta o jurídico revisar o modelo) |
 
 **Pendências:**
 - respostas do cliente em [`docs/decisoes.md`](docs/decisoes.md);

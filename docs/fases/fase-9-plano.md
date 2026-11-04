@@ -2,7 +2,12 @@
 
 **Branch:** `fase-9` (a partir de `fase-8`) · **Plano de:** 04/11/2026 · **Origem:** [proposta 0001](../propostas/0001-ia-no-licitaone.md), item 3 · **Base técnica:** ADRs [0016](../adr/0016-leitura-com-ia.md) e [0017](../adr/0017-pedido-com-ia.md)
 
-**Status:** aguarda validação antes de codar.
+**Status:** validado e concluído em 04/11/2026 ([relatório](fase-9.md), [ADR 0018](../adr/0018-follow-up-com-ia.md)).
+
+## Decisões de 04/11/2026
+1. **Registro de contato sem IA:** entra.
+2. **WhatsApp:** rascunho curto com "Abrir no WhatsApp" (só abre a conversa com o texto, sem enviar).
+3. **Responsável pela tarefa sugerida:** o usuário pediu pesquisa. A documentação do HubSpot e do Pipedrive não diz qual é o padrão na tarefa criada ao registrar uma ligação. As tarefas criadas por automação vão para o dono do registro ([guia de workflows do HubSpot](https://insidea.com/blog/hubspot/kb/how-to-create-tasks-automatically-using-hubspot-workflows)). **Decisão:** vai para o **responsável pela licitação**, como os alertas daqui, com o campo visível e trocável no formulário.
 
 ## O que existe hoje
 - O alerta "contrato sem pedido há 30 dias" cria uma tarefa com um **rascunho de e-mail fixo** (`AlertRules`): o mesmo texto para todo órgão. Ele cita só a data e o objeto. O sistema nunca envia; a pessoa copia ou abre no e-mail.
@@ -43,10 +48,10 @@
 - Métricas: `shema.extraction.*` com `kind=RESPOSTA` e `kind=RASCUNHO`.
 
 ## Etapas
-1. Registro de contato (backend, histórico, diálogo), sem IA.
-2. Classificação da resposta: esquema, conferência das datas no domínio, endpoint, preenchimento do diálogo, tarefa sugerida, atalho para o pedido.
-3. Follow-up com contexto: esquema, endpoint, botão na tarefa e no contrato, e-mail e WhatsApp.
-4. E2E (1440 e 390) com o leitor de demonstração, axe, ADR 0018 e relatório `docs/fases/fase-9.md`.
+1. ✅ Registro de contato (backend, histórico, diálogo), sem IA.
+2. ✅ Classificação da resposta: esquema, conferência das datas no domínio, endpoint, preenchimento do diálogo, tarefa sugerida, atalho para o pedido.
+3. ✅ Follow-up com contexto: esquema, endpoint, botão na tarefa e no contrato, e-mail e WhatsApp.
+4. ✅ E2E (1440 e 390) com o leitor de demonstração, axe, ADR 0018 e relatório `docs/fases/fase-9.md`.
 
 ## Fora desta fase
 - Enviar e-mail ou WhatsApp pelo sistema.
