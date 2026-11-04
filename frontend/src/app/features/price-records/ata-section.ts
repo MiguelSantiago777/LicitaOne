@@ -25,7 +25,7 @@ import { PriceRecordsService } from '../../api/generated/price-records/price-rec
 import { ApiError } from '../../core/http/api-error';
 import { Icon } from '../../shared/ui/icon';
 import { Panel } from '../../shared/ui/panel';
-import { AiReading, AtaAiFill } from './ata-ai-fill';
+import { AiReading, DocumentAiFill } from './document-ai-fill';
 import { AtaItemsDialog } from './ata-items-dialog';
 import { CaronaDialog, CaronaPreset } from './carona-dialog';
 import { saveBlob } from './documents-section';
@@ -48,7 +48,7 @@ const WON = ['VENCIDA', 'AGUARDANDO_ASSINATURA', 'CONTRATO_ASSINADO', 'EM_ANDAME
     RouterLink,
     Icon,
     Panel,
-    AtaAiFill,
+    DocumentAiFill,
     AtaItemsDialog,
     CaronaDialog,
   ],

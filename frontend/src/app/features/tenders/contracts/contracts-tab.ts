@@ -12,14 +12,17 @@ import {
 } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ContractsService } from '../../../api/generated/contracts/contracts.service';
+import { DocumentsService } from '../../../api/generated/documents/documents.service';
 import type {
   ContractOrderResponse,
   ContractResponse,
+  ExtractionItem,
   TenderResponse,
 } from '../../../api/generated/model';
 import { ApiError } from '../../../core/http/api-error';
 import { daysSince, formatQuantity } from '../../../shared/format';
 import { Icon } from '../../../shared/ui/icon';
+import { saveBlob } from '../../price-records/documents-section';
 import { CloseContractDialog } from './close-contract-dialog';
 import { ImportWizard } from './import-wizard';
 import { ItemsEditor } from './items-editor';
@@ -51,6 +54,7 @@ const ACCEPTS_CONTRACTS = ['VENCIDA', 'AGUARDANDO_ASSINATURA', 'CONTRATO_ASSINAD
 })
 export class ContractsTab {
   private readonly api = inject(ContractsService);
+  private readonly documentsApi = inject(DocumentsService);
 
   readonly tender = input.required<TenderResponse>();
   /** Muda quando o cabeçalho do detalhe pede "Registrar contrato": abre o diálogo. */
@@ -65,6 +69,8 @@ export class ContractsTab {
   protected readonly closing = signal<ContractResponse | null>(null);
   protected readonly editingItems = signal<ContractResponse | null>(null);
   protected readonly importing = signal<ContractResponse | null>(null);
+  /** Itens lidos pela IA no PDF do contrato, oferecidos no editor de itens depois de salvar. */
+  protected readonly suggestedItems = signal<ExtractionItem[] | null>(null);
   /** Pedido aguardando a confirmação para ser apagado (confirmação na própria linha, sem diálogo do navegador). */
   protected readonly confirmingRemoval = signal<string | null>(null);
   protected readonly actionError = signal<string | null>(null);
@@ -72,6 +78,15 @@ export class ContractsTab {
   protected readonly contracts = rxResource({
     params: () => this.tender().id,
     stream: ({ params }) => this.api.tenderContracts(params),
+  });
+
+  /** Documentos da licitação, só quando algum pedido veio de um (para o nome e o download). */
+  protected readonly documents = rxResource({
+    params: () =>
+      (this.contracts.value() ?? []).some((c) => c.orders.some((o) => o.sourceDocumentId))
+        ? this.tender().id
+        : undefined,
+    stream: ({ params }) => this.documentsApi.listDocuments({ tenderId: params }),
   });
 
   protected readonly canSign = computed(
@@ -111,6 +126,31 @@ export class ContractsTab {
     this.changed.emit();
   }
 
+  /** O contrato foi salvo com a leitura da IA: abre os itens lidos para conferir. */
+  protected openSuggestedItems(contract: ContractResponse, items: ExtractionItem[]): void {
+    this.suggestedItems.set(items);
+    this.editingItems.set(contract);
+  }
+
+  protected sourceTitle(documentId: string): string | null {
+    return this.documents.value()?.find((d) => d.id === documentId)?.title ?? null;
+  }
+
+  /** Baixa a versão atual do documento de onde o pedido foi lido. */
+  protected downloadSource(documentId: string): void {
+    const doc = this.documents.value()?.find((d) => d.id === documentId);
+    if (!doc) {
+      this.actionError.set('O documento do pedido não está mais na licitação.');
+      return;
+    }
+    const version = doc.versions.find((v) => v.number === doc.currentVersion) ?? doc.versions[0];
+    this.documentsApi.downloadDocument(doc.id, doc.currentVersion).subscribe({
+      next: (blob) => saveBlob(blob, version?.fileName ?? doc.title),
+      error: (err: unknown) =>
+        this.actionError.set(err instanceof ApiError ? err.detail : 'Não foi possível baixar.'),
+    });
+  }
+
   protected onImported(): void {
     this.contracts.reload();
     this.changed.emit();
@@ -136,5 +176,6 @@ export class ContractsTab {
     this.ordering.set(null);
     this.closing.set(null);
     this.editingItems.set(null);
+    this.suggestedItems.set(null);
   }
 }

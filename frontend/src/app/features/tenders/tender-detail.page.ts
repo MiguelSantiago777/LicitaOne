@@ -1,5 +1,13 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
@@ -73,8 +81,14 @@ export class TenderDetailPage {
   );
   protected readonly editing = signal(false);
   protected readonly transitionTarget = signal<NextStatusResponse | null>(null);
-  /** Pedido do cabeçalho para a aba de contratos abrir "Registrar contrato". */
+  /**
+   * Pedido do cabeçalho para a aba de contratos abrir "Registrar contrato". Zera quando a pessoa sai da aba: ao
+   * voltar, a aba é criada de novo e não deve reabrir o diálogo sozinha.
+   */
   protected readonly signRequest = signal(0);
+  private readonly resetSignRequest = effect(() => {
+    if (this.tab() !== 'itens') this.signRequest.set(0);
+  });
 
   protected readonly tender = rxResource({
     params: () => this.id(),

@@ -9,9 +9,15 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ContractsService } from '../../../api/generated/contracts/contracts.service';
-import type { ContractResponse } from '../../../api/generated/model';
+import { DocumentsService } from '../../../api/generated/documents/documents.service';
+import type {
+  ContractResponse,
+  OrderReadingLine,
+  OrderReadingResponse,
+} from '../../../api/generated/model';
 import { ApiError } from '../../../core/http/api-error';
 import {
   formatBrlInput,
@@ -20,15 +26,18 @@ import {
   parseQuantity,
   todayIso,
 } from '../../../shared/format';
+import { Icon } from '../../../shared/ui/icon';
 import { Panel } from '../../../shared/ui/panel';
+import { OrderAiFill } from './order-ai-fill';
 
 /**
  * Registra um pedido. Contrato com itens: quantidade por item, limitada ao saldo de cada um, com o total calculado
- * na hora. Contrato sem itens: só o valor.
+ * na hora. Contrato sem itens: só o valor. "Preencher com IA" lê o pedido do órgão (documento, foto ou mensagem) e
+ * preenche as quantidades; o pedido guarda o documento de origem e o histórico registra que veio da IA.
  */
 @Component({
   selector: 'app-order-dialog',
-  imports: [CurrencyPipe, FormsModule, Panel],
+  imports: [CurrencyPipe, FormsModule, Icon, Panel, OrderAiFill],
   template: `
     <app-panel
       [open]="!!contract()"
@@ -42,9 +51,49 @@ import { Panel } from '../../../shared/ui/panel';
           @if (error(); as message) {
             <div class="alert" role="alert">{{ message }}</div>
           }
+          @if (c.items.length) {
+            <app-order-ai-fill
+              [contractId]="c.id"
+              [tenderId]="c.tenderId"
+              [documents]="documents.value() ?? []"
+              (done)="applyAi($event)"
+            />
+          }
+          @if (aiReading(); as reading) {
+            <div class="ai-applied" role="status">
+              <strong>Pedido preenchido com a leitura da IA.</strong>
+              Confira as quantidades no pedido antes de registrar; o valor usa sempre o preço do
+              contrato.
+              @if (reading.result?.warnings?.length) {
+                <ul class="ai-warnings">
+                  @for (w of reading.result?.warnings; track $index) {
+                    <li><app-icon name="alert" [size]="14" />{{ w }}</li>
+                  }
+                </ul>
+              }
+              @if (unmatched().length) {
+                <p class="ai-left">Ficaram de fora, por não serem deste contrato:</p>
+                <ul class="ai-warnings">
+                  @for (l of unmatched(); track $index) {
+                    <li>
+                      <app-icon name="alert" [size]="14" />{{ l.description }}
+                      @if (l.quantity !== undefined && l.quantity !== null) {
+                        ({{ fq(l.quantity) }}{{ l.unit ? ' ' + l.unit : '' }})
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          }
           <div class="grid-2">
             <div class="field">
-              <label for="order-date">Data do pedido</label>
+              <label for="order-date"
+                >Data do pedido
+                @if (aiTag(result()?.orderedAt); as t) {
+                  <span class="ai-tag">{{ t }}</span>
+                }
+              </label>
               <input
                 id="order-date"
                 type="date"
@@ -57,7 +106,12 @@ import { Panel } from '../../../shared/ui/panel';
               />
             </div>
             <div class="field">
-              <label for="order-ref">Empenho, AF ou ordem de compra</label>
+              <label for="order-ref"
+                >Empenho, AF ou ordem de compra
+                @if (aiTag(result()?.reference); as t) {
+                  <span class="ai-tag">{{ t }}</span>
+                }
+              </label>
               <input
                 id="order-ref"
                 class="input"
@@ -76,7 +130,12 @@ import { Panel } from '../../../shared/ui/panel';
               @for (item of c.items; track item.id) {
                 <div class="line" [class.done]="item.remaining <= 0">
                   <label [for]="'q-' + item.id">
-                    <span class="cell-main">{{ item.description }}</span>
+                    <span class="cell-main"
+                      >{{ item.description }}
+                      @if (aiLines()[item.id]; as l) {
+                        <span class="ai-tag">{{ l.page ? 'IA · p. ' + l.page : 'IA' }}</span>
+                      }
+                    </span>
                     <span class="cell-sub num">
                       @if (item.lot) {
                         {{ item.lot }} ·
@@ -84,6 +143,9 @@ import { Panel } from '../../../shared/ui/panel';
                       saldo {{ fq(item.remaining) }} de {{ fq(item.quantity) }} ·
                       {{ item.unitPrice | currency: 'BRL' : 'symbol' : '1.2-4' }} cada
                     </span>
+                    @for (issue of aiLines()[item.id]?.issues ?? []; track $index) {
+                      <span class="line-issue">{{ issue }}</span>
+                    }
                   </label>
                   <input
                     [id]="'q-' + item.id"
@@ -195,11 +257,27 @@ import { Panel } from '../../../shared/ui/panel';
     .qty[aria-invalid='true'] {
       border-color: var(--red);
     }
+    .line-issue {
+      display: block;
+      margin-top: 2px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .line-issue::before {
+      content: '• ';
+      color: var(--amber);
+    }
+    .ai-left {
+      margin-top: 4px;
+      font-weight: 550;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrderDialog {
   private readonly api = inject(ContractsService);
+  private readonly documentsApi = inject(DocumentsService);
 
   readonly contract = input<ContractResponse | null>(null);
   readonly agencyName = input<string | null>(null);
@@ -218,6 +296,25 @@ export class OrderDialog {
   protected reference = '';
   protected value = '';
   protected notes = '';
+  /** Leitura da IA aplicada (Fase 8): vai como "sugerido pela IA" e com o documento de origem. */
+  protected readonly aiReading = signal<OrderReadingResponse | null>(null);
+  protected readonly result = computed(() => this.aiReading()?.result ?? null);
+  /** Linha lida de cada item do contrato, para a etiqueta e os avisos ao lado da quantidade. */
+  protected readonly aiLines = computed(() => {
+    const lines: Record<string, OrderReadingLine> = {};
+    for (const l of this.result()?.lines ?? []) if (l.itemId) lines[l.itemId] = l;
+    return lines;
+  });
+  protected readonly unmatched = computed(() =>
+    (this.result()?.lines ?? []).filter((l) => !l.itemId),
+  );
+
+  /** Documentos da licitação, para a IA ler o pedido. */
+  protected readonly documents = rxResource({
+    params: () => this.contract()?.tenderId,
+    stream: ({ params }) => this.documentsApi.listDocuments({ tenderId: params }),
+  });
+
   /** Uma chave por abertura do diálogo: clicar duas vezes ou repetir depois de um erro de rede não lança dois pedidos. */
   private idempotencyKey = '';
 
@@ -247,8 +344,32 @@ export class OrderDialog {
       this.reference = '';
       this.value = '';
       this.notes = '';
+      this.aiReading.set(null);
       this.idempotencyKey = crypto.randomUUID();
     });
+  }
+
+  /** Preenche com o que a IA leu: data, referência, entrega (nas observações) e as quantidades por item. */
+  protected applyAi(reading: OrderReadingResponse): void {
+    const c = this.contract();
+    const r = reading.result;
+    if (!c || !r) return;
+    const date = r.orderedAt?.value;
+    if (date && date <= this.today && date >= c.signedAt) this.orderedAt = date;
+    if (r.reference?.value) this.reference = r.reference.value.slice(0, 60);
+    if (r.deliveryNotes?.value && !this.notes.trim()) this.notes = r.deliveryNotes.value;
+    const quantities: Record<string, string> = {};
+    for (const l of r.lines ?? []) {
+      if (l.itemId && l.quantity != null) quantities[l.itemId] = formatQuantity(l.quantity);
+    }
+    this.quantities.set(quantities);
+    this.error.set(null);
+    this.aiReading.set(reading);
+  }
+
+  protected aiTag(v: { value?: unknown; page?: number } | undefined): string | null {
+    if (v?.value == null) return null;
+    return v.page ? `IA · p. ${v.page}` : 'IA';
   }
 
   protected setQuantity(itemId: string, text: string): void {
@@ -306,6 +427,8 @@ export class OrderDialog {
           notes: this.notes.trim() || undefined,
           value,
           lines,
+          sourceDocumentId: this.aiReading()?.documentId ?? undefined,
+          suggestedByAi: this.aiReading() != null,
         },
         { headers: { 'Idempotency-Key': this.idempotencyKey } },
       )

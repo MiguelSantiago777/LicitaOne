@@ -28,4 +28,6 @@ export interface PlaceOrderRequest {
    * @maxItems 500
    */
   lines?: OrderLineRequest[];
+  sourceDocumentId?: string;
+  suggestedByAi?: boolean;
 }

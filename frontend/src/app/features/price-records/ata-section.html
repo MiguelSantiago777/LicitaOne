@@ -261,7 +261,8 @@
       @if (formError(); as message) {
         <div class="alert" role="alert">{{ message }}</div>
       }
-      <app-ata-ai-fill
+      <app-document-ai-fill
+        [tenderId]="tender().id"
         [documents]="ataDocuments.value() ?? []"
         [preferredId]="documentId"
         (done)="applyAi($event)"

@@ -202,6 +202,17 @@
                   <span class="cell-sub">{{ o.notes }}</span>
                 }
                 <span class="cell-sub">por {{ o.createdByName ?? '—' }}</span>
+                @if (o.sourceDocumentId) {
+                  <button
+                    type="button"
+                    class="link inline source"
+                    (click)="downloadSource(o.sourceDocumentId)"
+                  >
+                    <app-icon name="download" [size]="12" />{{
+                      sourceTitle(o.sourceDocumentId) ?? 'Documento do pedido'
+                    }}
+                  </button>
+                }
               </div>
               <strong class="num">{{ o.value | currency: 'BRL' }}</strong>
               @if (c.canEdit && !c.closedAt) {
@@ -267,6 +278,7 @@
   [contract]="editingContract()"
   (closed)="signing.set(false); editingContract.set(null)"
   (saved)="onContractSaved($event)"
+  (suggestedItems)="openSuggestedItems($event.contract, $event.items)"
 />
 <app-order-dialog
   [contract]="ordering()"
@@ -283,7 +295,8 @@
 <app-items-editor
   [contract]="editingItems()"
   [agencyName]="tender().agency.name"
-  (closed)="editingItems.set(null)"
+  [suggested]="suggestedItems()"
+  (closed)="editingItems.set(null); suggestedItems.set(null)"
   (saved)="onContractSaved($event)"
 />
 <app-import-wizard

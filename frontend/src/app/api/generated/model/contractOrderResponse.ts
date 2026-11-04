@@ -16,4 +16,5 @@ export interface ContractOrderResponse {
   lines: ContractOrderLineResponse[];
   createdByName: string;
   createdAt: string;
+  sourceDocumentId: string;
 }

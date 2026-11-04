@@ -15,4 +15,5 @@ export interface SignContractRequest {
    * @maxItems 500
    */
   items?: ItemRequest[];
+  suggestedByAi?: boolean;
 }

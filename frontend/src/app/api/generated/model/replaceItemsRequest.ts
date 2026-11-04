@@ -15,4 +15,5 @@ export interface ReplaceItemsRequest {
    * @maxItems 500
    */
   items: ItemRequest[];
+  suggestedByAi?: boolean;
 }

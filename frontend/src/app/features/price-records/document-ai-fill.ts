@@ -14,6 +14,7 @@ import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Subscription, timer } from 'rxjs';
 import { switchMap, take, takeWhile } from 'rxjs/operators';
+import { DocumentsService } from '../../api/generated/documents/documents.service';
 import { ExtractionsService } from '../../api/generated/extractions/extractions.service';
 import type { DocumentResponse, ExtractionResponse } from '../../api/generated/model';
 import { ApiError } from '../../core/http/api-error';
@@ -34,48 +35,79 @@ function isPdf(d: DocumentResponse): boolean {
   return current?.contentType === 'application/pdf';
 }
 
+/** Como a caixa fala de cada tipo de documento. */
+const KIND_TEXT = {
+  ATA: { name: 'da ata', label: 'PDF da ata para a IA ler', title: 'Ata' },
+  CONTRATO: { name: 'do contrato', label: 'PDF do contrato para a IA ler', title: 'Contrato' },
+} as const;
+
 /**
- * "Preencher com IA" no formulário da ata (ADR 0016): escolhe o PDF da ata, pede a leitura (processada em segundo
- * plano) e acompanha até terminar. Se a versão atual do documento já foi lida, oferece usar a leitura anterior em
- * vez de mandar o PDF de novo. Quem preenche os campos é o formulário; aqui só a leitura.
+ * "Preencher com IA" nos formulários da ata e do contrato (ADR 0016): escolhe o PDF, pede a leitura (processada em
+ * segundo plano) e acompanha até terminar. Se a versão atual do documento já foi lida, oferece usar a leitura
+ * anterior em vez de mandar o PDF de novo. Quem preenche os campos é o formulário; aqui só a leitura.
  */
 @Component({
-  selector: 'app-ata-ai-fill',
+  selector: 'app-document-ai-fill',
   imports: [DatePipe, FormsModule, Icon],
   template: `
-    @if (settings.value()?.enabled && pdfs().length) {
+    @if (settings.value()?.enabled) {
       <section class="ai-fill" aria-labelledby="ai-fill-title">
         <div class="ai-head">
           <app-icon name="sparkles" [size]="18" />
           <div>
             <h3 id="ai-fill-title">Preencher com IA</h3>
-            <p>A IA lê o PDF da ata e preenche os campos. Confira tudo antes de salvar.</p>
+            <p>
+              A IA lê o PDF {{ text().name }} e preenche os campos. Confira tudo antes de salvar.
+            </p>
           </div>
         </div>
-        <div class="ai-row">
-          <label class="visually-hidden" for="ai-document">PDF da ata para a IA ler</label>
-          <select
-            id="ai-document"
-            class="input"
-            name="aiDocument"
-            [ngModel]="documentId()"
-            (ngModelChange)="documentId.set($event)"
-            [disabled]="busy()"
-          >
-            @for (d of pdfs(); track d.id) {
-              <option [value]="d.id">{{ d.title }} (versão {{ d.currentVersion }})</option>
-            }
-          </select>
-          <button
-            type="button"
-            class="btn sm primary"
-            (click)="read()"
-            [disabled]="busy() || !documentId()"
-            [attr.aria-busy]="busy() || null"
-          >
-            <app-icon name="sparkles" [size]="14" />{{ busy() ? 'Lendo…' : 'Ler com IA' }}
-          </button>
-        </div>
+        @if (pdfs().length) {
+          <div class="ai-row">
+            <label class="visually-hidden" for="ai-document">{{ text().label }}</label>
+            <select
+              id="ai-document"
+              class="input"
+              name="aiDocument"
+              [ngModel]="documentId()"
+              (ngModelChange)="documentId.set($event)"
+              [disabled]="busy()"
+            >
+              @for (d of pdfs(); track d.id) {
+                <option [value]="d.id">{{ d.title }} (versão {{ d.currentVersion }})</option>
+              }
+            </select>
+            <button
+              type="button"
+              class="btn sm primary"
+              (click)="read()"
+              [disabled]="busy() || !documentId()"
+              [attr.aria-busy]="busy() || null"
+            >
+              <app-icon name="sparkles" [size]="14" />{{ busy() ? 'Lendo…' : 'Ler com IA' }}
+            </button>
+          </div>
+        } @else {
+          <p class="ai-previous">
+            Esta licitação ainda não tem o PDF {{ text().name }}. Envie aqui: ele fica guardado em
+            Documentos e a IA lê em seguida.
+          </p>
+        }
+        @if (tenderId()) {
+          <div class="ai-upload">
+            <label class="btn sm file-btn" [class.primary]="!pdfs().length" [class.busy]="busy()">
+              <app-icon name="plus" [size]="14" />{{
+                pdfs().length ? 'Enviar outro PDF e ler' : 'Enviar PDF e ler com IA'
+              }}
+              <input
+                type="file"
+                accept=".pdf,application/pdf"
+                [disabled]="busy()"
+                (change)="upload($event)"
+                [attr.aria-label]="'Enviar o PDF ' + text().name + ' para a IA ler'"
+              />
+            </label>
+          </div>
+        }
         @if (previous(); as p) {
           <p class="ai-previous">
             Este PDF já foi lido em {{ p.finishedAt | date: "dd/MM/yyyy 'às' HH:mm" }} por
@@ -96,23 +128,33 @@ function isPdf(d: DocumentResponse): boolean {
       </section>
     }
   `,
-  styleUrl: './ata-ai-fill.scss',
+  styleUrl: './document-ai-fill.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AtaAiFill {
+export class DocumentAiFill {
   private readonly api = inject(ExtractionsService);
+  private readonly documentsApi = inject(DocumentsService);
   private readonly destroyRef = inject(DestroyRef);
 
-  /** Documentos da licitação; só os PDFs do tipo Ata entram. */
+  /** Documentos da licitação; só os PDFs do tipo escolhido entram. */
   readonly documents = input<DocumentResponse[]>([]);
-  /** Documento já ligado à ata, para vir escolhido. */
+  /** Tipo de documento a ler: Ata ou Contrato. */
+  readonly kind = input<'ATA' | 'CONTRATO'>('ATA');
+  /** Licitação: com ela, a caixa também envia o PDF (guardado em Documentos) e já pede a leitura. */
+  readonly tenderId = input<string>('');
+  /** Documento já ligado ao registro, para vir escolhido. */
   readonly preferredId = input<string>('');
   readonly done = output<AiReading>();
 
   protected readonly settings = rxResource({ stream: () => this.api.getExtractionSettings() });
-  protected readonly pdfs = computed(() =>
-    this.documents().filter((d) => d.kind === 'ATA' && isPdf(d)),
-  );
+  protected readonly text = computed(() => KIND_TEXT[this.kind()]);
+  /** PDFs enviados por esta caixa, que a lista de documentos de quem chamou ainda não tem. */
+  private readonly uploaded = signal<DocumentResponse[]>([]);
+  protected readonly pdfs = computed(() => {
+    const known = this.documents();
+    const extra = this.uploaded().filter((u) => !known.some((d) => d.id === u.id));
+    return [...known, ...extra].filter((d) => d.kind === this.kind() && isPdf(d));
+  });
   protected readonly documentId = signal('');
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -157,6 +199,37 @@ export class AtaAiFill {
       next: (e) => this.follow(e, documentId),
       error: (err: unknown) => this.fail(err),
     });
+  }
+
+  /** Envia o PDF escolhido como documento da licitação e já pede a leitura. */
+  protected upload(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    const maxMb = this.settings.value()?.maxFileMb ?? 20;
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      this.error.set('Escolha um arquivo PDF.');
+      return;
+    }
+    if (file.size > maxMb * 1024 * 1024) {
+      this.error.set(`O PDF passa de ${maxMb} MB, o máximo que a IA lê de uma vez.`);
+      return;
+    }
+    this.error.set(null);
+    this.busy.set(true);
+    const title = file.name.replace(/\.pdf$/i, '').slice(0, 200) || this.text().title;
+    this.documentsApi
+      .uploadDocument({ tenderId: this.tenderId(), kind: this.kind(), title }, { file })
+      .subscribe({
+        next: (doc) => {
+          this.uploaded.update((list) => [...list, doc]);
+          this.documentId.set(doc.id);
+          this.busy.set(false);
+          this.read();
+        },
+        error: (err: unknown) => this.fail(err),
+      });
   }
 
   protected use(extraction: ExtractionResponse): void {

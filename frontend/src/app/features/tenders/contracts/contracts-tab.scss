@@ -204,3 +204,12 @@ li.done {
     margin-right: auto;
   }
 }
+
+/* Documento de onde o pedido foi lido pela IA (Fase 8) */
+.source {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  justify-self: start;
+  font-size: 12px;
+}

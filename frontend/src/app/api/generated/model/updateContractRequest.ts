@@ -11,4 +11,5 @@ export interface UpdateContractRequest {
   /** @minimum 0 */
   version: number;
   contract: ContractRequest;
+  suggestedByAi?: boolean;
 }

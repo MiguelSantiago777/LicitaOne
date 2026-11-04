@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ContractsService } from '../../../api/generated/contracts/contracts.service';
-import type { ContractResponse } from '../../../api/generated/model';
+import type { ContractResponse, ExtractionItem } from '../../../api/generated/model';
 import { ApiError } from '../../../core/http/api-error';
 import { formatQuantity, parseQuantity, parseUnitPrice } from '../../../shared/format';
 import { Icon } from '../../../shared/ui/icon';
@@ -49,6 +49,15 @@ const price = new Intl.NumberFormat('pt-BR', {
       <form id="items-form" class="form" (ngSubmit)="submit()" novalidate>
         @if (error(); as message) {
           <div class="alert" role="alert">{{ message }}</div>
+        }
+        @if (suggested()?.length) {
+          <p class="ai-applied" role="status">
+            <span
+              ><strong>Itens lidos pela IA no PDF do contrato.</strong> Confira descrição,
+              quantidade e valor unitário de cada um antes de salvar; os campos em branco ela não
+              conseguiu ler.</span
+            >
+          </p>
         }
         <div class="table-wrap">
           <table class="items">
@@ -215,6 +224,8 @@ export class ItemsEditor {
 
   readonly contract = input<ContractResponse | null>(null);
   readonly agencyName = input<string | null>(null);
+  /** Itens lidos pela IA (ADR 0016): substituem os itens sem pedido, para a pessoa conferir. */
+  readonly suggested = input<ExtractionItem[] | null>(null);
   readonly closed = output<void>();
   readonly saved = output<ContractResponse>();
 
@@ -250,7 +261,24 @@ export class ItemsEditor {
           ordered: item.ordered,
         })),
       );
-      if (!c.items.length) this.add();
+      const suggested = this.suggested();
+      if (suggested?.length) {
+        // Itens com pedido ficam; os demais dão lugar aos lidos
+        this.rows.update((rows) => [
+          ...rows.filter((row) => row.ordered > 0),
+          ...suggested.map((i) => ({
+            key: `new-${++this.seq}`,
+            lot: i.lot ?? '',
+            description: i.description ?? '',
+            unit: i.unit ?? '',
+            quantity: i.quantity != null ? formatQuantity(i.quantity) : '',
+            unitPrice: i.unitPrice != null ? price.format(i.unitPrice) : '',
+            ordered: 0,
+          })),
+        ]);
+      } else if (!c.items.length) {
+        this.add();
+      }
     });
   }
 
@@ -305,7 +333,8 @@ export class ItemsEditor {
     }
     this.saving.set(true);
     this.error.set(null);
-    this.api.replaceContractItems(c.id, { version: c.version, items }).subscribe({
+    const suggestedByAi = !!this.suggested()?.length;
+    this.api.replaceContractItems(c.id, { version: c.version, items, suggestedByAi }).subscribe({
       next: (result) => {
         this.saving.set(false);
         this.saved.emit(result);

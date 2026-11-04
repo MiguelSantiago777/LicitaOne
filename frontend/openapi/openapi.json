@@ -40,6 +40,10 @@
       "description": "Importação de planilhas"
     },
     {
+      "name": "extractions",
+      "description": "Leitura de atas, contratos e pedidos com IA"
+    },
+    {
       "name": "tasks",
       "description": "Tarefas"
     },
@@ -2662,6 +2666,48 @@
         }
       }
     },
+    "/api/v1/contracts/{contractId}/order-readings": {
+      "post": {
+        "tags": [
+          "extractions"
+        ],
+        "summary": "Pede para a IA ler um pedido (documento ou mensagem) contra os itens do contrato",
+        "operationId": "requestOrderReading",
+        "parameters": [
+          {
+            "name": "contractId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderReadingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderReadingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cards/{cardId}/move": {
       "post": {
         "tags": [
@@ -3558,6 +3604,38 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/PriceRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/order-readings/{readingId}": {
+      "get": {
+        "tags": [
+          "extractions"
+        ],
+        "summary": "Situação e resultado de uma leitura de pedido",
+        "operationId": "getOrderReading",
+        "parameters": [
+          {
+            "name": "readingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderReadingResponse"
                 }
               }
             }
@@ -5755,6 +5833,9 @@
           },
           "contract": {
             "$ref": "#/components/schemas/ContractRequest"
+          },
+          "suggestedByAi": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -5870,6 +5951,10 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "sourceDocumentId": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "required": [
@@ -5880,6 +5965,7 @@
           "notes",
           "orderedAt",
           "reference",
+          "sourceDocumentId",
           "value"
         ]
       },
@@ -6032,6 +6118,9 @@
             },
             "maxItems": 500,
             "minItems": 0
+          },
+          "suggestedByAi": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -6579,6 +6668,9 @@
             },
             "maxItems": 500,
             "minItems": 0
+          },
+          "suggestedByAi": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -7446,6 +7538,13 @@
             },
             "maxItems": 500,
             "minItems": 0
+          },
+          "sourceDocumentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "suggestedByAi": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -7470,6 +7569,180 @@
           "closedAt",
           "version"
         ]
+      },
+      "OrderReadingRequest": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 21000,
+            "minLength": 0
+          }
+        }
+      },
+      "OrderReadingLine": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unitPrice": {
+            "type": "number"
+          },
+          "contractUnitPrice": {
+            "type": "number"
+          },
+          "remaining": {
+            "type": "number"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "excerpt": {
+            "type": "string"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "OrderReadingResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contractId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "DOCUMENT",
+              "TEXT"
+            ]
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "DONE",
+              "FAILED"
+            ]
+          },
+          "result": {
+            "$ref": "#/components/schemas/OrderReadingResult"
+          },
+          "model": {
+            "type": "string"
+          },
+          "inputTokens": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "outputTokens": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "createdByName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "contractId",
+          "createdAt",
+          "createdByName",
+          "documentId",
+          "documentVersion",
+          "errorMessage",
+          "finishedAt",
+          "id",
+          "inputTokens",
+          "model",
+          "outputTokens",
+          "result",
+          "source",
+          "status"
+        ]
+      },
+      "OrderReadingResult": {
+        "type": "object",
+        "properties": {
+          "documentType": {
+            "type": "string"
+          },
+          "orderedAt": {
+            "$ref": "#/components/schemas/ValueLocalDate"
+          },
+          "reference": {
+            "$ref": "#/components/schemas/ValueString"
+          },
+          "agencyName": {
+            "$ref": "#/components/schemas/ValueString"
+          },
+          "contractReference": {
+            "$ref": "#/components/schemas/ValueString"
+          },
+          "deliveryNotes": {
+            "$ref": "#/components/schemas/ValueString"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderReadingLine"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
       },
       "MoveCardRequest": {
         "type": "object",

@@ -12,7 +12,12 @@ import { Injectable, inject } from '@angular/core';
 
 import type { Observable } from 'rxjs';
 
-import type { ExtractionResponse, ExtractionSettingsResponse } from '../model';
+import type {
+  ExtractionResponse,
+  ExtractionSettingsResponse,
+  OrderReadingRequest,
+  OrderReadingResponse,
+} from '../model';
 
 import type { HttpHeaders, HttpResponse as AngularHttpResponse } from '@angular/common/http';
 
@@ -89,6 +94,98 @@ export class ExtractionsService {
     }
 
     return this.http.post<TData>(`/api/v1/documents/${documentId}/extractions`, undefined, {
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+    });
+  }
+  /**
+   * @summary Pede para a IA ler um pedido (documento ou mensagem) contra os itens do contrato
+   */
+  requestOrderReading<TData = OrderReadingResponse>(
+    contractId: string,
+    orderReadingRequest: OrderReadingRequest,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  requestOrderReading<TData = OrderReadingResponse>(
+    contractId: string,
+    orderReadingRequest: OrderReadingRequest,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  requestOrderReading<TData = OrderReadingResponse>(
+    contractId: string,
+    orderReadingRequest: OrderReadingRequest,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  requestOrderReading<TData = OrderReadingResponse>(
+    contractId: string,
+    orderReadingRequest: OrderReadingRequest,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+        `/api/v1/contracts/${contractId}/order-readings`,
+        orderReadingRequest,
+        {
+          ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+          observe: 'events',
+        },
+      );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+        `/api/v1/contracts/${contractId}/order-readings`,
+        orderReadingRequest,
+        {
+          ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+          observe: 'response',
+        },
+      );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/contracts/${contractId}/order-readings`,
+      orderReadingRequest,
+      {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      },
+    );
+  }
+  /**
+   * @summary Situação e resultado de uma leitura de pedido
+   */
+  getOrderReading<TData = OrderReadingResponse>(
+    readingId: string,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  getOrderReading<TData = OrderReadingResponse>(
+    readingId: string,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  getOrderReading<TData = OrderReadingResponse>(
+    readingId: string,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  getOrderReading<TData = OrderReadingResponse>(
+    readingId: string,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(`/api/v1/order-readings/${readingId}`, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      });
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(`/api/v1/order-readings/${readingId}`, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      });
+    }
+
+    return this.http.get<TData>(`/api/v1/order-readings/${readingId}`, {
       ...(options as Omit<NonNullable<typeof options>, 'observe'>),
       observe: 'body',
     });
@@ -206,6 +303,8 @@ export class ExtractionsService {
 }
 
 export type RequestExtractionClientResult = NonNullable<ExtractionResponse>;
+export type RequestOrderReadingClientResult = NonNullable<OrderReadingResponse>;
+export type GetOrderReadingClientResult = NonNullable<OrderReadingResponse>;
 export type GetExtractionClientResult = NonNullable<ExtractionResponse>;
 export type GetExtractionSettingsClientResult = NonNullable<ExtractionSettingsResponse>;
 export type GetLatestExtractionClientResult = NonNullable<ExtractionResponse>;

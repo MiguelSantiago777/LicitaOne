@@ -76,3 +76,29 @@
     flex-direction: column;
   }
 }
+
+.ai-upload {
+  display: flex;
+}
+.file-btn {
+  position: relative;
+  cursor: pointer;
+  background: var(--surface);
+}
+.file-btn.primary {
+  background: var(--brand);
+}
+.file-btn.busy {
+  opacity: 0.6;
+  pointer-events: none;
+}
+.file-btn input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.file-btn:focus-within {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+}
