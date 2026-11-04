@@ -48,6 +48,10 @@ public class ContractOrder {
     @Column(name = "created_by_name", length = 120)
     private String createdByName;
 
+    /** Documento de onde o pedido foi lido (ofício, AF, empenho), quando veio de um. */
+    @Column(name = "source_document_id")
+    private UUID sourceDocumentId;
+
     protected ContractOrder() {}
 
     ContractOrder(
@@ -57,8 +61,10 @@ public class ContractOrder {
             BigDecimal value,
             List<OrderLine> lines,
             Instant createdAt,
-            String createdByName) {
+            String createdByName,
+            UUID sourceDocumentId) {
         this.id = UUID.randomUUID();
+        this.sourceDocumentId = sourceDocumentId;
         this.orderedAt = orderedAt;
         this.reference = reference;
         this.notes = notes;
@@ -98,5 +104,9 @@ public class ContractOrder {
 
     public String getCreatedByName() {
         return createdByName;
+    }
+
+    public UUID getSourceDocumentId() {
+        return sourceDocumentId;
     }
 }

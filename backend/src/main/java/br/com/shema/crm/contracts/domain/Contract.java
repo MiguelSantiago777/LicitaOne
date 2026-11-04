@@ -201,7 +201,14 @@ public class Contract extends AuditableEntity {
                             + BrFormat.money(balance.remaining()) + ".");
         }
         ContractOrder order = new ContractOrder(
-                date, blankToNull(draft.reference()), blankToNull(draft.notes()), orderValue, lines, now, userName);
+                date,
+                blankToNull(draft.reference()),
+                blankToNull(draft.notes()),
+                orderValue,
+                lines,
+                now,
+                userName,
+                draft.sourceDocumentId());
         orders.add(order);
         return order;
     }

@@ -71,21 +71,25 @@ final class ContractDtos {
         }
     }
 
+    /** @param suggestedByAi os dados vieram da leitura com IA e foram conferidos (fica no histórico) */
     record SignContractRequest(
             @NotNull @Valid ContractRequest contract,
-            @Valid @Size(max = 500) List<ItemRequest> items) {}
+            @Valid @Size(max = 500) List<ItemRequest> items,
+            Boolean suggestedByAi) {}
 
     record UpdateContractRequest(
             @NotNull(message = "Versão obrigatória") @PositiveOrZero
             Long version,
 
-            @NotNull @Valid ContractRequest contract) {}
+            @NotNull @Valid ContractRequest contract,
+            Boolean suggestedByAi) {}
 
     record ReplaceItemsRequest(
             @NotNull(message = "Versão obrigatória") @PositiveOrZero
             Long version,
 
-            @NotNull @Valid @Size(max = 500) List<ItemRequest> items) {}
+            @NotNull @Valid @Size(max = 500) List<ItemRequest> items,
+            Boolean suggestedByAi) {}
 
     record OrderLineRequest(
             @NotNull UUID itemId,
@@ -101,7 +105,9 @@ final class ContractDtos {
             @Size(max = 60) String reference,
             @Size(max = 2000) String notes,
             @Positive @Digits(integer = 13, fraction = 2) BigDecimal value,
-            @Valid @Size(max = 500) List<OrderLineRequest> lines) {
+            @Valid @Size(max = 500) List<OrderLineRequest> lines,
+            UUID sourceDocumentId,
+            Boolean suggestedByAi) {
 
         OrderDraft toDraft() {
             List<OrderDraft.Line> l = lines == null
@@ -109,7 +115,7 @@ final class ContractDtos {
                     : lines.stream()
                             .map(x -> new OrderDraft.Line(x.itemId(), x.quantity()))
                             .toList();
-            return new OrderDraft(orderedAt, reference, notes, value, l);
+            return new OrderDraft(orderedAt, reference, notes, value, l, sourceDocumentId);
         }
     }
 

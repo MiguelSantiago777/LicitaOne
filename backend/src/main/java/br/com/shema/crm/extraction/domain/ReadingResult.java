@@ -151,7 +151,7 @@ public record ReadingResult(
         }
     }
 
-    private static Value<String> text(RawField field, int max) {
+    static Value<String> text(RawField field, int max) {
         if (field == null) {
             return Value.empty();
         }
@@ -159,7 +159,7 @@ public record ReadingResult(
         return value == null ? Value.empty() : new Value<>(value, page(field.page()));
     }
 
-    private static Value<LocalDate> date(RawField field, String label, List<String> warnings) {
+    static Value<LocalDate> date(RawField field, String label, List<String> warnings) {
         if (field == null || field.value() == null || field.value().isBlank()) {
             return Value.empty();
         }
@@ -235,17 +235,17 @@ public record ReadingResult(
         return plain(supplier).contains(key);
     }
 
-    private static String plain(String value) {
+    static String plain(String value) {
         return Normalizer.normalize(value.trim(), Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "")
                 .toLowerCase(Locale.ROOT);
     }
 
-    private static Integer page(int page) {
+    static Integer page(int page) {
         return page > 0 ? page : null;
     }
 
-    private static String blankToNull(String value, int max) {
+    static String blankToNull(String value, int max) {
         if (value == null || value.isBlank()) {
             return null;
         }

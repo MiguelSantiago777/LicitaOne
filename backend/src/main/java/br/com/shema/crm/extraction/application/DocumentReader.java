@@ -1,6 +1,7 @@
 package br.com.shema.crm.extraction.application;
 
 import br.com.shema.crm.extraction.domain.Extraction;
+import br.com.shema.crm.extraction.domain.RawOrder;
 import br.com.shema.crm.extraction.domain.RawReading;
 
 /**
@@ -13,6 +14,24 @@ public interface DocumentReader {
 
     /** O que foi lido e quanto custou. {@code model} é o que respondeu (pode ser o de fallback). */
     record Reading(RawReading raw, String model, long inputTokens, long outputTokens) {}
+
+    /**
+     * Um pedido para ler: um arquivo (PDF ou imagem) ou um texto colado, e os itens do contrato já numerados para o
+     * modelo relacionar cada linha.
+     *
+     * @param content PDF ou imagem; nulo quando o pedido é texto
+     * @param contentType {@code application/pdf}, {@code image/png} ou {@code image/jpeg}; nulo quando é texto
+     * @param text e-mail ou mensagem colada; nulo quando é arquivo
+     * @param contract o contrato e seus itens, em texto, como o modelo vê
+     */
+    record OrderReadRequest(byte[] content, String contentType, String fileName, String text, String contract) {
+
+        public boolean isText() {
+            return content == null;
+        }
+    }
+
+    record OrderRead(RawOrder raw, String model, long inputTokens, long outputTokens) {}
 
     /**
      * A leitura não deu certo por um motivo que a pessoa entende (documento recusado, grande demais, IA fora do ar).
@@ -52,4 +71,9 @@ public interface DocumentReader {
     boolean enabled();
 
     Reading read(ReadRequest request);
+
+    /** Lê um pedido contra os itens de um contrato. */
+    default OrderRead readOrder(OrderReadRequest request) {
+        throw new ReadingFailed("Este leitor não lê pedidos.");
+    }
 }

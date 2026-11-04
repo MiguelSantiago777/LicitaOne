@@ -63,7 +63,8 @@ public record ContractDetails(
             BigDecimal value,
             List<Line> lines,
             String createdByName,
-            Instant createdAt) {}
+            Instant createdAt,
+            UUID sourceDocumentId) {}
 
     @Schema(name = "ContractOrderLineResponse")
     public record Line(UUID itemId, String description, BigDecimal quantity, BigDecimal unitPrice, BigDecimal total) {}
@@ -132,6 +133,7 @@ public record ContractDetails(
                 o.getValue(),
                 lines,
                 o.getCreatedByName(),
-                o.getCreatedAt());
+                o.getCreatedAt(),
+                o.getSourceDocumentId());
     }
 }

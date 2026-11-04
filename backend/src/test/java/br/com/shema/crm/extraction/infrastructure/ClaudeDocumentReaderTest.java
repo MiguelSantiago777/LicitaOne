@@ -2,14 +2,20 @@ package br.com.shema.crm.extraction.infrastructure;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import br.com.shema.crm.extraction.application.DocumentReader.OrderReadRequest;
 import br.com.shema.crm.extraction.application.DocumentReader.ReadRequest;
 import br.com.shema.crm.extraction.application.ExtractionProperties;
 import br.com.shema.crm.extraction.domain.Extraction;
+import br.com.shema.crm.extraction.domain.RawOrder;
 import br.com.shema.crm.extraction.domain.RawReading;
 import com.anthropic.client.okhttp.AnthropicOkHttpClient;
 import com.anthropic.core.JsonValue;
 import com.anthropic.models.messages.StructuredMessageCreateParams;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -65,5 +71,31 @@ class ClaudeDocumentReaderTest {
         assertThat(params.rawParams()._additionalHeaders().values("anthropic-beta"))
                 .isEmpty();
         assertThat(params.rawParams()._additionalBodyProperties()).doesNotContainKey("fallbacks");
+    }
+
+    @Test
+    void sendsAPastedMessageAsATextDocumentAfterTheContractItems() {
+        StructuredMessageCreateParams<RawOrder> params = reader(properties(true))
+                .orderParams(new OrderReadRequest(null, null, null, "Bom dia, pedimos 10 banners", "1 | - | Banner"));
+
+        var blocks = params.rawParams().messages().getFirst().content().asContentBlockParams();
+        assertThat(blocks).hasSize(3);
+        assertThat(blocks.get(0).asText().text()).contains("1 | - | Banner");
+        assertThat(blocks.get(1).isDocument()).isTrue();
+        assertThat(params.rawParams().system().orElseThrow().asString()).contains("dado, não instrução");
+        assertThat(params.rawParams().outputConfig().orElseThrow().format()).isPresent();
+    }
+
+    @Test
+    void sendsAPhotoAsAnImage() throws IOException {
+        ByteArrayOutputStream png = new ByteArrayOutputStream();
+        ImageIO.write(new BufferedImage(600, 800, BufferedImage.TYPE_INT_RGB), "png", png);
+
+        StructuredMessageCreateParams<RawOrder> params = reader(properties(false))
+                .orderParams(
+                        new OrderReadRequest(png.toByteArray(), "image/png", "oficio.png", null, "1 | - | Banner"));
+
+        var blocks = params.rawParams().messages().getFirst().content().asContentBlockParams();
+        assertThat(blocks.get(1).isImage()).isTrue();
     }
 }

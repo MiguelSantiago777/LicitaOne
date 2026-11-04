@@ -81,7 +81,11 @@ class ContractController {
     @PreAuthorize("hasAnyRole('ADMIN','SALES')")
     @Operation(summary = "Registra um contrato assinado (ou empenho, ou dispensa)", operationId = "signContract")
     ContractDetails sign(@PathVariable UUID tenderId, @Valid @RequestBody SignContractRequest request) {
-        return service.sign(tenderId, request.contract().toDraft(), ItemRequest.drafts(request.items()));
+        return service.sign(
+                tenderId,
+                request.contract().toDraft(),
+                ItemRequest.drafts(request.items()),
+                Boolean.TRUE.equals(request.suggestedByAi()));
     }
 
     @GetMapping("/tenders/{tenderId}/contracts/history")
@@ -110,14 +114,19 @@ class ContractController {
     @PreAuthorize("hasAnyRole('ADMIN','SALES')")
     @Operation(summary = "Altera os dados do contrato", operationId = "updateContract")
     ContractDetails update(@PathVariable UUID id, @Valid @RequestBody UpdateContractRequest request) {
-        return service.update(id, request.version(), request.contract().toDraft());
+        return service.update(
+                id, request.version(), request.contract().toDraft(), Boolean.TRUE.equals(request.suggestedByAi()));
     }
 
     @PutMapping("/contracts/{id}/items")
     @PreAuthorize("hasAnyRole('ADMIN','SALES')")
     @Operation(summary = "Substitui a lista de itens do contrato", operationId = "replaceContractItems")
     ContractDetails replaceItems(@PathVariable UUID id, @Valid @RequestBody ReplaceItemsRequest request) {
-        return service.replaceItems(id, request.version(), ItemRequest.drafts(request.items()));
+        return service.replaceItems(
+                id,
+                request.version(),
+                ItemRequest.drafts(request.items()),
+                Boolean.TRUE.equals(request.suggestedByAi()));
     }
 
     @PostMapping("/contracts/{id}/orders")
@@ -130,7 +139,8 @@ class ContractController {
             @PathVariable UUID id,
             @RequestHeader(name = "Idempotency-Key", required = false) @Size(max = 100) String idempotencyKey,
             @Valid @RequestBody PlaceOrderRequest request) {
-        return service.placeOrder(id, request.version(), request.toDraft(), idempotencyKey);
+        return service.placeOrder(
+                id, request.version(), request.toDraft(), idempotencyKey, Boolean.TRUE.equals(request.suggestedByAi()));
     }
 
     @DeleteMapping("/contracts/{id}/orders/{orderId}")

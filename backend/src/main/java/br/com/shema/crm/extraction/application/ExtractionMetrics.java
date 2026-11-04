@@ -35,24 +35,31 @@ class ExtractionMetrics implements MeterBinder {
     }
 
     void finished(Extraction.Status status, Long inputTokens, Long outputTokens) {
+        finished("DOCUMENTO", status, inputTokens, outputTokens);
+    }
+
+    /** @param kind DOCUMENTO (ata e contrato) ou PEDIDO */
+    void finished(String kind, Extraction.Status status, Long inputTokens, Long outputTokens) {
         if (registry == null) {
             return;
         }
         Counter.builder("shema.extraction.finished")
-                .description("Leituras de documento com IA concluídas, por resultado")
+                .description("Leituras com IA concluídas, por tipo e resultado")
+                .tag("kind", kind)
                 .tag("status", status.name())
                 .register(registry)
                 .increment();
-        tokens("input", inputTokens);
-        tokens("output", outputTokens);
+        tokens(kind, "input", inputTokens);
+        tokens(kind, "output", outputTokens);
     }
 
-    private void tokens(String type, Long count) {
+    private void tokens(String kind, String type, Long count) {
         if (count == null || count <= 0) {
             return;
         }
         Counter.builder("shema.extraction.tokens")
                 .description("Tokens gastos na leitura com IA (custo da API)")
+                .tag("kind", kind)
                 .tag("type", type)
                 .register(registry)
                 .increment(count);

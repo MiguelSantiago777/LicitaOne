@@ -11,6 +11,7 @@ import br.com.shema.crm.contracts.domain.ItemDraft;
 import br.com.shema.crm.contracts.domain.OrderDraft;
 import br.com.shema.crm.contracts.infrastructure.ContractEventRepository;
 import br.com.shema.crm.contracts.infrastructure.ContractRepository;
+import br.com.shema.crm.pricerecords.DocumentFiles;
 import br.com.shema.crm.shared.domain.BrFormat;
 import br.com.shema.crm.shared.domain.DomainRuleViolation;
 import br.com.shema.crm.shared.messaging.EventMetadata;
@@ -53,6 +54,7 @@ public class ContractService {
     private final ApplicationEventPublisher publisher;
     private final EntityManager entityManager;
     private final JsonMapper json;
+    private final DocumentFiles documents;
     private final Clock clock;
 
     public ContractService(
@@ -63,7 +65,9 @@ public class ContractService {
             ApplicationEventPublisher publisher,
             EntityManager entityManager,
             JsonMapper json,
+            DocumentFiles documents,
             Clock clock) {
+        this.documents = documents;
         this.contracts = contracts;
         this.events = events;
         this.tenders = tenders;
@@ -96,7 +100,7 @@ public class ContractService {
     }
 
     /** Registra um contrato assinado, com ou sem itens. O primeiro move a licitação para "Contrato assinado". */
-    public ContractDetails sign(UUID tenderId, ContractDraft draft, List<ItemDraft> items) {
+    public ContractDetails sign(UUID tenderId, ContractDraft draft, List<ItemDraft> items, boolean suggestedByAi) {
         CurrentUser user = CurrentUser.get();
         TenderRef tender = tender(tenderId);
         user.requireCanEditOwnedBy(tender.ownerId());
@@ -111,14 +115,20 @@ public class ContractService {
         }
         contracts.save(contract);
         tenders.contractSigned(tenderId, contract.getSignedAt(), user);
-        record(contract, ContractEvent.Type.SIGNED, contract.getSignedAt(), signedSummary(contract), null, user);
+        record(
+                contract,
+                ContractEvent.Type.SIGNED,
+                contract.getSignedAt(),
+                signedSummary(contract) + aiNote(suggestedByAi, user),
+                null,
+                user);
         publisher.publishEvent(new ContractSigned(
                 EventMetadata.create(clock), contract.getId(), tenderId, contract.getSignedAt(), contract.getValue()));
         contracts.flush();
         return ContractDetails.of(contract, true);
     }
 
-    public ContractDetails update(UUID id, long expectedVersion, ContractDraft draft) {
+    public ContractDetails update(UUID id, long expectedVersion, ContractDraft draft, boolean suggestedByAi) {
         CurrentUser user = CurrentUser.get();
         Contract contract = load(id);
         TenderRef tender = editable(contract, expectedVersion, user);
@@ -126,13 +136,20 @@ public class ContractService {
         contract.update(draft, tender.wonAt(), today());
         List<FieldChange> changes = diff(before, contract.snapshot());
         if (!changes.isEmpty()) {
-            record(contract, ContractEvent.Type.UPDATED, null, null, changes, user);
+            String note = aiNote(suggestedByAi, user);
+            record(
+                    contract,
+                    ContractEvent.Type.UPDATED,
+                    null,
+                    note.isEmpty() ? null : "Dados alterados" + note,
+                    changes,
+                    user);
         }
         contracts.flush();
         return details(contract, tender);
     }
 
-    public ContractDetails replaceItems(UUID id, long expectedVersion, List<ItemDraft> items) {
+    public ContractDetails replaceItems(UUID id, long expectedVersion, List<ItemDraft> items, boolean suggestedByAi) {
         CurrentUser user = CurrentUser.get();
         Contract contract = load(id);
         TenderRef tender = editable(contract, expectedVersion, user);
@@ -143,7 +160,8 @@ public class ContractService {
                 ContractEvent.Type.ITEMS_CHANGED,
                 null,
                 items.size() + (items.size() == 1 ? " item" : " itens") + " · total "
-                        + BrFormat.money(contract.itemsTotal()),
+                        + BrFormat.money(contract.itemsTotal())
+                        + aiNote(suggestedByAi, user),
                 null,
                 user);
         contracts.flush();
@@ -154,18 +172,22 @@ public class ContractService {
      * Registra um pedido. Com Idempotency-Key, repetir a mesma requisição devolve o contrato sem lançar o pedido de
      * novo (o caso de quem clica duas vezes ou perde a resposta).
      */
-    public ContractDetails placeOrder(UUID id, long expectedVersion, OrderDraft draft, String idempotencyKey) {
+    public ContractDetails placeOrder(
+            UUID id, long expectedVersion, OrderDraft draft, String idempotencyKey, boolean suggestedByAi) {
         CurrentUser user = CurrentUser.get();
         Contract contract = load(id);
         if (idempotency.find(ORDER_SCOPE, idempotencyKey, user.id()).isPresent()) {
             return details(contract, tender(contract.getTenderId()));
         }
         TenderRef tender = editable(contract, expectedVersion, user);
+        String source = sourceTitle(draft.sourceDocumentId(), contract.getTenderId());
         forceNewVersion(contract);
         ContractOrder order = contract.placeOrder(draft, today(), clock.instant(), user.name());
         tenders.orderRegistered(contract.getTenderId(), order.getOrderedAt(), user);
         String summary = "Pedido de " + BrFormat.money(order.getValue())
-                + (order.getReference() == null ? "" : " · " + order.getReference());
+                + (order.getReference() == null ? "" : " · " + order.getReference())
+                + (source == null ? "" : " · documento \"" + source + "\"")
+                + aiNote(suggestedByAi, user);
         record(contract, ContractEvent.Type.ORDER_PLACED, order.getOrderedAt(), summary, null, user);
         idempotency.remember(ORDER_SCOPE, idempotencyKey, user.id(), order.getId());
         publisher.publishEvent(new OrderRegistered(
@@ -256,6 +278,23 @@ public class ContractService {
 
     private ContractDetails details(Contract contract, TenderRef tender) {
         return ContractDetails.of(contract, CurrentUser.get().canEditOwnedBy(tender.ownerId()));
+    }
+
+    /** Título do documento de origem do pedido; ele precisa ser da mesma licitação. */
+    private String sourceTitle(UUID documentId, UUID tenderId) {
+        if (documentId == null) {
+            return null;
+        }
+        return documents
+                .current(documentId)
+                .filter(d -> d.tenderId().equals(tenderId))
+                .map(DocumentFiles.DocumentFile::title)
+                .orElseThrow(() -> new DomainRuleViolation(
+                        "SOURCE_DOCUMENT_NOT_FOUND", "O documento de origem do pedido não está nesta licitação."));
+    }
+
+    private static String aiNote(boolean suggestedByAi, CurrentUser user) {
+        return suggestedByAi ? " · dados sugeridos pela IA e conferidos por " + user.name() : "";
     }
 
     private String signedSummary(Contract c) {
