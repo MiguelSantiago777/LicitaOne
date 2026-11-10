@@ -1,6 +1,7 @@
 # Runbook de operação do LicitaOne
 
 Para quem instala e mantém o sistema. Outros documentos:
+- roteiro de instalação para seguir com checklist (servidor com Apache): [`instalacao-passo-a-passo.md`](instalacao-passo-a-passo.md);
 - mensageria e DLQ: [`mensageria.md`](mensageria.md);
 - segurança: [`seguranca.md`](seguranca.md);
 - performance: [`performance.md`](performance.md).
