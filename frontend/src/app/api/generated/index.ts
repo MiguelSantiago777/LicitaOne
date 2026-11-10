@@ -1,6 +1,7 @@
 export * from './admin/admin.service';
 export * from './agencies/agencies.service';
 export * from './alerts/alerts.service';
+export * from './assistant/assistant.service';
 export * from './auth/auth.service';
 export * from './boards/boards.service';
 export * from './contracts/contracts.service';

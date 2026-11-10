@@ -2,8 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
+import { AssistantService } from '../api/generated/assistant/assistant.service';
 import { TendersService } from '../api/generated/tenders/tenders.service';
 import { Session } from '../core/auth/session';
+import { AssistantPanel } from '../features/assistant/assistant-panel';
 import { Avatar } from '../shared/ui/avatar';
 import { BrandMark } from '../shared/ui/brand-mark';
 import { Icon } from '../shared/ui/icon';
@@ -19,7 +21,16 @@ interface NavItem {
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon, BrandMark, Avatar, PasswordDialog],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    Icon,
+    BrandMark,
+    Avatar,
+    PasswordDialog,
+    AssistantPanel,
+  ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,9 +39,17 @@ export class Shell {
   protected readonly session = inject(Session);
   private readonly router = inject(Router);
   private readonly tendersApi = inject(TendersService);
+  private readonly assistantApi = inject(AssistantService);
 
   protected readonly menuOpen = signal(false);
   protected readonly passwordOpen = signal(false);
+  protected readonly assistantOpen = signal(false);
+
+  /** "Pergunte ao LicitaOne" (Fase 11): o botão só aparece com a IA configurada. */
+  private readonly assistant = rxResource({
+    stream: () => this.assistantApi.assistantSettings(),
+  });
+  protected readonly assistantEnabled = computed(() => this.assistant.value()?.enabled ?? false);
 
   /** Contador real do menu: licitações vencidas que ainda esperam contrato. */
   private readonly summary = rxResource({ stream: () => this.tendersApi.tenderSummary() });

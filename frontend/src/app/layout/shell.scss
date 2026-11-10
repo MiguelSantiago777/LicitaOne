@@ -228,6 +228,13 @@
   align-items: center;
   gap: 6px;
 }
+.ask-btn {
+  border-color: color-mix(in srgb, var(--violet) 35%, transparent);
+  color: var(--violet);
+}
+.ask-btn:hover {
+  background: var(--violet-bg);
+}
 .topbar-actions .btn.icon {
   position: relative;
 }

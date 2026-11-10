@@ -52,6 +52,10 @@
       "description": "Licitações"
     },
     {
+      "name": "assistant",
+      "description": "Perguntas sobre a carteira, respondidas com IA"
+    },
+    {
       "name": "admin",
       "description": "Operação"
     },
@@ -3271,6 +3275,37 @@
         "security": []
       }
     },
+    "/api/v1/assistant/questions": {
+      "post": {
+        "tags": [
+          "assistant"
+        ],
+        "summary": "Faz uma pergunta; a resposta sai em segundo plano (consulte pelo id). Nada é gravado.",
+        "operationId": "askAssistant",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistantQuestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantQuestionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/alerts/run": {
       "post": {
         "tags": [
@@ -4315,6 +4350,59 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/OpenContractsSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assistant": {
+      "get": {
+        "tags": [
+          "assistant"
+        ],
+        "summary": "Se o assistente está ligado, o limite do dia e exemplos",
+        "operationId": "assistantSettings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantSettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assistant/questions/{id}": {
+      "get": {
+        "tags": [
+          "assistant"
+        ],
+        "summary": "Andamento e resposta de uma pergunta",
+        "operationId": "assistantQuestion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantQuestionResponse"
                 }
               }
             }
@@ -8571,6 +8659,164 @@
           "password"
         ]
       },
+      "AssistantPastTurnRequest": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "answer": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          }
+        }
+      },
+      "AssistantQuestionRequest": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssistantPastTurnRequest"
+            },
+            "maxItems": 20,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "question"
+        ]
+      },
+      "AssistantAnswerResponse": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssistantItemResponse"
+            }
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssistantQueryResponse"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "items",
+          "queries",
+          "text",
+          "warnings"
+        ]
+      },
+      "AssistantItemResponse": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "query": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "detail",
+          "id",
+          "label",
+          "path",
+          "query",
+          "type"
+        ]
+      },
+      "AssistantQueryResponse": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "filters": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "filters",
+          "label",
+          "rows"
+        ]
+      },
+      "AssistantQuestionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "RUNNING",
+              "DONE",
+              "FAILED"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "answer": {
+            "$ref": "#/components/schemas/AssistantAnswerResponse"
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "answer",
+          "error",
+          "id",
+          "status",
+          "steps"
+        ]
+      },
       "RunAlertsResponse": {
         "type": "object",
         "properties": {
@@ -9481,6 +9727,34 @@
           "cards",
           "id",
           "name"
+        ]
+      },
+      "AssistantSettingsResponse": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "dailyLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "usedToday": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "examples": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "dailyLimit",
+          "enabled",
+          "examples",
+          "usedToday"
         ]
       },
       "AlertOwnerResponse": {

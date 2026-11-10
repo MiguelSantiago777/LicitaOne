@@ -92,6 +92,18 @@
       </form>
 
       <div class="topbar-actions">
+        @if (assistantEnabled()) {
+          <button
+            type="button"
+            class="btn ask-btn"
+            (click)="assistantOpen.set(true)"
+            aria-label="Pergunte ao LicitaOne"
+            aria-haspopup="dialog"
+          >
+            <app-icon name="sparkles" [size]="16" />
+            <span class="hide-sm">Perguntar</span>
+          </button>
+        }
         @if (!isViewer()) {
           <button
             type="button"
@@ -113,3 +125,4 @@
 </div>
 
 <app-password-dialog [open]="passwordOpen()" (closed)="passwordOpen.set(false)" />
+<app-assistant-panel [open]="assistantOpen()" (closed)="assistantOpen.set(false)" />
