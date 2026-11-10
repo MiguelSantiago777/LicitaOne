@@ -39,7 +39,7 @@ Requisitos:
    ```bash
    deploy/setup/gerar-env-prod.sh
    ```
-   - Ele pergunta o endereço público, o **administrador inicial** (nome, e-mail e senha; Enter gera uma senha aleatória), o SMTP e, se quiser, a chave da IA.
+   - Ele pergunta o endereço público, o SMTP e a IA: **Gemini** (chave do Google AI Studio), Claude (chave da Anthropic) ou nenhuma por enquanto.
    - Sorteia as senhas do banco, do RabbitMQ e do S3 e gera a chave JWT.
    - Grava com permissão 600 e cria o link `.env -> .env.prod`. Com ele, o `docker compose` já usa os dois arquivos de compose (`COMPOSE_FILE`), sem flags, e os scripts de backup acham as senhas.
    - Depois, preencha à mão os dados da empresa (`SHEMA_COMPANY_*`).
@@ -51,8 +51,13 @@ Requisitos:
    ```
    - A primeira subida compila as imagens (alguns minutos).
    - O Flyway cria o banco, sem dados de exemplo.
-   - O administrador do `.env.prod` é criado só se ainda não houver nenhum administrador. Depois disso as variáveis `SHEMA_ADMIN_*` são ignoradas: trocar a senha ali não muda nada.
-5. Configure o **TLS no proxy da frente**, encaminhando para `127.0.0.1:14200`. Com Caddy, que pega o certificado sozinho:
+5. Crie o **usuário master** (como o `createsuperuser` do Django):
+   ```bash
+   deploy/setup/criar-admin.sh
+   ```
+   Pergunta nome, e-mail e senha (duas vezes, sem mostrar; mínimo de 12 caracteres). A senha não passa pela linha de comando nem fica no histórico. O hash BCrypt sai do `htpasswd` do servidor ou, sem ele, da imagem `httpd:2.4-alpine`.
+   - Alternativa: preencher `SHEMA_ADMIN_*` no `.env.prod` antes de subir. O backend cria esse administrador só se ainda não houver nenhum; depois, as variáveis são ignoradas.
+6. Configure o **TLS no proxy da frente**, encaminhando para `127.0.0.1:14200`. Com Caddy, que pega o certificado sozinho:
    ```bash
    sudo apt install -y caddy
    ```
@@ -66,18 +71,10 @@ Requisitos:
    sudo systemctl reload caddy
    ```
    **O servidor já tem Apache nas portas 80 e 443** (outros sites)? Não instale o Caddy: use o modelo `deploy/apache/licitaone.conf` (instruções no próprio arquivo) e tire o certificado com `sudo certbot --apache -d <domínio>`. O LicitaOne só ocupa `127.0.0.1:14200`; para trocar, mude `FRONTEND_PORT` no `.env.prod` e a porta no site do Apache. O Postgres do LicitaOne fica dentro do Docker e não disputa a porta 5432 com um Postgres instalado no servidor.
-6. Primeiro acesso:
-   1. Entre com o administrador e **troque a senha** (ícone de engrenagem no rodapé do menu). O log avisa se a senha inicial não segue a política.
-   2. Cadastre os usuários em Administração → Usuários.
-7. Agende o backup (seção 6) e **teste uma restauração** antes de pôr dados de verdade.
+7. Primeiro acesso: entre com o usuário master e cadastre os outros em Administração → Usuários.
+8. Agende o backup (seção 6) e **teste uma restauração** antes de pôr dados de verdade.
 
-**Esqueceu a senha do único administrador?** Outro administrador define uma nova em Usuários → Definir senha. Se não houver outro, rebaixe o administrador para criar um novo na subida:
-```bash
-docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' <<'SQL'
-update users set role = 'SALES' where email = 'admin@exemplo.com.br';
-SQL
-```
-Troque o e-mail no `.env.prod` por um que ainda não exista e rode `docker compose up -d --wait backend`: o backend cria o novo administrador, que então redefine a senha do antigo e devolve o perfil dele.
+**Esqueceu a senha do único administrador?** Outro administrador define uma nova em Usuários → Definir senha. Se não houver outro, rode `deploy/setup/criar-admin.sh` com o mesmo e-mail: o usuário continua o mesmo (nome e histórico), volta a ser administrador e ativo, ganha a senha nova, é desbloqueado e tem as sessões abertas encerradas.
 
 ## 3. Configuração (variáveis de ambiente)
 | Variável | Para quê | Padrão |

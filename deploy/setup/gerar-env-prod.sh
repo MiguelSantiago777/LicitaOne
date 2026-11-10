@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Gera o .env.prod do LicitaOne a partir do .env.prod.example:
-# - pergunta o endereço público, o administrador inicial e o SMTP;
-# - sorteia as senhas do banco, do RabbitMQ, do S3 e do administrador, e gera a chave JWT (RSA 2048);
+# - pergunta o endereço público, o SMTP e a IA (Gemini ou Claude, com a chave);
+# - sorteia as senhas do banco, do RabbitMQ e do S3, e gera a chave JWT (RSA 2048);
 # - grava com permissão só para o dono (600) e cria o link .env -> .env.prod, para o `docker compose` e os scripts
 #   de backup lerem o arquivo sem flags.
 #   deploy/setup/gerar-env-prod.sh
 # Roda no servidor, da raiz do repositório ou de qualquer lugar. Não sobrescreve um .env.prod que já exista.
+# O usuário master é criado depois de subir, com deploy/setup/criar-admin.sh.
 # Procedimento completo em docs/operacao/runbook.md (seção 2).
 set -euo pipefail
 
@@ -48,9 +49,6 @@ ask_secret() { # ask_secret "Pergunta" -> resposta (pode ficar em branco)
 
 random_hex() { openssl rand -hex "$1"; }
 
-# Senha do admin: 20 caracteres de letras e números (passa na política de 12+ caracteres)
-random_password() { openssl rand -base64 30 | tr -dc 'A-Za-z0-9' | head -c 20; }
-
 echo "== LicitaOne: gerar $TARGET =="
 echo
 
@@ -62,33 +60,34 @@ esac
 PUBLIC_URL="${PUBLIC_URL%/}"
 
 echo
-echo "-- Administrador inicial (o \"superusuário\") --"
-ADMIN_NAME="$(ask "Nome" "Administrador")"
-ADMIN_EMAIL="$(ask "E-mail de login")"
-ADMIN_PASSWORD="$(ask_secret "Senha (Enter para gerar uma aleatória)")"
-GENERATED_ADMIN_PASSWORD=false
-if [ -z "$ADMIN_PASSWORD" ]; then
-  ADMIN_PASSWORD="$(random_password)"
-  GENERATED_ADMIN_PASSWORD=true
-elif [ "${#ADMIN_PASSWORD}" -lt 12 ]; then
-  echo "A senha precisa ter pelo menos 12 caracteres." >&2
-  exit 1
-fi
-
-echo
 echo "-- SMTP dos avisos por e-mail (porta 587 com STARTTLS) --"
 MAIL_HOST="$(ask "Servidor SMTP (ex.: smtp.gmail.com)")"
 MAIL_PORT="$(ask "Porta" "587")"
-MAIL_USER="$(ask "Usuário SMTP" "$ADMIN_EMAIL")"
-MAIL_PASSWORD="$(ask_secret "Senha SMTP")"
+MAIL_USER="$(ask "Usuário SMTP (em geral, o e-mail)")"
+MAIL_PASSWORD="$(ask_secret "Senha SMTP (no Gmail, uma senha de app)")"
 MAIL_FROM="$(ask "Remetente dos avisos" "LicitaOne <$MAIL_USER>")"
 
 echo
-echo "-- IA (opcional: Enter deixa desligada; dá para pôr depois no $TARGET) --"
-ANTHROPIC_KEY="$(ask_secret "Chave da API da Anthropic")"
+echo "-- IA: leitura de documentos e o assistente \"Pergunte ao LicitaOne\" --"
+echo "  1) Gemini (chave do Google AI Studio: aistudio.google.com/apikey)"
+echo "  2) Claude (chave da Anthropic: console.anthropic.com)"
+echo "  3) Sem IA por enquanto (dá para pôr a chave depois no $TARGET e reiniciar o backend)"
+AI_CHOICE="$(ask "Escolha" "1")"
+AI_PROVIDER=claude
+GEMINI_KEY=""
+ANTHROPIC_KEY=""
+case "$AI_CHOICE" in
+  1)
+    AI_PROVIDER=gemini
+    GEMINI_KEY="$(ask_secret "Chave do Gemini")"
+    echo "  Aviso: no plano gratuito do Gemini o Google pode usar o conteúdo enviado. Confirme com o cliente." >&2
+    ;;
+  2) ANTHROPIC_KEY="$(ask_secret "Chave da Anthropic")" ;;
+  3) ;;
+  *) echo "Opção inválida: $AI_CHOICE" >&2; exit 1 ;;
+esac
 
-for value in "$PUBLIC_URL" "$ADMIN_NAME" "$ADMIN_EMAIL" "$ADMIN_PASSWORD" "$MAIL_HOST" "$MAIL_USER" "$MAIL_PASSWORD" \
-             "$MAIL_FROM" "$ANTHROPIC_KEY"; do
+for value in "$PUBLIC_URL" "$MAIL_HOST" "$MAIL_USER" "$MAIL_PASSWORD" "$MAIL_FROM" "$ANTHROPIC_KEY" "$GEMINI_KEY"; do
   case "$value" in
     *\'*) echo "Os valores não podem ter aspas simples ('). Tente de novo." >&2; exit 1 ;;
   esac
@@ -106,12 +105,11 @@ export V_SHEMA_PUBLIC_URL="$(q "$PUBLIC_URL")"
 export V_POSTGRES_PASSWORD="$(random_hex 24)"
 export V_RABBITMQ_PASSWORD="$(random_hex 24)"
 export V_S3_SECRET_KEY="$(random_hex 24)"
-export V_SHEMA_ADMIN_NAME="$(q "$ADMIN_NAME")"
-export V_SHEMA_ADMIN_EMAIL="$(q "$ADMIN_EMAIL")"
-export V_SHEMA_ADMIN_PASSWORD="$(q "$ADMIN_PASSWORD")"
 export V_SHEMA_JWT_PRIVATE_KEY="\"$JWT_KEY\""
 export V_SHEMA_JWT_KEY_ID="prod-$(date +%Y-%m)"
+export V_SHEMA_AI_PROVIDER="$AI_PROVIDER"
 export V_ANTHROPIC_API_KEY="$(q "$ANTHROPIC_KEY")"
+export V_GEMINI_API_KEY="$(q "$GEMINI_KEY")"
 export V_MAIL_HOST="$(q "$MAIL_HOST")"
 export V_MAIL_PORT="$MAIL_PORT"
 export V_MAIL_USER="$(q "$MAIL_USER")"
@@ -136,15 +134,10 @@ ln -sfn "$TARGET" .env
 echo
 echo "Pronto: $TARGET criado (permissão 600) e .env -> $TARGET."
 echo
-echo "  Administrador: $ADMIN_EMAIL"
-if [ "$GENERATED_ADMIN_PASSWORD" = true ]; then
-  echo "  Senha inicial: $ADMIN_PASSWORD"
-  echo "  (anote agora; troque no primeiro acesso, pelo ícone de engrenagem no rodapé do menu)"
-fi
-echo
 echo "Próximos passos:"
 echo "  1. Preencha os dados da empresa (SHEMA_COMPANY_*) no $TARGET, para as cartas do kit de carona."
 echo "  2. Suba:  docker compose up -d --build --wait"
-echo "  3. Configure o HTTPS no proxy apontando para 127.0.0.1:14200: Caddy, ou o Apache que já estiver no servidor"
+echo "  3. Crie o usuário master:  deploy/setup/criar-admin.sh"
+echo "  4. Configure o HTTPS no proxy apontando para 127.0.0.1:14200: Caddy, ou o Apache que já estiver no servidor"
 echo "     (modelo em deploy/apache/licitaone.conf; runbook, seção 2)."
-echo "  4. Guarde uma cópia do $TARGET num cofre de senhas: sem ele, não dá para restaurar o banco nem os tokens."
+echo "  5. Guarde uma cópia do $TARGET num cofre de senhas: sem ele, não dá para restaurar o banco nem os tokens."

@@ -105,8 +105,9 @@ O compose de desenvolvimento sobe com **dados de exemplo** (seed) e com o Mailpi
 ## Produção
 
 ```bash
-deploy/setup/gerar-env-prod.sh      # pergunta o admin, o SMTP e o endereço; gera senhas e a chave JWT
+deploy/setup/gerar-env-prod.sh      # pergunta o endereço, o SMTP e a IA (Gemini ou Claude); gera senhas e a chave JWT
 docker compose up -d --build --wait  # o .env aponta para o .env.prod, que já liga o compose de produção
+deploy/setup/criar-admin.sh          # usuário master (como o createsuperuser do Django)
 ```
 
 Perfil `prod`: sem dados de exemplo nem Swagger, cookie `Secure`, só o frontend publicado (atrás de um proxy com TLS) e o backend recusa subir sem a chave JWT. Instalação, backup (`deploy/backup/`), monitoramento e incidentes estão no [runbook](docs/operacao/runbook.md).
