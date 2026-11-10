@@ -43,7 +43,9 @@ Requisitos:
    - Sorteia as senhas do banco, do RabbitMQ e do S3 e gera a chave JWT.
    - Grava com permissão 600 e cria o link `.env -> .env.prod`. Com ele, o `docker compose` já usa os dois arquivos de compose (`COMPOSE_FILE`), sem flags, e os scripts de backup acham as senhas.
    - Depois, preencha à mão os dados da empresa (`SHEMA_COMPANY_*`).
-   - **Guarde uma cópia do `.env.prod` num cofre de senhas.** Sem ele, um backup não volta: a senha do banco e a chave dos tokens estão nele.
+   - **Guarde uma cópia do `.env.prod` num cofre de senhas.**
+     - As senhas do banco e do RabbitMQ ficam gravadas nos volumes na primeira subida. Depois disso, mudar no `.env.prod` não muda lá, e o sistema para de conectar. Para trocar, altere primeiro dentro do serviço (`alter user` no Postgres, `rabbitmqctl change_password`) e depois no arquivo.
+     - Perder o arquivo não perde dados: um `.env.prod` novo num servidor limpo restaura o backup normalmente. Só a chave JWT nova faz todo mundo entrar de novo.
    - Prefere fazer à mão? Copie o `.env.prod.example` e siga os comentários dele; sem a chave JWT o backend **não sobe** em produção, de propósito.
 4. Suba:
    ```bash
