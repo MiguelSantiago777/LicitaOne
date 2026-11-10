@@ -145,5 +145,6 @@ echo
 echo "Próximos passos:"
 echo "  1. Preencha os dados da empresa (SHEMA_COMPANY_*) no $TARGET, para as cartas do kit de carona."
 echo "  2. Suba:  docker compose up -d --build --wait"
-echo "  3. Configure o HTTPS no proxy (Caddy) apontando para 127.0.0.1:14200 (runbook, seção 2)."
+echo "  3. Configure o HTTPS no proxy apontando para 127.0.0.1:14200: Caddy, ou o Apache que já estiver no servidor"
+echo "     (modelo em deploy/apache/licitaone.conf; runbook, seção 2)."
 echo "  4. Guarde uma cópia do $TARGET num cofre de senhas: sem ele, não dá para restaurar o banco nem os tokens."

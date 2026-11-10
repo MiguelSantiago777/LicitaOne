@@ -19,37 +19,65 @@ O backend não guarda estado: dá para rodar mais de uma instância. O job diár
 
 ## 2. Instalação em produção
 Requisitos:
-- um servidor Linux com Docker e Compose v2.24 ou mais novo;
-- 2 vCPU e 4 GB de RAM bastam para o volume esperado;
-- um domínio com HTTPS;
-- uma conta SMTP.
+- um servidor Linux (Ubuntu 24.04 ou Debian 12, por exemplo) com Docker e Compose v2.24 ou mais novo;
+- 2 vCPU e 4 GB de RAM bastam para o volume esperado, com 40 GB de disco;
+- um domínio (ou subdomínio) com o DNS apontando para o servidor;
+- uma conta SMTP para os avisos;
+- portas 80 e 443 abertas (o resto fica fechado: banco, RabbitMQ e S3 não saem do Docker).
 
-1. Clone o repositório e crie o arquivo de ambiente:
+1. Instale o Docker (script oficial) e libere seu usuário:
    ```bash
-   cp .env.prod.example .env.prod && chmod 600 .env.prod
+   curl -fsSL https://get.docker.com | sudo sh
+   sudo usermod -aG docker $USER    # saia e entre de novo na sessão
    ```
-2. Preencha o `.env.prod`:
-   - senhas aleatórias: `openssl rand -base64 32`;
-   - `SHEMA_PUBLIC_URL`;
-   - SMTP;
-   - a chave JWT: `openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048`, colada entre aspas com as quebras de linha.
-   - Sem a chave JWT, o backend **não sobe** em produção, de propósito.
-3. Suba:
+2. Clone o repositório em `/opt/licitaone`:
    ```bash
-   docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d --build --wait
+   sudo mkdir -p /opt/licitaone && sudo chown $USER /opt/licitaone
+   git clone https://github.com/MiguelSantiago777/LicitaOne.git /opt/licitaone && cd /opt/licitaone
    ```
-   - O Flyway cria o banco na primeira subida, sem dados de exemplo.
-   - O administrador do `.env.prod` é criado só se não houver nenhum usuário.
-4. Configure o **TLS no proxy da frente**, encaminhando para `127.0.0.1:14200`. Exemplo com Caddy, que pega o certificado sozinho:
+3. Gere o `.env.prod`:
+   ```bash
+   deploy/setup/gerar-env-prod.sh
+   ```
+   - Ele pergunta o endereço público, o **administrador inicial** (nome, e-mail e senha; Enter gera uma senha aleatória), o SMTP e, se quiser, a chave da IA.
+   - Sorteia as senhas do banco, do RabbitMQ e do S3 e gera a chave JWT.
+   - Grava com permissão 600 e cria o link `.env -> .env.prod`. Com ele, o `docker compose` já usa os dois arquivos de compose (`COMPOSE_FILE`), sem flags, e os scripts de backup acham as senhas.
+   - Depois, preencha à mão os dados da empresa (`SHEMA_COMPANY_*`).
+   - **Guarde uma cópia do `.env.prod` num cofre de senhas.** Sem ele, um backup não volta: a senha do banco e a chave dos tokens estão nele.
+   - Prefere fazer à mão? Copie o `.env.prod.example` e siga os comentários dele; sem a chave JWT o backend **não sobe** em produção, de propósito.
+4. Suba:
+   ```bash
+   docker compose up -d --build --wait
+   ```
+   - A primeira subida compila as imagens (alguns minutos).
+   - O Flyway cria o banco, sem dados de exemplo.
+   - O administrador do `.env.prod` é criado só se ainda não houver nenhum administrador. Depois disso as variáveis `SHEMA_ADMIN_*` são ignoradas: trocar a senha ali não muda nada.
+5. Configure o **TLS no proxy da frente**, encaminhando para `127.0.0.1:14200`. Com Caddy, que pega o certificado sozinho:
+   ```bash
+   sudo apt install -y caddy
+   ```
+   Em `/etc/caddy/Caddyfile`:
    ```
    licitaone.exemplo.com.br {
        reverse_proxy 127.0.0.1:14200
    }
    ```
-5. Primeiro acesso:
+   ```bash
+   sudo systemctl reload caddy
+   ```
+   **O servidor já tem Apache nas portas 80 e 443** (outros sites)? Não instale o Caddy: use o modelo `deploy/apache/licitaone.conf` (instruções no próprio arquivo) e tire o certificado com `sudo certbot --apache -d <domínio>`. O LicitaOne só ocupa `127.0.0.1:14200`; para trocar, mude `FRONTEND_PORT` no `.env.prod` e a porta no site do Apache. O Postgres do LicitaOne fica dentro do Docker e não disputa a porta 5432 com um Postgres instalado no servidor.
+6. Primeiro acesso:
    1. Entre com o administrador e **troque a senha** (ícone de engrenagem no rodapé do menu). O log avisa se a senha inicial não segue a política.
    2. Cadastre os usuários em Administração → Usuários.
-6. Agende o backup (seção 6) e **teste uma restauração** antes de pôr dados de verdade.
+7. Agende o backup (seção 6) e **teste uma restauração** antes de pôr dados de verdade.
+
+**Esqueceu a senha do único administrador?** Outro administrador define uma nova em Usuários → Definir senha. Se não houver outro, rebaixe o administrador para criar um novo na subida:
+```bash
+docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' <<'SQL'
+update users set role = 'SALES' where email = 'admin@exemplo.com.br';
+SQL
+```
+Troque o e-mail no `.env.prod` por um que ainda não exista e rode `docker compose up -d --wait backend`: o backend cria o novo administrador, que então redefine a senha do antigo e devolve o perfil dele.
 
 ## 3. Configuração (variáveis de ambiente)
 | Variável | Para quê | Padrão |
@@ -67,6 +95,9 @@ Requisitos:
 | `SHEMA_LOGIN_ATTEMPTS_PER_MINUTE` | limite de tentativas de login por IP | 10 |
 | `ANTHROPIC_API_KEY` | leitura com IA de atas, contratos e pedidos (ADRs 0016 e 0017); em branco, a funcionalidade fica desligada. O envio de documentos e mensagens à Anthropic foi autorizado em 04/11/2026 | — |
 | `SHEMA_EXTRACTION_MODEL` | modelo da leitura com IA | `claude-opus-5-5` |
+| `SHEMA_AI_PROVIDER` | provedor da IA, para leitura e assistente (ADR 0021): `claude` ou `gemini` | `claude` |
+| `GEMINI_API_KEY` | chave do Google AI Studio, usada com `SHEMA_AI_PROVIDER=gemini`; em branco, a IA fica desligada. ⚠ No plano gratuito o Google pode usar o conteúdo enviado: confirme com o cliente antes de ligar em produção | — |
+| `SHEMA_EXTRACTION_GEMINI_MODEL`, `SHEMA_ASSISTANT_GEMINI_MODEL` | modelos do Gemini | `gemini-3.8-flash` |
 | `SHEMA_EXTRACTION_DEMO` | leitor de demonstração, sem IA (só E2E); o backend não sobe com ele no perfil prod | `false` |
 
 Os limites de carona ficam em `shema.caronas.*`: até 4 órgãos, 50% de cada item por órgão e 200% no total (ADRs 0014 e 0019).
@@ -76,7 +107,7 @@ Os dados da empresa no kit de carona (razão social, CNPJ, endereço, cidade, re
 ## 4. Atualizar a versão
 ```bash
 git pull
-docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d --build --wait
+docker compose up -d --build --wait
 ```
 - As migrações do banco rodam sozinhas na subida.
 - **Antes de atualizar, faça um backup** (seção 6). Uma migração não tem volta automática: para voltar a versão, restaure o backup feito antes e suba a versão anterior (`git checkout <tag>`).
@@ -147,8 +178,9 @@ deploy/backup/restore.sh /caminho/dos/backups/20261029-150000
 | "Verificar agora" responde que já está rodando | outra verificação em andamento (lock do ShedLock) | espere um minuto. Se o processo morreu, o lock expira sozinho em até 15 min |
 | Upload de documento falha | S3 fora ou disco cheio | `docker compose ps s3` e espaço em disco |
 | Pessoa bloqueada após errar a senha | 5 erros: bloqueio de 15 min | esperar, ou o administrador define uma senha nova (Usuários → Definir senha) |
+| Leitura com IA termina com "A cota gratuita da IA acabou por hoje" | Gemini no plano gratuito: a cota diária acabou (volta à meia-noite do horário do Pacífico, 4h ou 5h em Brasília) | espere a cota voltar, ou ative o faturamento no projeto do Google AI Studio |
 | Leitura com IA termina com "A chave da IA foi recusada" | `ANTHROPIC_API_KEY` errada, revogada ou sem crédito | troque a chave e reinicie o backend; as leituras com falha podem ser pedidas de novo |
-| Leitura com IA demora ou falha com "IA ocupada ou fora do ar" | limite de uso ou instabilidade da API (o SDK já tentou de novo) | pedir de novo depois; métricas `shema.extraction.failed` e `shema.extraction.tokens` (etiqueta `kind`: `DOCUMENTO`, `PEDIDO`, `RESPOSTA`, `RASCUNHO` ou `CARONA`) no Prometheus. Filas: `shemacrm.extraction.extraction-requested` e `shemacrm.extraction.order-reading-requested`, cada uma com DLQ |
+| Leitura com IA demora ou falha com "IA ocupada ou fora do ar" | limite de uso ou instabilidade da API (o SDK já tentou de novo) | pedir de novo depois; métricas `shema.extraction.failed` e `shema.extraction.tokens` (etiqueta `kind`: `DOCUMENTO`, `PEDIDO`, `RESPOSTA`, `RASCUNHO` ou `CARONA`). O assistente "Pergunte ao LicitaOne" tem `shema.assistant.questions` (`outcome`), `shema.assistant.tool.calls` (`tool`) e `shema.assistant.tokens` (ADR 0020) no Prometheus. Filas: `shemacrm.extraction.extraction-requested` e `shemacrm.extraction.order-reading-requested`, cada uma com DLQ |
 | "Não deu para abrir a imagem" no pedido por foto | arquivo corrompido ou formato que a IA não lê | pedir a foto em JPEG ou PNG, ou o PDF; o texto colado é outra opção |
 | Sessões caem a cada reinício | backend sem `SHEMA_JWT_PRIVATE_KEY` (só acontece fora do perfil prod) | defina a chave |
 
@@ -168,8 +200,14 @@ deploy/backup/restore.sh /caminho/dos/backups/20261029-150000
 | Contatos de órgãos (nome, cargo, e-mail, telefone) | `agency_contacts` | follow-up de pedidos | enquanto o órgão for cliente; apagar o contato a pedido da pessoa |
 | Histórico (quem fez o quê) | `*_events` | auditoria (seção 5.8) | prazo dos contratos + 5 anos |
 | Documentos (atas, contratos, empenhos) | bucket S3 | prova documental | apagar é lógico; os arquivos ficam pelo mesmo prazo |
-| Logs | `docker compose logs` | suporte | configure a rotação do Docker (ex.: `max-size: 50m`, `max-file: 5`) |
+| Logs | `docker compose logs` | suporte | o compose de produção roda 5 arquivos de 50 MB por serviço |
 | Backups | fora do servidor | recuperação | 30 dias |
 
 - **Pedido de um titular** (acesso ou exclusão do contato): o administrador consulta ou apaga o contato na tela do órgão.
 - Os logs não guardam senha, token nem conteúdo de documento, só ids.
+
+## Assistente "Pergunte ao LicitaOne" (ADR 0020)
+- Liga com o mesmo provedor e a mesma chave da leitura (`ANTHROPIC_API_KEY`, ou `GEMINI_API_KEY` com `SHEMA_AI_PROVIDER=gemini`). Sem a chave, o botão "Perguntar" não aparece.
+- Limite de perguntas por pessoa por dia: `SHEMA_ASSISTANT_DAILY_LIMIT` (padrão 50). A contagem fica em `assistant_usage`; para liberar alguém no mesmo dia, apague a linha da pessoa nessa tabela.
+- O texto das perguntas não é guardado nem vai para os logs. As perguntas em andamento ficam na memória do backend por 10 minutos: reiniciar o backend perde só as que estavam rodando.
+- E2E: rode o compose com `SHEMA_EXTRACTION_DEMO=true` e `SHEMA_ASSISTANT_DAILY_LIMIT=1000`, porque o teste pergunta várias vezes como o mesmo usuário.

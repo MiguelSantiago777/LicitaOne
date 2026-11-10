@@ -1,24 +1,35 @@
 # Produção (Fase 6): por cima do docker-compose.yml.
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d --build --wait
+# (com o .env.prod gerado por deploy/setup/gerar-env-prod.sh, basta `docker compose up -d --build --wait`)
 # Diferenças em relação ao dev:
 # - perfil prod no backend: sem seed, sem Swagger, cookie Secure e recusa subir sem SHEMA_JWT_PRIVATE_KEY;
 # - banco, RabbitMQ e S3 sem porta publicada (só a rede interna); a aplicação sai só pelo frontend;
 # - SMTP de verdade no lugar do Mailpit (que não sobe);
-# - todos os serviços reiniciam sozinhos.
+# - todos os serviços reiniciam sozinhos;
+# - logs com rotação (5 arquivos de 50 MB por serviço), para não encher o disco.
 # O TLS fica no proxy da frente (Caddy, Traefik, nginx do servidor ou balanceador da nuvem). Ver docs/operacao/runbook.md.
 name: ${COMPOSE_PROJECT_NAME:-licitaone}
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
 
 services:
   postgres:
     restart: unless-stopped
+    logging: *logging
     ports: !reset []
 
   rabbitmq:
     restart: unless-stopped
+    logging: *logging
     ports: !reset []
 
   s3:
     restart: unless-stopped
+    logging: *logging
     ports: !reset []
 
   mailpit:
@@ -27,12 +38,18 @@ services:
 
   backend:
     restart: unless-stopped
+    logging: *logging
     environment:
       SPRING_PROFILES_ACTIVE: docker,prod
       SHEMA_JWT_PRIVATE_KEY: ${SHEMA_JWT_PRIVATE_KEY:?defina a chave RSA (PEM) no .env.prod}
       SHEMA_JWT_KEY_ID: "${SHEMA_JWT_KEY_ID:?defina o id da chave, por exemplo prod-2026-10}"
       ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
       SHEMA_EXTRACTION_MODEL: "${SHEMA_EXTRACTION_MODEL:-claude-opus-5-5}"
+      SHEMA_AI_PROVIDER: "${SHEMA_AI_PROVIDER:-claude}"
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+      SHEMA_EXTRACTION_GEMINI_MODEL: "${SHEMA_EXTRACTION_GEMINI_MODEL:-gemini-3.8-flash}"
+      SHEMA_ASSISTANT_GEMINI_MODEL: "${SHEMA_ASSISTANT_GEMINI_MODEL:-gemini-3.8-flash}"
+      SHEMA_ASSISTANT_DAILY_LIMIT: "${SHEMA_ASSISTANT_DAILY_LIMIT:-50}"
       SHEMA_COMPANY_LEGAL_NAME: "${SHEMA_COMPANY_LEGAL_NAME:-Shema Suprimentos e Serviços}"
       SHEMA_COMPANY_CNPJ: "${SHEMA_COMPANY_CNPJ:-}"
       SHEMA_COMPANY_ADDRESS: "${SHEMA_COMPANY_ADDRESS:-}"
@@ -66,6 +83,7 @@ services:
 
   frontend:
     restart: unless-stopped
+    logging: *logging
     # Publicado só no localhost do servidor: o proxy com TLS encaminha para cá
     ports: !override
       - "127.0.0.1:${FRONTEND_PORT:-14200}:8080"

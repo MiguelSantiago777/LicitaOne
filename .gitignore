@@ -1,6 +1,7 @@
 # Referências de design de terceiros (clone com .git próprio; ver docs/decisoes.md)
 .claude/design-refs/
 .env
+.env.prod
 *.log
 .idea/
 .vscode/

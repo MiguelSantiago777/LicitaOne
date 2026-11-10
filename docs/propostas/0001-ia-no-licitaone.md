@@ -1,6 +1,6 @@
 # Proposta 0001 — IA no LicitaOne
 
-- **Status:** item 1 (leitura da ata) aprovado e feito na Fase 7 ([relatório](../fases/fase-7.md), [ADR 0016](../adr/0016-leitura-com-ia.md)); o contrato na tela e o item 2 (pedido por PDF, foto ou mensagem) feitos na Fase 8 ([relatório](../fases/fase-8.md), [ADR 0017](../adr/0017-pedido-com-ia.md)); o item 3 (follow-up com contexto e resposta do órgão) feito na Fase 9 ([relatório](../fases/fase-9.md), [ADR 0018](../adr/0018-follow-up-com-ia.md)); o item 4 (ofício de carona) feito na Fase 10 como kit de carona ([relatório](../fases/fase-10.md), [ADR 0019](../adr/0019-kit-de-carona.md)); os itens da fronteira seguem em discussão
+- **Status:** item 1 (leitura da ata) aprovado e feito na Fase 7 ([relatório](../fases/fase-7.md), [ADR 0016](../adr/0016-leitura-com-ia.md)); o contrato na tela e o item 2 (pedido por PDF, foto ou mensagem) feitos na Fase 8 ([relatório](../fases/fase-8.md), [ADR 0017](../adr/0017-pedido-com-ia.md)); o item 3 (follow-up com contexto e resposta do órgão) feito na Fase 9 ([relatório](../fases/fase-9.md), [ADR 0018](../adr/0018-follow-up-com-ia.md)); o item 4 (ofício de carona) feito na Fase 10 como kit de carona ([relatório](../fases/fase-10.md), [ADR 0019](../adr/0019-kit-de-carona.md)); "Pergunte ao LicitaOne" feito na Fase 11 ([relatório](../fases/fase-11.md), [ADR 0020](../adr/0020-assistente-de-perguntas.md)); o resumo do dia e a importação assistida seguem em discussão
 - **Data:** 03/11/2026
 - **Origem:** conversa com o time em 03/11/2026 sobre funcionalidades para diferenciar o produto
 

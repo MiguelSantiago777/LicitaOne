@@ -23,3 +23,5 @@ Cada decisão relevante tem um arquivo `NNNN-titulo.md` com contexto, decisão e
 | [0017](0017-pedido-com-ia.md) | Pedido a partir de PDF, foto ou mensagem com IA | Aceito |
 | [0018](0018-follow-up-com-ia.md) | Registro de contato, resposta do órgão e follow-up com IA | Aceito |
 | [0019](0019-kit-de-carona.md) | Kit de carona sob medida (apresentação, ofício e anuência) | Aceito |
+| [0020](0020-assistente-de-perguntas.md) | "Pergunte ao LicitaOne": assistente de perguntas sobre a carteira | Aceito |
+| [0021](0021-gemini-como-provedor.md) | Gemini como provedor alternativo da IA | Proposto |

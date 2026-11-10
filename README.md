@@ -4,7 +4,7 @@ CRM de licitações públicas da Shema Suprimentos e Serviços. Acompanha cada l
 
 > O sistema se chamava ShemaCRM. Só o nome visível mudou: código, banco e filas continuam com `shema`/`shemacrm`.
 
-**Situação:** o MVP está pronto (Fases 0 a 6, com todos os itens da definição de pronto). Nas Fases 7 a 10, a IA preenche ata, contrato e pedido (por PDF, foto ou mensagem), entende a resposta do órgão, escreve o follow-up e o kit de carona; falta a chave da API em produção. Veja [Andamento](#andamento).
+**Situação:** o MVP está pronto (Fases 0 a 6, com todos os itens da definição de pronto). Nas Fases 7 a 11, a IA preenche ata, contrato e pedido (por PDF, foto ou mensagem), entende a resposta do órgão, escreve o follow-up e o kit de carona, e responde perguntas sobre a carteira; falta a chave da API em produção. Veja [Andamento](#andamento).
 
 ## O que o sistema faz
 
@@ -29,6 +29,7 @@ CRM de licitações públicas da Shema Suprimentos e Serviços. Acompanha cada l
 - **Tarefas** manuais e automáticas, com conclusão em massa.
 - **Registro de contato** com o órgão no histórico (canal, data, situação, o que foi conversado). A IA entende a resposta colada e sugere a próxima tarefa.
 - **Follow-up com IA:** e-mail ou WhatsApp citando contrato, saldo, último pedido e últimos contatos, com copiar, abrir no e-mail e abrir no WhatsApp. O sistema não envia nada.
+- **Pergunte ao LicitaOne:** perguntas em português sobre a carteira ("quais contratos têm mais saldo e não pedem há 60 dias?"), com a lista clicável dos itens e as consultas feitas. Só lê; nada da conversa é guardado.
 - **Kit de carona:** para cada município candidato, quanto ele pode pedir de cada item (50% por município, sem passar dos 200%), a carta de apresentação (com IA), o modelo de ofício de solicitação e o ofício de anuência, em .docx.
 
 **Alertas e painel**
@@ -104,8 +105,8 @@ O compose de desenvolvimento sobe com **dados de exemplo** (seed) e com o Mailpi
 ## Produção
 
 ```bash
-cp .env.prod.example .env.prod      # chave JWT, SMTP, senhas e endereço público
-docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d --build --wait
+deploy/setup/gerar-env-prod.sh      # pergunta o admin, o SMTP e o endereço; gera senhas e a chave JWT
+docker compose up -d --build --wait  # o .env aponta para o .env.prod, que já liga o compose de produção
 ```
 
 Perfil `prod`: sem dados de exemplo nem Swagger, cookie `Secure`, só o frontend publicado (atrás de um proxy com TLS) e o backend recusa subir sem a chave JWT. Instalação, backup (`deploy/backup/`), monitoramento e incidentes estão no [runbook](docs/operacao/runbook.md).
@@ -167,6 +168,7 @@ Uma branch por fase, cada uma a partir da anterior. O relatório de cada fase (o
 | 8 | IA: contrato pelo PDF e pedido por PDF, foto ou mensagem ([ADR 0017](docs/adr/0017-pedido-com-ia.md)) | ✅ (falta medir com pedidos reais) |
 | 9 | Registro de contato, resposta do órgão e follow-up com IA ([ADR 0018](docs/adr/0018-follow-up-com-ia.md)) | ✅ |
 | 10 | Kit de carona: apresentação, ofício de solicitação e anuência ([ADR 0019](docs/adr/0019-kit-de-carona.md)) | ✅ (falta o jurídico revisar o modelo) |
+| 11 | "Pergunte ao LicitaOne": perguntas sobre a carteira ([ADR 0020](docs/adr/0020-assistente-de-perguntas.md)) | ✅ (falta medir com a chave) |
 
 **Pendências:**
 - respostas do cliente em [`docs/decisoes.md`](docs/decisoes.md);
