@@ -38,6 +38,17 @@ class ContractOrderContextService implements ContractOrderContext {
     }
 
     @Override
+    public List<OrderContext> allOpen() {
+        List<Contract> open = contracts.findByClosedAtIsNull();
+        Map<UUID, TenderRef> byTender =
+                tenders.findAll(open.stream().map(Contract::getTenderId).collect(Collectors.toSet()));
+        return open.stream()
+                .filter(c -> byTender.containsKey(c.getTenderId()))
+                .map(c -> context(c, byTender.get(c.getTenderId())))
+                .toList();
+    }
+
+    @Override
     public List<OrderContext> openForTender(UUID tenderId) {
         return tenders.find(tenderId)
                 .map(t -> contracts.findByTenderIdOrderBySignedAtAscCreatedAtAsc(tenderId).stream()

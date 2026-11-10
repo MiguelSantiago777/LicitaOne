@@ -24,6 +24,8 @@
 		<awssdk.version>2.55.16</awssdk.version>
 		<shedlock.version>7.10.1</shedlock.version>
 		<anthropic.version>3.4.0</anthropic.version>
+		<!-- Mesma versão que o SDK da Anthropic traz; aqui gera o esquema da saída estruturada do Gemini -->
+		<victools.version>4.38.0</victools.version>
 		<!-- Acima da versão do Spring Boot 4.1.2 (5.30.0), que tem CVEs HIGH corrigidas na 5.33/5.34 (Trivy, Fase 6) -->
 		<rabbit-amqp-client.version>5.37.0</rabbit-amqp-client.version>
 		<jacoco.version>0.8.16</jacoco.version>
@@ -155,6 +157,17 @@
 			<groupId>com.anthropic</groupId>
 			<artifactId>anthropic-java</artifactId>
 			<version>${anthropic.version}</version>
+		</dependency>
+		<!-- Esquema JSON dos registros Raw* para a saída estruturada do Gemini (ADR 0021) -->
+		<dependency>
+			<groupId>com.github.victools</groupId>
+			<artifactId>jsonschema-generator</artifactId>
+			<version>${victools.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.victools</groupId>
+			<artifactId>jsonschema-module-jackson</artifactId>
+			<version>${victools.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.micrometer</groupId>

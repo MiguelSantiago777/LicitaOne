@@ -116,12 +116,26 @@ shema:
     mail-from: ${SHEMA_ALERTS_MAIL_FROM:LicitaOne <alertas@shema.local>}
     mail-enabled: ${SHEMA_ALERTS_MAIL_ENABLED:true}
   # Leitura de atas e contratos com IA (Fase 7, ADR 0016). Sem chave, a funcionalidade fica desligada.
+  # SHEMA_AI_PROVIDER escolhe o provedor (ADR 0021): claude (ANTHROPIC_API_KEY) ou gemini (GEMINI_API_KEY).
   extraction:
+    provider: ${SHEMA_AI_PROVIDER:claude}
+    gemini-api-key: ${GEMINI_API_KEY:}
+    gemini-model: ${SHEMA_EXTRACTION_GEMINI_MODEL:gemini-3.8-flash}
     api-key: ${ANTHROPIC_API_KEY:}
     model: ${SHEMA_EXTRACTION_MODEL:claude-opus-5-5}
     effort: ${SHEMA_EXTRACTION_EFFORT:medium}
     fallbacks: ${SHEMA_EXTRACTION_FALLBACKS:true}
     # Só para E2E: leitor de demonstração, sem IA. Nunca em produção.
+    demo: ${SHEMA_EXTRACTION_DEMO:false}
+  # "Pergunte ao LicitaOne" (Fase 11, ADR 0020): mesmo provedor e mesma chave da leitura; sem ela, o botão some.
+  assistant:
+    provider: ${SHEMA_AI_PROVIDER:claude}
+    gemini-api-key: ${GEMINI_API_KEY:}
+    gemini-model: ${SHEMA_ASSISTANT_GEMINI_MODEL:gemini-3.8-flash}
+    api-key: ${ANTHROPIC_API_KEY:}
+    model: ${SHEMA_ASSISTANT_MODEL:claude-opus-5-5}
+    daily-limit: ${SHEMA_ASSISTANT_DAILY_LIMIT:50}
+    # Só para E2E: responde por palavra-chave, sem IA. Nunca em produção.
     demo: ${SHEMA_EXTRACTION_DEMO:false}
   # Dados da empresa no cabeçalho e na anuência do kit de carona (Fase 10). Em branco, o texto mostra o campo entre
   # colchetes para preencher, e a tela avisa.
@@ -143,3 +157,4 @@ shema:
   bootstrap-admin:
     email: ${SHEMA_ADMIN_EMAIL:}
     password: ${SHEMA_ADMIN_PASSWORD:}
+    name: ${SHEMA_ADMIN_NAME:Administrador}

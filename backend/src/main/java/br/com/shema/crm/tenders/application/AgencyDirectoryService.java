@@ -73,6 +73,16 @@ class AgencyDirectoryService implements AgencyDirectory {
     }
 
     @Override
+    public List<AgencyRef> search(String text, int limit) {
+        return agencies.search(
+                        text == null || text.isBlank() ? null : text.trim(),
+                        org.springframework.data.domain.PageRequest.of(
+                                0, Math.clamp(limit, 1, 100), org.springframework.data.domain.Sort.by("name")))
+                .map(AgencyDirectoryService::ref)
+                .getContent();
+    }
+
+    @Override
     public boolean isMunicipal(UUID agencyId) {
         return agencyId != null
                 && agencies.findById(agencyId)

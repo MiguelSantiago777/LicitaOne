@@ -50,6 +50,25 @@ class UserDirectoryService implements UserDirectory {
     }
 
     @Override
+    public List<UserSummary> searchActive(String text) {
+        String key = plain(text);
+        return users.findAll().stream()
+                .filter(User::isActive)
+                .filter(u -> key.isEmpty() || plain(u.getName()).contains(key))
+                .sorted(java.util.Comparator.comparing(User::getName))
+                .map(UserDirectoryService::summary)
+                .toList();
+    }
+
+    private static String plain(String text) {
+        return text == null
+                ? ""
+                : java.text.Normalizer.normalize(text.strip(), java.text.Normalizer.Form.NFD)
+                        .replaceAll("\\p{M}", "")
+                        .toLowerCase(java.util.Locale.ROOT);
+    }
+
+    @Override
     public List<String> activeAdminEmails() {
         return users.findByRoleAndActiveTrueOrderByName(Role.ADMIN).stream()
                 .map(User::getEmail)

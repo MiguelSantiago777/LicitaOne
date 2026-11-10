@@ -13,6 +13,8 @@ public interface ContractRepository extends JpaRepository<Contract, UUID> {
 
     boolean existsByTenderIdAndClosedAtIsNull(UUID tenderId);
 
+    List<Contract> findByClosedAtIsNull();
+
     @Query("select max(c.closedAt) from Contract c where c.tenderId = :tenderId")
     LocalDate lastClosedAt(UUID tenderId);
 }

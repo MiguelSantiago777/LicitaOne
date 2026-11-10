@@ -19,4 +19,7 @@ public interface UserDirectory {
 
     /** E-mails dos administradores ativos: recebem os avisos que não têm responsável. */
     List<String> activeAdminEmails();
+
+    /** Usuários ativos cujo nome contém o texto (sem acento nem caixa), por nome: para o assistente achar "o Edwin". */
+    List<UserSummary> searchActive(String text);
 }

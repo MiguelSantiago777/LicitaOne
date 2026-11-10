@@ -15,6 +15,9 @@ public interface ContractOrderContext {
 
     Optional<OrderContext> find(UUID contractId);
 
+    /** Todos os contratos ainda abertos, de todas as licitações (Fase 11: o assistente de perguntas). */
+    List<OrderContext> allOpen();
+
     /** Contratos ainda abertos da licitação, do mais antigo para o mais novo. */
     List<OrderContext> openForTender(UUID tenderId);
 

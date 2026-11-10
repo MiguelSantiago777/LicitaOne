@@ -28,6 +28,9 @@ public interface AgencyDirectory {
     /** Telefones dos contatos do órgão, na ordem do cadastro: para o "Abrir no WhatsApp" do follow-up. */
     List<String> contactPhones(UUID agencyId);
 
+    /** Órgãos cujo nome ou município contém o texto, por nome, no máximo {@code limit}. */
+    List<AgencyRef> search(String text, int limit);
+
     /** Se o órgão é municipal: carona em ata municipal depende da lei local (Fase 10). */
     boolean isMunicipal(UUID agencyId);
 }
