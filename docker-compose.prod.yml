@@ -68,6 +68,8 @@ services:
       SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
       SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: ${MAIL_STARTTLS:-true}
       SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED: ${MAIL_STARTTLS:-true}
+      # Porta 465 (SSL direto, sem STARTTLS): MAIL_SSL=true e MAIL_STARTTLS=false
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_ENABLE: ${MAIL_SSL:-false}
       SHEMA_ALERTS_MAIL_FROM: ${SHEMA_ALERTS_MAIL_FROM:?defina o remetente dos avisos}
       # S3 externo (opcional): aponte para o provedor e deixe o serviço s3 local parado
       S3_ENDPOINT: ${S3_ENDPOINT:-http://s3:8333}

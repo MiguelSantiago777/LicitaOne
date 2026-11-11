@@ -71,9 +71,13 @@ case "$PROXY_CHOICE" in
 esac
 
 echo
-echo "-- SMTP dos avisos por e-mail (porta 587 com STARTTLS) --"
+echo "-- SMTP dos avisos por e-mail (porta 587 com STARTTLS, ou 465 com SSL) --"
 MAIL_HOST="$(ask "Servidor SMTP (ex.: smtp.gmail.com)")"
 MAIL_PORT="$(ask "Porta" "587")"
+case "$MAIL_PORT" in
+  465) MAIL_SSL=true; MAIL_STARTTLS=false ;;
+  *) MAIL_SSL=false; MAIL_STARTTLS=true ;;
+esac
 MAIL_USER="$(ask "Usuário SMTP (em geral, o e-mail)")"
 MAIL_PASSWORD="$(ask_secret "Senha SMTP (no Gmail, uma senha de app)")"
 MAIL_FROM="$(ask "Remetente dos avisos" "LicitaOne <$MAIL_USER>")"
@@ -124,6 +128,8 @@ export V_ANTHROPIC_API_KEY="$(q "$ANTHROPIC_KEY")"
 export V_GEMINI_API_KEY="$(q "$GEMINI_KEY")"
 export V_MAIL_HOST="$(q "$MAIL_HOST")"
 export V_MAIL_PORT="$MAIL_PORT"
+export V_MAIL_SSL="$MAIL_SSL"
+export V_MAIL_STARTTLS="$MAIL_STARTTLS"
 export V_MAIL_USER="$(q "$MAIL_USER")"
 export V_MAIL_PASSWORD="$(q "$MAIL_PASSWORD")"
 export V_SHEMA_ALERTS_MAIL_FROM="$(q "$MAIL_FROM")"
