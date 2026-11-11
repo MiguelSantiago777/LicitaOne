@@ -1,0 +1,32 @@
+# HTTPS em Docker (Caddy) para um servidor só do LicitaOne, por exemplo uma VM na nuvem.
+# Entra por cima do docker-compose.prod.yml; o gerador do .env.prod já põe no COMPOSE_FILE quando você escolhe
+# "Caddy no Docker":
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml:docker-compose.caddy.yml
+# O Caddy ocupa as portas 80 e 443 do servidor. Se o servidor já tem Apache nelas, não use este arquivo:
+# veja deploy/apache/licitaone.conf.
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    environment:
+      SHEMA_PUBLIC_URL: "${SHEMA_PUBLIC_URL:?defina o endereço público (https://...)}"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificados: sem este volume, cada recriação pede certificado novo (e o Let's Encrypt limita)
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+
+volumes:
+  caddy_data:
+  caddy_config:

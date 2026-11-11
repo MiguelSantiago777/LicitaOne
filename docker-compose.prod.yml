@@ -7,7 +7,8 @@
 # - SMTP de verdade no lugar do Mailpit (que não sobe);
 # - todos os serviços reiniciam sozinhos;
 # - logs com rotação (5 arquivos de 50 MB por serviço), para não encher o disco.
-# O TLS fica no proxy da frente (Caddy, Traefik, nginx do servidor ou balanceador da nuvem). Ver docs/operacao/runbook.md.
+# O TLS fica no proxy da frente: Caddy em Docker (docker-compose.caddy.yml, VM só do LicitaOne), Apache/nginx do
+# servidor ou balanceador da nuvem. Ver docs/operacao/runbook.md.
 name: ${COMPOSE_PROJECT_NAME:-licitaone}
 
 x-logging: &logging

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Gera o .env.prod do LicitaOne a partir do .env.prod.example:
-# - pergunta o endereço público, o SMTP e a IA (Gemini ou Claude, com a chave);
+# - pergunta o endereço público, quem faz o HTTPS (Caddy no Docker ou Apache do servidor), o SMTP e a IA (Gemini ou Claude, com a chave);
 # - sorteia as senhas do banco, do RabbitMQ e do S3, e gera a chave JWT (RSA 2048);
 # - grava com permissão só para o dono (600) e cria o link .env -> .env.prod, para o `docker compose` e os scripts
 #   de backup lerem o arquivo sem flags.
@@ -60,6 +60,17 @@ esac
 PUBLIC_URL="${PUBLIC_URL%/}"
 
 echo
+echo "-- HTTPS (quem atende nas portas 80 e 443) --"
+echo "  1) Caddy no Docker: servidor só do LicitaOne (VM na nuvem). Tira e renova o certificado sozinho."
+echo "  2) Apache que já existe no servidor (modelo em deploy/apache/licitaone.conf, certificado pelo certbot)"
+PROXY_CHOICE="$(ask "Escolha" "1")"
+case "$PROXY_CHOICE" in
+  1) COMPOSE_FILES=docker-compose.yml:docker-compose.prod.yml:docker-compose.caddy.yml ;;
+  2) COMPOSE_FILES=docker-compose.yml:docker-compose.prod.yml ;;
+  *) echo "Opção inválida: $PROXY_CHOICE" >&2; exit 1 ;;
+esac
+
+echo
 echo "-- SMTP dos avisos por e-mail (porta 587 com STARTTLS) --"
 MAIL_HOST="$(ask "Servidor SMTP (ex.: smtp.gmail.com)")"
 MAIL_PORT="$(ask "Porta" "587")"
@@ -101,6 +112,7 @@ JWT_KEY="$(openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 2>/dev/n
 # duplas, porque tem várias linhas (o PEM não tem $ nem aspas).
 q() { printf "'%s'" "$1"; }
 
+export V_COMPOSE_FILE="$COMPOSE_FILES"
 export V_SHEMA_PUBLIC_URL="$(q "$PUBLIC_URL")"
 export V_POSTGRES_PASSWORD="$(random_hex 24)"
 export V_RABBITMQ_PASSWORD="$(random_hex 24)"
@@ -138,7 +150,12 @@ echo "Próximos passos:"
 echo "  1. Preencha os dados da empresa (SHEMA_COMPANY_*) no $TARGET, para as cartas do kit de carona."
 echo "  2. Suba:  docker compose up -d --build --wait"
 echo "  3. Crie o usuário master:  deploy/setup/criar-admin.sh"
-echo "  4. Configure o HTTPS no proxy apontando para 127.0.0.1:14200: Caddy, ou o Apache que já estiver no servidor"
-echo "     (modelo em deploy/apache/licitaone.conf; runbook, seção 2)."
+if [ "$PROXY_CHOICE" = 1 ]; then
+  echo "  4. HTTPS: o Caddy sobe junto no passo 2 e tira o certificado sozinho. Antes, o DNS de $PUBLIC_URL tem que"
+  echo "     apontar para este servidor e as portas 80 e 443 têm que estar liberadas no firewall da nuvem."
+else
+  echo "  4. Configure o site no Apache apontando para 127.0.0.1:14200 (modelo em deploy/apache/licitaone.conf)"
+  echo "     e tire o certificado com o certbot (runbook, seção 2)."
+fi
 echo "  5. Guarde uma cópia do $TARGET num cofre de senhas. As senhas do banco e do RabbitMQ ficam gravadas nos volumes"
 echo "     na primeira subida: depois disso, trocar no $TARGET não troca lá, e o sistema para de conectar."

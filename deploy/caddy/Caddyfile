@@ -1,0 +1,30 @@
+# HTTPS do LicitaOne num container (servidor só para ele, sem Apache nas portas 80/443).
+# O endereço vem do SHEMA_PUBLIC_URL do .env.prod (ex.: https://sistema.shemabrasil.com.br).
+# O Caddy tira o certificado do Let's Encrypt na primeira subida e renova sozinho; para isso o DNS do domínio
+# tem que apontar para o servidor e as portas 80 e 443 têm que estar abertas no firewall da nuvem.
+{$SHEMA_PUBLIC_URL} {
+	encode zstd gzip
+
+	# Uploads de até 25 MB (o backend recusa acima disso)
+	request_body {
+		max_size 26MB
+	}
+
+	reverse_proxy frontend:8080 {
+		# Leitura de documentos com IA e relatórios podem demorar
+		transport http {
+			read_timeout 300s
+			write_timeout 300s
+		}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

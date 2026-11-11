@@ -110,7 +110,7 @@ docker compose up -d --build --wait  # o .env aponta para o .env.prod, que já l
 deploy/setup/criar-admin.sh          # usuário master (como o createsuperuser do Django)
 ```
 
-Perfil `prod`: sem dados de exemplo nem Swagger, cookie `Secure`, só o frontend publicado (atrás de um proxy com TLS) e o backend recusa subir sem a chave JWT. Instalação, backup (`deploy/backup/`), monitoramento e incidentes estão no [runbook](docs/operacao/runbook.md).
+Perfil `prod`: sem dados de exemplo nem Swagger, cookie `Secure`, só o frontend publicado (atrás de um proxy com TLS) e o backend recusa subir sem a chave JWT. Instalação, backup (`deploy/backup/`), monitoramento e incidentes estão no [runbook](docs/operacao/runbook.md). Passo a passo: [VM na nuvem, tudo em Docker com HTTPS pelo Caddy](docs/operacao/instalacao-nuvem.md) ou [servidor que já tem Apache](docs/operacao/instalacao-passo-a-passo.md).
 
 ## Desenvolver
 

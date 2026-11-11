@@ -60,7 +60,9 @@ Requisitos:
    ```
    Pergunta nome, e-mail e senha (duas vezes, sem mostrar; mínimo de 12 caracteres). A senha não passa pela linha de comando nem fica no histórico. O hash BCrypt sai do `htpasswd` do servidor ou, sem ele, da imagem `httpd:2.4-alpine`.
    - Alternativa: preencher `SHEMA_ADMIN_*` no `.env.prod` antes de subir. O backend cria esse administrador só se ainda não houver nenhum; depois, as variáveis são ignoradas.
-6. Configure o **TLS no proxy da frente**, encaminhando para `127.0.0.1:14200`. Com Caddy, que pega o certificado sozinho:
+6. Configure o **TLS no proxy da frente**.
+   **Servidor só do LicitaOne (VM na nuvem)?** Escolha "Caddy no Docker" no gerador do `.env.prod`: o `COMPOSE_FILE` passa a incluir o `docker-compose.caddy.yml`, e o Caddy sobe junto no passo 4, nas portas 80 e 443, e tira o certificado sozinho (roteiro completo em [instalacao-nuvem.md](instalacao-nuvem.md)). Nada para fazer aqui.
+   Caddy instalado direto no servidor, encaminhando para `127.0.0.1:14200`:
    ```bash
    sudo apt install -y caddy
    ```
