@@ -83,7 +83,8 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  color: var(--amber);
+  /* Sobre o --violet-bg o --amber fica em 4,2:1; este tom passa de 4,5:1 (WCAG AA) */
+  color: #92400e;
   font-size: 12px;
   font-weight: 550;
 }
@@ -137,6 +138,8 @@
 }
 .queries-toggle {
   justify-self: start;
+  /* Fica sobre o --violet-bg: o --brand dá 4,35:1, abaixo do mínimo de 4,5:1 */
+  color: var(--brand-hover);
   font-size: 12px;
 }
 .queries {
