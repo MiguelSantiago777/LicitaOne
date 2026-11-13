@@ -16,6 +16,7 @@ import type {
   ChangeOwnPassword,
   CreateUser,
   ResetPassword,
+  UpdateOwnProfile,
   UpdateUser,
   UserOptionResponse,
   UserResponse,
@@ -100,6 +101,44 @@ export class UsersService {
     }
 
     return this.http.put<TData>(`/api/v1/users/${id}`, updateUserBody, {
+      ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      observe: 'body',
+    });
+  }
+  /**
+   * @summary Altera o próprio cargo e CPF (assinatura das propostas)
+   */
+  updateOwnProfile<TData = UserResponse>(
+    updateOwnProfileBody: UpdateOwnProfile,
+    options?: HttpClientBodyOptions,
+  ): Observable<TData>;
+  updateOwnProfile<TData = UserResponse>(
+    updateOwnProfileBody: UpdateOwnProfile,
+    options?: HttpClientEventOptions,
+  ): Observable<HttpEvent<TData>>;
+  updateOwnProfile<TData = UserResponse>(
+    updateOwnProfileBody: UpdateOwnProfile,
+    options?: HttpClientResponseOptions,
+  ): Observable<AngularHttpResponse<TData>>;
+  updateOwnProfile<TData = UserResponse>(
+    updateOwnProfileBody: UpdateOwnProfile,
+    options?: HttpClientObserveOptions,
+  ): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.put<TData>(`/api/v1/me/profile`, updateOwnProfileBody, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      });
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.put<TData>(`/api/v1/me/profile`, updateOwnProfileBody, {
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      });
+    }
+
+    return this.http.put<TData>(`/api/v1/me/profile`, updateOwnProfileBody, {
       ...(options as Omit<NonNullable<typeof options>, 'observe'>),
       observe: 'body',
     });
@@ -319,6 +358,7 @@ export class UsersService {
 }
 
 export type UpdateUserClientResult = NonNullable<UserResponse>;
+export type UpdateOwnProfileClientResult = NonNullable<UserResponse>;
 export type ListUsersClientResult = NonNullable<UserResponse[]>;
 export type CreateUserClientResult = NonNullable<UserResponse>;
 export type ResetUserPasswordClientResult = NonNullable<void>;

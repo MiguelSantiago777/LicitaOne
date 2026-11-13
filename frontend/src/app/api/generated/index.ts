@@ -10,6 +10,7 @@ export * from './documents/documents.service';
 export * from './extractions/extractions.service';
 export * from './imports/imports.service';
 export * from './price-records/price-records.service';
+export * from './proposals/proposals.service';
 export * from './tasks/tasks.service';
 export * from './tenders/tenders.service';
 export * from './users/users.service';

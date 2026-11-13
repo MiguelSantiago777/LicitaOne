@@ -1,0 +1,157 @@
+<div class="page-head">
+  <div>
+    <h1>Propostas de preços</h1>
+    <p class="sub">
+      @if (list.value(); as l) {
+        <span class="num">{{ l.totalItems }}</span>
+        {{ l.totalItems === 1 ? 'proposta' : 'propostas'
+        }}{{ cancelled() ? ', com as canceladas' : '' }}
+      } @else {
+        Propostas com número, itens e PDF para assinar
+      }
+    </p>
+  </div>
+  @if (canCreate()) {
+    <div class="page-actions">
+      <button
+        type="button"
+        class="btn primary"
+        (click)="create()"
+        [disabled]="creating()"
+        [attr.aria-busy]="creating() || null"
+      >
+        <app-icon name="plus" [size]="16" />{{ creating() ? 'Criando…' : 'Nova proposta' }}
+      </button>
+    </div>
+  }
+</div>
+
+<div class="filters">
+  <label class="search filter-search">
+    <span class="visually-hidden">Buscar propostas</span>
+    <app-icon name="search" [size]="16" />
+    <input
+      class="input"
+      type="search"
+      name="q"
+      placeholder="Número, cliente ou CNPJ"
+      [(ngModel)]="search"
+      (ngModelChange)="search$.next($event)"
+    />
+  </label>
+  <label class="visually-hidden" for="f-kind">Tipo</label>
+  <select
+    id="f-kind"
+    class="input kind-select"
+    [ngModel]="kind()"
+    (ngModelChange)="navigate({ tipo: $event || null })"
+  >
+    <option value="">Produtos e serviços</option>
+    @for (k of kinds; track k.id) {
+      <option [value]="k.id">{{ k.short }}s</option>
+    }
+  </select>
+  <button
+    type="button"
+    class="btn"
+    [attr.aria-pressed]="cancelled()"
+    [class.toggled]="cancelled()"
+    (click)="navigate({ canceladas: cancelled() ? null : '1' })"
+  >
+    <app-icon name="filter" [size]="16" />Mostrar canceladas
+  </button>
+</div>
+
+@if (error(); as message) {
+  <div class="alert" role="alert">
+    {{ message }}
+    <button
+      type="button"
+      class="btn ghost icon"
+      (click)="error.set(null)"
+      aria-label="Fechar aviso"
+    >
+      <app-icon name="x" [size]="16" />
+    </button>
+  </div>
+}
+
+<section class="card table-wrap">
+  <table class="data">
+    <caption class="visually-hidden">
+      Propostas de preços
+    </caption>
+    <thead>
+      <tr>
+        <th scope="col">Número</th>
+        <th scope="col">Data</th>
+        <th scope="col">Cliente</th>
+        <th scope="col">Tipo</th>
+        <th scope="col">Responsável</th>
+        <th scope="col" class="n">Valor total</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (p of list.value()?.items ?? []; track p.id) {
+        <tr class="clickable" [class.cancelled]="p.cancelledAt" (click)="open(p.id)">
+          <td class="nowrap">
+            <a
+              class="row-link num"
+              [routerLink]="['/propostas', p.id]"
+              (click)="$event.stopPropagation()"
+              >{{ p.number }}</a
+            >
+            @if (p.cancelledAt) {
+              <span class="badge red"><span class="dot"></span>Cancelada</span>
+            }
+          </td>
+          <td class="num nowrap">{{ p.proposalDate | date: 'dd/MM/yyyy' }}</td>
+          <td class="client">
+            @if (p.clientName) {
+              <span class="cell-main">{{ p.clientName }}</span>
+            } @else {
+              <span class="cell-sub">Cliente não informado</span>
+            }
+            @if (p.clientCnpj) {
+              <span class="cell-sub num">CNPJ {{ formatCnpj(p.clientCnpj) }}</span>
+            }
+          </td>
+          <td>
+            <span
+              class="badge"
+              [class.violet]="p.kind === 'SERVICO'"
+              [class.blue]="p.kind === 'PRODUTO'"
+              ><span class="dot"></span>{{ kindLabel(p.kind) }}</span
+            >
+          </td>
+          <td class="nowrap">{{ p.signerName || '—' }}</td>
+          <td class="n money num">{{ p.total | currency: 'BRL' }}</td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="6" class="empty">
+            @if (list.isLoading()) {
+              Carregando…
+            } @else if (q() || kind()) {
+              Nenhuma proposta com este filtro.
+            } @else if (canCreate()) {
+              Nenhuma proposta ainda. Clique em <strong>Nova proposta</strong> para fazer a
+              primeira.
+            } @else {
+              Nenhuma proposta ainda.
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</section>
+
+@if (list.value(); as l) {
+  <app-pager
+    [page]="page()"
+    [size]="pageSize"
+    [total]="l.totalItems"
+    (pageChange)="navigate({ pagina: $event || null })"
+  />
+}

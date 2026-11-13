@@ -1,0 +1,534 @@
+<a class="link back" routerLink="/propostas"><app-icon name="arrow-left" [size]="16" />Propostas</a>
+
+@if (loadError(); as message) {
+  <div class="alert" role="alert">{{ message }}</div>
+} @else if (proposal(); as p) {
+  <div class="page-head">
+    <div>
+      <div class="title-line">
+        <h1>
+          Proposta nº <span class="num">{{ p.number }}</span>
+        </h1>
+        @if (p.cancelledAt) {
+          <span class="badge red"><span class="dot"></span>Cancelada</span>
+        } @else if (p.missing.length === 0) {
+          <span class="badge green"><span class="dot"></span>Pronta para o PDF</span>
+        } @else {
+          <span class="badge amber"><span class="dot"></span>Em preenchimento</span>
+        }
+      </div>
+      <p class="sub">
+        Criada em {{ p.createdAt | date: "dd/MM/yyyy 'às' HH:mm" }} · o número não muda
+        @if (editable()) {
+          ·
+          <span class="save-state" role="status" [attr.data-state]="saveState()">
+            @switch (saveState()) {
+              @case ('pending') {
+                Alterações não salvas…
+              }
+              @case ('saving') {
+                Salvando…
+              }
+              @case ('saved') {
+                <app-icon name="circle-check" [size]="14" />Salvo
+              }
+              @case ('error') {
+                <app-icon name="circle-alert" [size]="14" />Não salvo
+              }
+              @case ('conflict') {
+                <app-icon name="circle-alert" [size]="14" />Não salvo
+              }
+              @default {
+                Salva sozinha enquanto você digita
+              }
+            }
+          </span>
+        }
+      </p>
+    </div>
+    <div class="page-actions">
+      @if (canWrite()) {
+        <button type="button" class="btn" (click)="duplicate()" [disabled]="busy()">
+          <app-icon name="copy" [size]="16" />Duplicar
+        </button>
+      }
+      @if (p.cancelledAt) {
+        @if (canWrite()) {
+          <button type="button" class="btn" (click)="reopen()" [disabled]="busy()">
+            <app-icon name="undo" [size]="16" />Desfazer cancelamento
+          </button>
+        }
+      } @else if (p.canEdit) {
+        @if (confirmingCancel()) {
+          <button type="button" class="btn danger" (click)="cancel()" [disabled]="busy()">
+            Confirmar cancelamento
+          </button>
+          <button type="button" class="btn ghost" (click)="confirmingCancel.set(false)">
+            Voltar
+          </button>
+        } @else {
+          <button type="button" class="btn" (click)="confirmingCancel.set(true)">
+            <app-icon name="x" [size]="16" />Cancelar proposta
+          </button>
+        }
+      }
+      <button
+        type="button"
+        class="btn primary"
+        (click)="download()"
+        [disabled]="!canDownload() || busy()"
+        [attr.aria-describedby]="canDownload() ? null : 'pdf-hint'"
+      >
+        <app-icon name="download" [size]="16" />Baixar PDF
+      </button>
+    </div>
+  </div>
+
+  @if (saveError(); as message) {
+    <div class="alert" role="alert">
+      <span>{{ message }}</span>
+      @if (saveState() === 'conflict') {
+        <button type="button" class="btn" (click)="reloadPage()">Recarregar</button>
+      }
+    </div>
+  }
+  @if (actionError(); as message) {
+    <div class="alert" role="alert">
+      <span>{{ message }}</span>
+      <button
+        type="button"
+        class="btn ghost icon"
+        (click)="actionError.set(null)"
+        aria-label="Fechar aviso"
+      >
+        <app-icon name="x" [size]="16" />
+      </button>
+    </div>
+  }
+  @if (p.cancelledAt) {
+    <div class="note">
+      Proposta cancelada em {{ p.cancelledAt | date: 'dd/MM/yyyy' }}. Ela continua na lista com o
+      número {{ p.number }}, mas não pode ser alterada nem baixada.
+      @if (canWrite()) {
+        Desfaça o cancelamento para voltar a editar, ou duplique para fazer outra.
+      }
+    </div>
+  }
+
+  <div class="layout">
+    <div class="main-col">
+      <section class="card" aria-labelledby="h-client">
+        <div class="card-head"><h2 id="h-client">Dados do cliente</h2></div>
+        <div class="card-body grid">
+          <div class="field span-2">
+            <label for="c-name">Nome ou razão social</label>
+            <input
+              id="c-name"
+              class="input"
+              name="clientName"
+              maxlength="200"
+              autocomplete="off"
+              [(ngModel)]="form.clientName"
+              (ngModelChange)="changed()"
+              [readonly]="!editable()"
+            />
+          </div>
+          <div class="field">
+            <label for="c-cnpj">CNPJ</label>
+            <input
+              id="c-cnpj"
+              class="input num"
+              name="clientCnpj"
+              maxlength="18"
+              placeholder="00.000.000/0000-00"
+              [(ngModel)]="form.clientCnpj"
+              (ngModelChange)="changed()"
+              (blur)="tidy('cnpj')"
+              [readonly]="!editable()"
+            />
+          </div>
+          <div class="field">
+            <label for="c-phones">Telefones</label>
+            <input
+              id="c-phones"
+              class="input"
+              name="clientPhones"
+              maxlength="120"
+              placeholder="(21) 2222-0000 / (21) 99999-0000"
+              [(ngModel)]="form.clientPhones"
+              (ngModelChange)="changed()"
+              [readonly]="!editable()"
+            />
+          </div>
+          <div class="field span-2">
+            <label for="c-address">Endereço</label>
+            <input
+              id="c-address"
+              class="input"
+              name="clientAddress"
+              maxlength="300"
+              [(ngModel)]="form.clientAddress"
+              (ngModelChange)="changed()"
+              [readonly]="!editable()"
+            />
+          </div>
+          <div class="field span-2">
+            <label for="c-email">E-mail</label>
+            <input
+              id="c-email"
+              class="input"
+              type="email"
+              name="clientEmail"
+              maxlength="254"
+              [(ngModel)]="form.clientEmail"
+              (ngModelChange)="changed()"
+              [readonly]="!editable()"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="h-items">
+        <div class="card-head">
+          <h2 id="h-items">Proposta de preços</h2>
+          <div class="segmented" role="radiogroup" aria-label="Tipo da proposta">
+            @for (k of kinds; track k.id) {
+              <label [class.on]="form.kind === k.id">
+                <input
+                  type="radio"
+                  name="kind"
+                  [value]="k.id"
+                  [(ngModel)]="form.kind"
+                  (ngModelChange)="changed()"
+                  [disabled]="!editable()"
+                />{{ k.short }}
+              </label>
+            }
+          </div>
+        </div>
+
+        <div class="items" role="table" aria-label="Itens da proposta">
+          <div class="item-row head" role="row">
+            <span role="columnheader">Item</span>
+            <span role="columnheader">Descrição</span>
+            <span role="columnheader">Unid.</span>
+            <span role="columnheader">Marca</span>
+            <span role="columnheader" class="n">Qtd.</span>
+            <span role="columnheader" class="n">Valor unit. (R$)</span>
+            <span role="columnheader" class="n">Valor total</span>
+            <span role="columnheader"><span class="visually-hidden">Ações</span></span>
+          </div>
+          @for (row of rows; track row.key; let i = $index) {
+            <div class="item-row" role="row">
+              <div class="cell c-num" role="cell">
+                <label class="lbl" [for]="'num-' + row.key">Item</label>
+                <input
+                  [id]="'num-' + row.key"
+                  class="input num"
+                  [name]="'num-' + row.key"
+                  maxlength="20"
+                  [placeholder]="'' + (i + 1)"
+                  [attr.aria-label]="'Número do item ' + (i + 1)"
+                  [(ngModel)]="row.itemNumber"
+                  (ngModelChange)="changed()"
+                  [readonly]="!editable()"
+                />
+              </div>
+              <div class="cell c-desc" role="cell">
+                <label class="lbl" [for]="'desc-' + row.key">Descrição</label>
+                <textarea
+                  [id]="'desc-' + row.key"
+                  class="input"
+                  [name]="'desc-' + row.key"
+                  rows="2"
+                  maxlength="2000"
+                  [attr.aria-label]="'Descrição do item ' + (i + 1)"
+                  [(ngModel)]="row.description"
+                  (ngModelChange)="changed()"
+                  [readonly]="!editable()"
+                ></textarea>
+              </div>
+              <div class="cell c-unit" role="cell">
+                <label class="lbl" [for]="'unit-' + row.key">Unid.</label>
+                <input
+                  [id]="'unit-' + row.key"
+                  class="input"
+                  [name]="'unit-' + row.key"
+                  maxlength="20"
+                  placeholder="un"
+                  [attr.aria-label]="'Unidade do item ' + (i + 1)"
+                  [(ngModel)]="row.unit"
+                  (ngModelChange)="changed()"
+                  [readonly]="!editable()"
+                />
+              </div>
+              <div class="cell c-brand" role="cell">
+                <label class="lbl" [for]="'brand-' + row.key">Marca</label>
+                <input
+                  [id]="'brand-' + row.key"
+                  class="input"
+                  [name]="'brand-' + row.key"
+                  maxlength="100"
+                  [attr.aria-label]="'Marca do item ' + (i + 1)"
+                  [(ngModel)]="row.brand"
+                  (ngModelChange)="changed()"
+                  [readonly]="!editable()"
+                />
+              </div>
+              <div class="cell c-qty" role="cell">
+                <label class="lbl" [for]="'qty-' + row.key">Qtd.</label>
+                <input
+                  [id]="'qty-' + row.key"
+                  class="input num n"
+                  [name]="'qty-' + row.key"
+                  inputmode="decimal"
+                  [attr.aria-label]="'Quantidade do item ' + (i + 1)"
+                  [attr.aria-invalid]="invalid().has('q' + row.key) || null"
+                  [(ngModel)]="row.quantity"
+                  (ngModelChange)="changed()"
+                  (blur)="tidyRow(row)"
+                  [readonly]="!editable()"
+                />
+              </div>
+              <div class="cell c-price" role="cell">
+                <label class="lbl" [for]="'price-' + row.key">Valor unit. (R$)</label>
+                <input
+                  [id]="'price-' + row.key"
+                  class="input num n"
+                  [name]="'price-' + row.key"
+                  inputmode="decimal"
+                  placeholder="0,00"
+                  [attr.aria-label]="'Valor unitário do item ' + (i + 1)"
+                  [attr.aria-invalid]="invalid().has('p' + row.key) || null"
+                  [(ngModel)]="row.unitPrice"
+                  (ngModelChange)="changed()"
+                  (blur)="tidyRow(row)"
+                  [readonly]="!editable()"
+                />
+              </div>
+              <div class="cell c-total num" role="cell">
+                <span class="lbl">Valor total</span>
+                @if (totals().lines[i]; as t) {
+                  {{ t | currency: 'BRL' }}
+                } @else if (totals().lines[i] === 0) {
+                  {{ 0 | currency: 'BRL' }}
+                } @else {
+                  <span class="muted">—</span>
+                }
+              </div>
+              <div class="cell c-del" role="cell">
+                @if (editable()) {
+                  <button
+                    type="button"
+                    class="btn ghost icon"
+                    (click)="removeItem(row)"
+                    [attr.aria-label]="'Remover o item ' + (i + 1)"
+                    title="Remover item"
+                  >
+                    <app-icon name="trash" [size]="16" />
+                  </button>
+                }
+              </div>
+            </div>
+          } @empty {
+            <p class="no-items">Nenhum item ainda.</p>
+          }
+        </div>
+        <div class="items-foot">
+          @if (editable()) {
+            <button type="button" class="btn" (click)="addItem()">
+              <app-icon name="plus" [size]="16" />Adicionar item
+            </button>
+          } @else {
+            <span></span>
+          }
+          <div class="grand-total">
+            <span class="gt-label">Valor total</span>
+            <span class="gt-value num">{{ totals().total | currency: 'BRL' }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="h-terms">
+        <div class="card-head"><h2 id="h-terms">Condições</h2></div>
+        <div class="card-body grid">
+          <div class="field">
+            <label for="t-validity">Validade da proposta (dias)</label>
+            <input
+              id="t-validity"
+              class="input num"
+              name="validityDays"
+              inputmode="numeric"
+              maxlength="4"
+              placeholder="60"
+              [attr.aria-invalid]="invalid().has('validity') || null"
+              [(ngModel)]="form.validityDays"
+              (ngModelChange)="changed()"
+              [readonly]="!editable()"
+            />
+          </div>
+          <div class="field">
+            <label for="t-date">Data da proposta</label>
+            <input
+              id="t-date"
+              class="input num"
+              type="date"
+              name="proposalDate"
+              [(ngModel)]="form.proposalDate"
+              (ngModelChange)="changed()"
+              [readonly]="!editable()"
+              required
+            />
+          </div>
+          <div class="field span-2">
+            <label for="t-payment">Forma de pagamento</label>
+            <input
+              id="t-payment"
+              class="input"
+              name="paymentTerms"
+              maxlength="500"
+              placeholder="Ex.: 30 dias após o atesto da nota fiscal"
+              [(ngModel)]="form.paymentTerms"
+              (ngModelChange)="changed()"
+              [readonly]="!editable()"
+            />
+          </div>
+          <div class="field span-2">
+            <label for="t-delivery">Prazo de entrega</label>
+            <input
+              id="t-delivery"
+              class="input"
+              name="deliveryTerms"
+              maxlength="500"
+              placeholder="Ex.: até 10 dias úteis após o recebimento do empenho"
+              [(ngModel)]="form.deliveryTerms"
+              (ngModelChange)="changed()"
+              [readonly]="!editable()"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="h-signer">
+        <div class="card-head">
+          <h2 id="h-signer">Responsável pela proposta</h2>
+          @if (editable()) {
+            <button
+              type="button"
+              class="btn ghost sm"
+              (click)="saveAsMyDefault()"
+              [disabled]="busy()"
+            >
+              Usar como meu padrão
+            </button>
+          }
+        </div>
+        <div class="card-body grid">
+          <div class="field span-2">
+            <label for="s-name">Nome</label>
+            <input
+              id="s-name"
+              class="input"
+              name="signerName"
+              maxlength="120"
+              [(ngModel)]="form.signerName"
+              (ngModelChange)="changed()"
+              [readonly]="!editable()"
+            />
+          </div>
+          <div class="field">
+            <label for="s-role">Cargo</label>
+            <input
+              id="s-role"
+              class="input"
+              name="signerRole"
+              maxlength="120"
+              [(ngModel)]="form.signerRole"
+              (ngModelChange)="changed()"
+              [readonly]="!editable()"
+            />
+          </div>
+          <div class="field">
+            <label for="s-cpf">CPF</label>
+            <input
+              id="s-cpf"
+              class="input num"
+              name="signerCpf"
+              inputmode="numeric"
+              maxlength="14"
+              placeholder="000.000.000-00"
+              [(ngModel)]="form.signerCpf"
+              (ngModelChange)="changed()"
+              (blur)="tidy('cpf')"
+              [readonly]="!editable()"
+            />
+          </div>
+          <p class="hint span-2">
+            O PDF sai sem assinatura, com a linha em branco acima do nome. Baixe e assine no
+            assinador (gov.br ou certificado digital).
+          </p>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card summary" aria-labelledby="h-summary">
+        <div class="card-head"><h2 id="h-summary">Resumo</h2></div>
+        <div class="card-body">
+          <p class="sum-label">Valor total</p>
+          <p class="sum-value num">{{ totals().total | currency: 'BRL' }}</p>
+          @if (saveState() === 'saved' || saveState() === 'idle') {
+            <p class="sum-words">{{ p.totalInWords }}</p>
+          }
+          <dl class="sum-list">
+            <div>
+              <dt>Itens</dt>
+              <dd class="num">{{ rows.length }}</dd>
+            </div>
+            <div>
+              <dt>Tipo</dt>
+              <dd>{{ form.kind === 'SERVICO' ? 'Serviço' : 'Produto' }}</dd>
+            </div>
+            <div>
+              <dt>Validade</dt>
+              <dd>{{ form.validityDays ? form.validityDays + ' dias' : '—' }}</dd>
+            </div>
+          </dl>
+
+          @if (!p.cancelledAt) {
+            @if (p.missing.length) {
+              <div class="missing" id="pdf-hint">
+                <p class="missing-title">
+                  <app-icon name="circle-alert" [size]="16" />Para gerar o PDF, falta:
+                </p>
+                <ul>
+                  @for (m of p.missing; track m) {
+                    <li>{{ m }}</li>
+                  }
+                </ul>
+              </div>
+            } @else if (!canDownload()) {
+              <p class="hint" id="pdf-hint">Salvando… o PDF fica disponível em seguida.</p>
+            } @else {
+              <p class="ready"><app-icon name="circle-check" [size]="16" />Tudo preenchido.</p>
+            }
+          }
+
+          @if (companyMissing.value()?.missing?.length) {
+            <p class="company-note">
+              O cabeçalho do PDF sai sem
+              {{ companyMissing.value()!.missing.join(', ') }} da Shema. Peça para preencher os
+              dados da empresa (SHEMA_COMPANY_*) no servidor.
+            </p>
+          }
+        </div>
+      </section>
+    </aside>
+  </div>
+} @else {
+  <div class="sk-stack" aria-busy="true" aria-label="Carregando a proposta">
+    <div class="sk" style="height: 32px; width: 280px"></div>
+    <div class="sk" style="height: 220px"></div>
+    <div class="sk" style="height: 260px"></div>
+  </div>
+}

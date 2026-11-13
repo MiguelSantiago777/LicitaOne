@@ -83,6 +83,7 @@ export class Shell {
         items: [
           { path: '/quadros', label: 'Quadros', icon: 'columns' },
           { path: '/negociacoes', label: 'Negociações', icon: 'deals' },
+          { path: '/propostas', label: 'Propostas', icon: 'proposals' },
           { path: '/tarefas', label: 'Tarefas', icon: 'tasks' },
           { path: '/alertas', label: 'Alertas', icon: 'bell' },
         ],

@@ -95,6 +95,33 @@
         </select>
       </div>
       @if (mode() === 'edit') {
+        <div class="field">
+          <label for="u-job">Cargo <span class="hint">(opcional)</span></label>
+          <input
+            id="u-job"
+            class="input"
+            name="jobTitle"
+            maxlength="120"
+            [(ngModel)]="form.jobTitle"
+            aria-describedby="u-signer-hint"
+          />
+        </div>
+        <div class="field">
+          <label for="u-cpf">CPF <span class="hint">(opcional)</span></label>
+          <input
+            id="u-cpf"
+            class="input num"
+            name="cpf"
+            inputmode="numeric"
+            maxlength="14"
+            placeholder="000.000.000-00"
+            [(ngModel)]="form.cpf"
+            aria-describedby="u-signer-hint"
+          />
+          <p id="u-signer-hint" class="hint">
+            Cargo e CPF vão na assinatura das propostas de preços feitas por esta pessoa.
+          </p>
+        </div>
         <label class="switch"
           ><input type="checkbox" name="active" [(ngModel)]="form.active" />Ativo (pode entrar no
           sistema)</label

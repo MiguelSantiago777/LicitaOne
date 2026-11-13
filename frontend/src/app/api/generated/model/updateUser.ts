@@ -15,4 +15,14 @@ export interface UpdateUser {
   name: string;
   role: UpdateUserRole;
   active?: boolean;
+  /**
+   * @minLength 0
+   * @maxLength 120
+   */
+  jobTitle?: string;
+  /**
+   * @minLength 0
+   * @maxLength 20
+   */
+  cpf?: string;
 }

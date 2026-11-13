@@ -1,0 +1,63 @@
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.filter-search {
+  width: min(320px, 100%);
+}
+.kind-select {
+  width: auto;
+  height: 36px;
+}
+.btn.toggled {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+}
+.alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 8px 8px 14px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  background: var(--red-bg);
+  color: var(--red);
+}
+.nowrap {
+  white-space: nowrap;
+}
+.row-link {
+  font-weight: 650;
+  color: var(--text);
+  margin-right: 8px;
+}
+.row-link:hover {
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.client {
+  min-width: 220px;
+}
+.client .cell-main,
+.client .cell-sub {
+  display: block;
+}
+tr.cancelled .row-link,
+tr.cancelled .cell-main,
+tr.cancelled .money {
+  color: var(--text-3);
+  text-decoration: line-through;
+}
+tr.clickable {
+  cursor: pointer;
+}
+tr.clickable:hover td {
+  background: var(--surface-2);
+}

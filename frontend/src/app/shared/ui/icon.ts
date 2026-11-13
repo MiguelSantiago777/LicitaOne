@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import {
+  ArrowLeft,
   ArrowUpRight,
   Bell,
   Building2,
@@ -28,6 +29,7 @@ import {
   Mail,
   Menu,
   PiggyBank,
+  Receipt,
   RefreshCw,
   Plus,
   ScrollText,
@@ -36,8 +38,10 @@ import {
   SquareKanban,
   Sparkles,
   Star,
+  Trash2,
   TrendingUp,
   TriangleAlert,
+  Undo2,
   Upload,
   Wallet,
   X,
@@ -46,6 +50,7 @@ import {
 
 /** Ícones Lucide (ISC). Sempre decorativos: o nome acessível vem do texto ou do aria-label do botão. */
 const ICONS: Record<string, IconNode> = {
+  'arrow-left': ArrowLeft,
   'arrow-up-right': ArrowUpRight,
   bell: Bell,
   building: Building2,
@@ -75,6 +80,7 @@ const ICONS: Record<string, IconNode> = {
   menu: Menu,
   piggy: PiggyBank,
   plus: Plus,
+  proposals: Receipt,
   records: ScrollText,
   refresh: RefreshCw,
   search: Search,
@@ -82,7 +88,9 @@ const ICONS: Record<string, IconNode> = {
   deals: SquareKanban,
   sparkles: Sparkles,
   star: Star,
+  trash: Trash2,
   trend: TrendingUp,
+  undo: Undo2,
   alert: TriangleAlert,
   imports: Upload,
   wallet: Wallet,

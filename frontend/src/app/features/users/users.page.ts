@@ -64,17 +64,41 @@ export class UsersPage {
   protected readonly current = signal<UserResponse | null>(null);
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
-  protected form = { name: '', email: '', role: 'SALES' as Role, password: '', active: true };
+  protected form = {
+    name: '',
+    email: '',
+    role: 'SALES' as Role,
+    password: '',
+    active: true,
+    jobTitle: '',
+    cpf: '',
+  };
 
   protected openCreate(): void {
-    this.form = { name: '', email: '', role: 'SALES', password: '', active: true };
+    this.form = {
+      name: '',
+      email: '',
+      role: 'SALES',
+      password: '',
+      active: true,
+      jobTitle: '',
+      cpf: '',
+    };
     this.current.set(null);
     this.error.set(null);
     this.mode.set('create');
   }
 
   protected openEdit(u: UserResponse): void {
-    this.form = { name: u.name, email: u.email, role: u.role, password: '', active: u.active };
+    this.form = {
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      password: '',
+      active: u.active,
+      jobTitle: u.jobTitle ?? '',
+      cpf: u.cpf ?? '',
+    };
     this.current.set(u);
     this.error.set(null);
     this.mode.set('edit');
@@ -122,6 +146,8 @@ export class UsersPage {
             name: this.form.name,
             role: this.form.role,
             active: this.form.active,
+            jobTitle: this.form.jobTitle || undefined,
+            cpf: this.form.cpf || undefined,
           })
           .subscribe({ next: done('Usuário atualizado.'), error: fail });
         break;

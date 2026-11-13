@@ -15,6 +15,8 @@ export interface UserResponse {
   roleLabel: string;
   initials: string;
   active: boolean;
+  jobTitle: string;
+  cpf: string;
   lastLoginAt: string;
   version: number;
 }

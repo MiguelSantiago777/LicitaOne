@@ -59,6 +59,18 @@ export const routes: Routes = [
         loadComponent: () => import('./features/deals/deals.page').then((m) => m.DealsPage),
       },
       {
+        path: 'propostas',
+        title: 'Propostas · LicitaOne',
+        loadComponent: () =>
+          import('./features/proposals/proposals.page').then((m) => m.ProposalsPage),
+      },
+      {
+        path: 'propostas/:id',
+        title: 'Proposta · LicitaOne',
+        loadComponent: () =>
+          import('./features/proposals/proposal.page').then((m) => m.ProposalPage),
+      },
+      {
         path: 'tarefas',
         title: 'Tarefas · LicitaOne',
         loadComponent: () => import('./features/tasks/tasks.page').then((m) => m.TasksPage),

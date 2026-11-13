@@ -60,6 +60,10 @@
       "description": "Operação"
     },
     {
+      "name": "proposals",
+      "description": "Propostas de preços"
+    },
+    {
       "name": "extractions",
       "description": "Leitura de atas e contratos com IA"
     },
@@ -295,6 +299,78 @@
         }
       }
     },
+    "/api/v1/proposals/{id}": {
+      "get": {
+        "tags": [
+          "proposals"
+        ],
+        "summary": "Uma proposta, com os itens",
+        "operationId": "getProposal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "proposals"
+        ],
+        "summary": "Salva a proposta inteira (cabeçalho e itens)",
+        "operationId": "updateProposal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProposalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/price-records/{id}": {
       "get": {
         "tags": [
@@ -434,6 +510,37 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/PriceRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/profile": {
+      "put": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Altera o próprio cargo e CPF (assinatura das propostas)",
+        "operationId": "updateOwnProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOwnProfile"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
                 }
               }
             }
@@ -2008,6 +2115,233 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/CompleteTasksResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proposals": {
+      "get": {
+        "tags": [
+          "proposals"
+        ],
+        "summary": "Propostas, da mais recente para a mais antiga",
+        "description": "q acha pelo número (2026/0001 ou 1), pelo nome do cliente ou pelo CNPJ.",
+        "operationId": "searchProposals",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PRODUTO",
+                "SERVICO"
+              ]
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "includeCancelled",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseProposalSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "proposals"
+        ],
+        "summary": "Cria uma proposta em branco, já com o número",
+        "description": "O número (2026/0001) é dado agora e nunca muda.",
+        "operationId": "createProposal",
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proposals/{id}/reopen": {
+      "post": {
+        "tags": [
+          "proposals"
+        ],
+        "summary": "Desfaz o cancelamento",
+        "operationId": "reopenProposal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalVersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proposals/{id}/duplicate": {
+      "post": {
+        "tags": [
+          "proposals"
+        ],
+        "summary": "Cria uma cópia com número novo e a data de hoje",
+        "operationId": "duplicateProposal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proposals/{id}/cancel": {
+      "post": {
+        "tags": [
+          "proposals"
+        ],
+        "summary": "Cancela a proposta (continua na lista, com o número)",
+        "operationId": "cancelProposal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalVersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalResponse"
                 }
               }
             }
@@ -3741,6 +4075,61 @@
         }
       }
     },
+    "/api/v1/proposals/{id}/pdf": {
+      "get": {
+        "tags": [
+          "proposals"
+        ],
+        "summary": "PDF da proposta, sem assinatura",
+        "description": "422 com o que falta preencher se a proposta estiver incompleta ou cancelada.",
+        "operationId": "downloadProposalPdf",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proposals/company-warning": {
+      "get": {
+        "tags": [
+          "proposals"
+        ],
+        "summary": "Dados da empresa que faltam no cabeçalho do PDF",
+        "operationId": "proposalCompanyWarning",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalCompanyWarningResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/price-records/{id}/carona-offer": {
       "get": {
         "tags": [
@@ -4666,6 +5055,16 @@
           },
           "active": {
             "type": "boolean"
+          },
+          "jobTitle": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "cpf": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
           }
         },
         "required": [
@@ -4703,6 +5102,12 @@
           "active": {
             "type": "boolean"
           },
+          "jobTitle": {
+            "type": "string"
+          },
+          "cpf": {
+            "type": "string"
+          },
           "lastLoginAt": {
             "type": "string",
             "format": "date-time"
@@ -4714,9 +5119,11 @@
         },
         "required": [
           "active",
+          "cpf",
           "email",
           "id",
           "initials",
+          "jobTitle",
           "lastLoginAt",
           "name",
           "role",
@@ -5244,6 +5651,301 @@
           "totalValue"
         ]
       },
+      "ProposalItemRequest": {
+        "type": "object",
+        "properties": {
+          "itemNumber": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "brand": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unitPrice": {
+            "type": "number"
+          }
+        }
+      },
+      "ProposalRequest": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "PRODUTO",
+              "SERVICO"
+            ]
+          },
+          "clientName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "clientCnpj": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0
+          },
+          "clientAddress": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 0
+          },
+          "clientEmail": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 0
+          },
+          "clientPhones": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "validityDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "paymentTerms": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "deliveryTerms": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "proposalDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "signerName": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "signerRole": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "signerCpf": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProposalItemRequest"
+            },
+            "maxItems": 500,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "items",
+          "kind",
+          "proposalDate"
+        ]
+      },
+      "UpdateProposalRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/ProposalRequest"
+          }
+        },
+        "required": [
+          "proposal",
+          "version"
+        ]
+      },
+      "ProposalItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "itemNumber": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unitPrice": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "brand",
+          "description",
+          "id",
+          "itemNumber",
+          "position",
+          "quantity",
+          "total",
+          "unit",
+          "unitPrice"
+        ]
+      },
+      "ProposalResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "PRODUTO",
+              "SERVICO"
+            ]
+          },
+          "clientName": {
+            "type": "string"
+          },
+          "clientCnpj": {
+            "type": "string"
+          },
+          "clientAddress": {
+            "type": "string"
+          },
+          "clientEmail": {
+            "type": "string"
+          },
+          "clientPhones": {
+            "type": "string"
+          },
+          "validityDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "paymentTerms": {
+            "type": "string"
+          },
+          "deliveryTerms": {
+            "type": "string"
+          },
+          "proposalDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "signerName": {
+            "type": "string"
+          },
+          "signerRole": {
+            "type": "string"
+          },
+          "signerCpf": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProposalItemResponse"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalInWords": {
+            "type": "string"
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "canEdit": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canEdit",
+          "cancelledAt",
+          "clientAddress",
+          "clientCnpj",
+          "clientEmail",
+          "clientName",
+          "clientPhones",
+          "createdAt",
+          "deliveryTerms",
+          "fileName",
+          "id",
+          "items",
+          "kind",
+          "missing",
+          "number",
+          "paymentTerms",
+          "proposalDate",
+          "signerCpf",
+          "signerName",
+          "signerRole",
+          "total",
+          "totalInWords",
+          "validityDays",
+          "version"
+        ]
+      },
       "RecordRequest": {
         "type": "object",
         "properties": {
@@ -5710,6 +6412,21 @@
           "items",
           "version"
         ]
+      },
+      "UpdateOwnProfile": {
+        "type": "object",
+        "properties": {
+          "jobTitle": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "cpf": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          }
+        }
       },
       "DescribeRequest": {
         "type": "object",
@@ -7408,6 +8125,19 @@
         },
         "required": [
           "completed"
+        ]
+      },
+      "ProposalVersionRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "version"
         ]
       },
       "NewRecordRequest": {
@@ -9202,6 +9932,104 @@
         "required": [
           "open",
           "overdue"
+        ]
+      },
+      "PageResponseProposalSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProposalSummaryResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalItems",
+          "totalPages"
+        ]
+      },
+      "ProposalSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "proposalDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "PRODUTO",
+              "SERVICO"
+            ]
+          },
+          "clientName": {
+            "type": "string"
+          },
+          "clientCnpj": {
+            "type": "string"
+          },
+          "total": {
+            "type": "number"
+          },
+          "signerName": {
+            "type": "string"
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "cancelledAt",
+          "clientCnpj",
+          "clientName",
+          "id",
+          "kind",
+          "number",
+          "proposalDate",
+          "signerName",
+          "total"
+        ]
+      },
+      "ProposalCompanyWarningResponse": {
+        "type": "object",
+        "properties": {
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "missing"
         ]
       },
       "PriceRecordSummaryResponse": {
