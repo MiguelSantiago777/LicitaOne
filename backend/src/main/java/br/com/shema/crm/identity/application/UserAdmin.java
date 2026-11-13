@@ -39,15 +39,24 @@ public class UserAdmin {
         return users.save(new User(name, email, passwordEncoder.encode(password), role));
     }
 
-    public User update(UUID id, UUID actingUserId, String name, Role role, boolean active) {
+    public User update(
+            UUID id, UUID actingUserId, String name, Role role, boolean active, String jobTitle, String cpf) {
         User user = get(id);
         if (id.equals(actingUserId) && (!active || role != Role.ADMIN)) {
             throw new ApiException(ErrorCode.CONFLICT, "Você não pode tirar o próprio acesso de administrador.");
         }
         user.changeProfile(name, role, active);
+        user.changeSignerData(jobTitle, cpf);
         if (!active) {
             refreshTokens.revokeAllForUser(id, clock.instant());
         }
+        return user;
+    }
+
+    /** Cargo e CPF da própria pessoa, para a assinatura das propostas. */
+    public User changeOwnSignerData(UUID id, String jobTitle, String cpf) {
+        User user = get(id);
+        user.changeSignerData(jobTitle, cpf);
         return user;
     }
 

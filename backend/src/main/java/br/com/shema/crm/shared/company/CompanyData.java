@@ -1,4 +1,4 @@
-package br.com.shema.crm.extraction.domain;
+package br.com.shema.crm.shared.company;
 
 import java.util.ArrayList;
 import java.util.List;

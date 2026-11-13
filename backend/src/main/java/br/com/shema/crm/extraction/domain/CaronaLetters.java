@@ -2,6 +2,7 @@ package br.com.shema.crm.extraction.domain;
 
 import br.com.shema.crm.pricerecords.CaronaOffers.Offer;
 import br.com.shema.crm.pricerecords.CaronaOffers.OfferItem;
+import br.com.shema.crm.shared.company.CompanyData;
 import br.com.shema.crm.shared.domain.BrFormat;
 import br.com.shema.crm.tenders.AgencyRef;
 import io.swagger.v3.oas.annotations.media.Schema;

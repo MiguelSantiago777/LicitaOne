@@ -1,7 +1,7 @@
 package br.com.shema.crm.extraction.infrastructure;
 
 import br.com.shema.crm.extraction.application.LetterDocuments;
-import br.com.shema.crm.extraction.domain.CompanyData;
+import br.com.shema.crm.shared.company.CompanyData;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;

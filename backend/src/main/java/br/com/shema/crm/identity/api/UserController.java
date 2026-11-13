@@ -45,6 +45,13 @@ class UserController {
         userAdmin.changeOwnPassword(CurrentUser.get().id(), request.currentPassword(), request.newPassword());
     }
 
+    @PutMapping("/me/profile")
+    @Operation(summary = "Altera o próprio cargo e CPF (assinatura das propostas)", operationId = "updateOwnProfile")
+    UserResponse updateOwnProfile(@Valid @RequestBody UserRequests.UpdateOwnProfile request) {
+        return UserResponse.from(
+                userAdmin.changeOwnSignerData(CurrentUser.get().id(), request.jobTitle(), request.cpf()));
+    }
+
     @GetMapping("/users/options")
     @Operation(summary = "Usuários ativos, para escolher responsável", operationId = "listUserOptions")
     List<UserOptionResponse> options() {
@@ -72,8 +79,14 @@ class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Altera nome, perfil ou situação de um usuário", operationId = "updateUser")
     UserResponse update(@PathVariable UUID id, @Valid @RequestBody UserRequests.UpdateUser request) {
-        return UserResponse.from(
-                userAdmin.update(id, CurrentUser.get().id(), request.name(), request.role(), request.active()));
+        return UserResponse.from(userAdmin.update(
+                id,
+                CurrentUser.get().id(),
+                request.name(),
+                request.role(),
+                request.active(),
+                request.jobTitle(),
+                request.cpf()));
     }
 
     @PostMapping("/users/{id}/password")

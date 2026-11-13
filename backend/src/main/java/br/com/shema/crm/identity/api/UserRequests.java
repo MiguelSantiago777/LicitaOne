@@ -27,7 +27,13 @@ final class UserRequests {
             String name,
 
             @NotNull(message = "Escolha o perfil") Role role,
-            boolean active) {}
+            boolean active,
+            @Size(max = 120) String jobTitle,
+            @Size(max = 20) String cpf) {}
+
+    record UpdateOwnProfile(
+            @Size(max = 120) String jobTitle,
+            @Size(max = 20) String cpf) {}
 
     record ResetPassword(
             @NotBlank(message = "Informe a nova senha") @Size(max = 200)

@@ -1,5 +1,7 @@
 package br.com.shema.crm.identity.domain;
 
+import br.com.shema.crm.shared.domain.BrDocuments;
+import br.com.shema.crm.shared.domain.DomainRuleViolation;
 import br.com.shema.crm.shared.persistence.AuditableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -41,6 +43,13 @@ public class User extends AuditableEntity {
 
     @Column(nullable = false)
     private boolean active;
+
+    /** Cargo e CPF de quem assina as propostas de preços (Fase 12). Opcionais. */
+    @Column(name = "job_title", length = 120)
+    private String jobTitle;
+
+    @Column(length = 11)
+    private String cpf;
 
     @OptimisticLock(excluded = true)
     @Column(name = "failed_login_attempts", nullable = false)
@@ -104,6 +113,16 @@ public class User extends AuditableEntity {
         this.active = active;
     }
 
+    /** Cargo e CPF que vão na assinatura da proposta. Em branco apaga. */
+    public void changeSignerData(String jobTitle, String cpf) {
+        String title = jobTitle == null || jobTitle.isBlank() ? null : jobTitle.trim();
+        if (title != null && title.length() > 120) {
+            throw new DomainRuleViolation("TOO_LONG", "Use no máximo 120 caracteres no cargo.");
+        }
+        this.jobTitle = title;
+        this.cpf = BrDocuments.cpf(cpf);
+    }
+
     public void changePassword(String passwordHash) {
         this.passwordHash = requireText(passwordHash, "passwordHash");
         this.failedLoginAttempts = 0;
@@ -144,6 +163,14 @@ public class User extends AuditableEntity {
 
     public Role getRole() {
         return role;
+    }
+
+    public String getJobTitle() {
+        return jobTitle;
+    }
+
+    public String getCpf() {
+        return cpf;
     }
 
     public boolean isActive() {

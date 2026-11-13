@@ -7,6 +7,7 @@ import br.com.shema.crm.extraction.domain.CaronaLetters.Kit;
 import br.com.shema.crm.extraction.domain.CaronaLetters.KitLine;
 import br.com.shema.crm.pricerecords.CaronaOffers.Offer;
 import br.com.shema.crm.pricerecords.CaronaOffers.OfferItem;
+import br.com.shema.crm.shared.company.CompanyData;
 import br.com.shema.crm.tenders.AgencyRef;
 import java.math.BigDecimal;
 import java.time.LocalDate;

@@ -11,6 +11,7 @@ import br.com.shema.crm.extraction.domain.RawCaronaKit;
 import br.com.shema.crm.pricerecords.CaronaOffers;
 import br.com.shema.crm.pricerecords.CaronaOffers.Offer;
 import br.com.shema.crm.pricerecords.CaronaOffers.OfferItem;
+import br.com.shema.crm.shared.company.CompanyProperties;
 import br.com.shema.crm.shared.domain.BrFormat;
 import br.com.shema.crm.shared.domain.DomainRuleViolation;
 import br.com.shema.crm.shared.security.CurrentUser;

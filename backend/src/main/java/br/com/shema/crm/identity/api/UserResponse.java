@@ -13,6 +13,8 @@ public record UserResponse(
         String roleLabel,
         String initials,
         boolean active,
+        String jobTitle,
+        String cpf,
         Instant lastLoginAt,
         long version) {
 
@@ -25,6 +27,8 @@ public record UserResponse(
                 user.getRole().label(),
                 user.initials(),
                 user.isActive(),
+                user.getJobTitle(),
+                user.getCpf(),
                 user.getLastLoginAt(),
                 user.getVersion() == null ? 0 : user.getVersion());
     }

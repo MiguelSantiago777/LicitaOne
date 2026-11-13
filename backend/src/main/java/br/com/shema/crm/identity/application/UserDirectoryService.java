@@ -1,5 +1,6 @@
 package br.com.shema.crm.identity.application;
 
+import br.com.shema.crm.identity.SignerProfile;
 import br.com.shema.crm.identity.UserDirectory;
 import br.com.shema.crm.identity.UserSummary;
 import br.com.shema.crm.identity.domain.Role;
@@ -29,6 +30,13 @@ class UserDirectoryService implements UserDirectory {
     @Override
     public Optional<UserSummary> find(UUID id) {
         return id == null ? Optional.empty() : users.findById(id).map(UserDirectoryService::summary);
+    }
+
+    @Override
+    public Optional<SignerProfile> signer(UUID id) {
+        return id == null
+                ? Optional.empty()
+                : users.findById(id).map(u -> new SignerProfile(u.getName(), u.getJobTitle(), u.getCpf()));
     }
 
     @Override

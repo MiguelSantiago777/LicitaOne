@@ -1,6 +1,6 @@
 package br.com.shema.crm.extraction.application;
 
-import br.com.shema.crm.extraction.domain.CompanyData;
+import br.com.shema.crm.shared.company.CompanyData;
 
 /** Gera o .docx de uma carta do kit de carona (Fase 10), a partir do texto que a pessoa revisou. */
 public interface LetterDocuments {

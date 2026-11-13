@@ -11,6 +11,9 @@ public interface UserDirectory {
 
     Optional<UserSummary> find(UUID id);
 
+    /** Nome, cargo e CPF de quem assina as propostas; vazio se o usuário não existe. */
+    Optional<SignerProfile> signer(UUID id);
+
     /** Busca em lote, para listas não fazerem uma consulta por linha. */
     Map<UUID, UserSummary> findAll(Collection<UUID> ids);
 

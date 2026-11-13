@@ -1,6 +1,5 @@
-package br.com.shema.crm.extraction.application;
+package br.com.shema.crm.shared.company;
 
-import br.com.shema.crm.extraction.domain.CompanyData;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
