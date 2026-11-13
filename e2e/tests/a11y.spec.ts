@@ -35,6 +35,7 @@ const pages: { path: string; heading: string }[] = [
   { path: '/quadros', heading: 'Quadros' },
   { path: '/negociacoes', heading: 'Negociações' },
   { path: '/negociacoes?visao=lista', heading: 'Negociações' },
+  { path: '/propostas', heading: 'Propostas de preços' },
   { path: '/tarefas', heading: 'Tarefas' },
   { path: '/alertas', heading: 'Alertas' },
   { path: '/importacao', heading: 'Importação' },

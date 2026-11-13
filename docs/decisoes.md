@@ -84,3 +84,10 @@ O usuário autorizou seguir sem esperar o cliente. Assumimos o seguinte; tudo po
 - O usuário autorizou enviar à Anthropic atas, contratos, pedidos (PDF e foto) e mensagens coladas, para a leitura com IA (ADRs 0016 e 0017).
 - Mensagens coladas podem ter dado pessoal de servidor: o texto fica no banco só até a leitura terminar e nunca vai para os logs.
 - Um ofício ou e-mail que pede itens de mais de um contrato é exceção. Segundo a pesquisa registrada no [plano da Fase 8](fases/fase-8-plano.md), empenho e AF saem de uma ata ou contrato só. Cada leitura serve um contrato, e o que não é dele fica de fora, com aviso.
+
+### Propostas de preços (12 e 13/11/2026)
+- Pedido do usuário: uma aba para gerar propostas de preços (cliente, produto ou serviço, itens, validade, pagamento, entrega, responsável). Fica dentro do LicitaOne, não como sistema à parte. Plano em [fases/fase-12-plano.md](fases/fase-12-plano.md).
+- O número da proposta é dado na criação e nunca muda, mesmo quando ela é editada.
+- O "documento" do responsável é o CPF.
+- O arquivo sai sem assinatura: quem baixa assina no assinador.
+- Os dados do cliente são sempre digitados na hora, sem puxar órgão nem licitação.
