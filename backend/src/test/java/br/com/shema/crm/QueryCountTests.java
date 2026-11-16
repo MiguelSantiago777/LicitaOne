@@ -79,6 +79,11 @@ class QueryCountTests {
     void pagedListsDoNotGrowWithThePageSize() throws Exception {
         mvc.perform(post("/api/v1/alerts/run").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
+        // Folga para as buscas em lote que são puladas quando a página não tem nenhuma linha daquele tipo. Nas tarefas:
+        // responsáveis, licitações e, das negociações, a negociação, o órgão e a licitação (5). Quais tarefas caem nas
+        // 3 primeiras muda com a data (o seed usa now()), então a página de 3 pode não ter nenhuma licitação e a de 25
+        // ter. Um N+1 cresce uma consulta por linha a mais, bem acima da folga (o teste confere isso abaixo).
+        Map<String, Integer> skippableBatches = Map.of("/api/v1/tasks?situation=TODAS&size=%d", 5);
         for (String uri : new String[] {
             "/api/v1/tenders?size=%d",
             "/api/v1/tenders?status=EM_ANDAMENTO&size=%d",
@@ -88,15 +93,17 @@ class QueryCountTests {
         }) {
             Map<?, ?> page = call(uri.formatted(25));
             Object total = page.get("totalItems");
-            assertThat(total == null ? 0 : ((Number) total).longValue())
-                    .as("o seed precisa de mais de 3 linhas em %s", uri)
-                    .isGreaterThan(3);
+            long rows = Math.min(25, total == null ? 0 : ((Number) total).longValue());
+            int slack = skippableBatches.getOrDefault(uri, 0);
+            assertThat(rows - 3)
+                    .as("o seed precisa de linhas a mais que 3 + a folga (%d) em %s", slack, uri)
+                    .isGreaterThan(slack);
             int few = statements(uri.formatted(3));
             int many = statements(uri.formatted(25));
             // Com 25 linhas pode ser até uma a menos: a página incompleta dispensa o count
             assertThat(many)
                     .as("consultas de %s com 25 linhas (com 3 foram %d)", uri, few)
-                    .isLessThanOrEqualTo(few);
+                    .isLessThanOrEqualTo(few + slack);
         }
     }
 
