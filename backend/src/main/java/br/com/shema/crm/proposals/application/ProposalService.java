@@ -116,9 +116,11 @@ public class ProposalService {
 
     /** Dados da empresa que faltam no cabeçalho do PDF, para a tela avisar. */
     public List<String> missingCompanyData() {
-        return company.data().missing().stream()
-                .filter(field -> !field.equals("representante legal") && !field.equals("cargo do representante"))
-                .toList();
+        // Com o timbrado, só a razão social (na assinatura) e a cidade (na data) saem dos dados da empresa
+        List<String> used = documents.usesLetterhead()
+                ? List.of("razão social", "cidade")
+                : List.of("razão social", "CNPJ", "endereço", "cidade");
+        return company.data().missing().stream().filter(used::contains).toList();
     }
 
     private Proposal load(UUID id) {

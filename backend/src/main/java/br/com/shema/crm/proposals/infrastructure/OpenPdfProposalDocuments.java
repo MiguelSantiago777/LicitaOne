@@ -10,6 +10,7 @@ import com.lowagie.text.Chunk;
 import com.lowagie.text.Document;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
+import com.lowagie.text.Image;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
@@ -22,18 +23,28 @@ import com.lowagie.text.pdf.PdfWriter;
 import com.lowagie.text.pdf.draw.LineSeparator;
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
 /**
  * PDF A4 da proposta com OpenPDF: cabeçalho da empresa, número, cliente, itens, total por extenso, condições, data
  * por extenso e a linha de assinatura em branco com nome, cargo e CPF. Não assina: quem baixa assina no assinador.
  * As colunas de unidade e marca só aparecem se algum item tiver.
+ *
+ * <p>Com o papel timbrado ({@code shema.proposals.letterhead}), a imagem A4 vai no fundo de cada página, o texto fica
+ * entre o logo e a faixa do rodapé e o cabeçalho em texto não entra (o timbrado já tem razão social, CNPJ e endereço).
  */
 @Component
 class OpenPdfProposalDocuments implements ProposalDocuments {
@@ -56,19 +67,65 @@ class OpenPdfProposalDocuments implements ProposalDocuments {
     private static final Font BODY_BOLD = new Font(Font.HELVETICA, 9, Font.BOLD, TEXT);
     private static final Font FOOTER = new Font(Font.HELVETICA, 7.5f, Font.NORMAL, MUTED);
 
+    private static final Logger log = LoggerFactory.getLogger(OpenPdfProposalDocuments.class);
+
     /** 2 cm em pontos. */
     private static final float MARGIN = 56.7f;
+
+    /** Com o timbrado: abaixo do logo (que termina a ~95 pt do topo) e acima da faixa do rodapé (~120 pt da base). */
+    private static final float LETTERHEAD_TOP = 120f;
+
+    private static final float LETTERHEAD_BOTTOM = 140f;
+
+    /** A imagem do timbrado, ou null para o cabeçalho em texto. */
+    private final byte[] letterhead;
+
+    OpenPdfProposalDocuments(
+            ResourceLoader resources,
+            @Value("${shema.proposals.letterhead:classpath:branding/timbrado-shema.png}") String letterheadLocation) {
+        this.letterhead = load(resources, letterheadLocation);
+    }
+
+    private static byte[] load(ResourceLoader resources, String location) {
+        if (location == null || location.isBlank()) {
+            return null;
+        }
+        Resource resource = resources.getResource(location.trim());
+        if (!resource.exists()) {
+            log.warn("Timbrado da proposta não encontrado em {}: o PDF sai com cabeçalho em texto", location);
+            return null;
+        }
+        try {
+            byte[] bytes = resource.getContentAsByteArray();
+            Image.getInstance(bytes); // confere que é uma imagem antes da primeira proposta
+            return bytes;
+        } catch (IOException | RuntimeException e) {
+            log.warn("Timbrado da proposta inválido em {}: o PDF sai com cabeçalho em texto", location, e);
+            return null;
+        }
+    }
+
+    @Override
+    public boolean usesLetterhead() {
+        return letterhead != null;
+    }
 
     @Override
     public byte[] pdf(Proposal proposal, CompanyData company) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Document doc = new Document(PageSize.A4, MARGIN, MARGIN, MARGIN, MARGIN);
+        Image background = letterheadImage();
+        Document doc = background == null
+                ? new Document(PageSize.A4, MARGIN, MARGIN, MARGIN, MARGIN)
+                : new Document(PageSize.A4, MARGIN, MARGIN, LETTERHEAD_TOP, LETTERHEAD_BOTTOM);
         PdfWriter writer = PdfWriter.getInstance(doc, out);
-        writer.setPageEvent(new Footer("Proposta nº " + proposal.number().text()));
+        writer.setPageEvent(
+                new PageDecoration("Proposta nº " + proposal.number().text(), background));
         doc.addTitle("Proposta de preços nº " + proposal.number().text());
         doc.addAuthor(company.legalNameOr());
         doc.open();
-        header(doc, company);
+        if (background == null) {
+            header(doc, company);
+        }
         title(doc, proposal);
         client(doc, proposal);
         items(doc, proposal);
@@ -76,6 +133,21 @@ class OpenPdfProposalDocuments implements ProposalDocuments {
         signature(doc, proposal, company);
         doc.close();
         return out.toByteArray();
+    }
+
+    /** Uma instância por documento: o PDF guarda a imagem uma vez só e repete nas páginas. */
+    private Image letterheadImage() {
+        if (letterhead == null) {
+            return null;
+        }
+        try {
+            Image image = Image.getInstance(letterhead);
+            image.scaleAbsolute(PageSize.A4.getWidth(), PageSize.A4.getHeight());
+            image.setAbsolutePosition(0, 0);
+            return image;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private static void header(Document doc, CompanyData company) {
@@ -253,6 +325,8 @@ class OpenPdfProposalDocuments implements ProposalDocuments {
         cell.setBorder(Rectangle.BOX);
         cell.setBorderColor(LINE);
         cell.setBorderWidth(0.5f);
+        // Fundo branco: os arcos do timbrado não passam por trás dos valores
+        cell.setBackgroundColor(Color.WHITE);
         return cell;
     }
 
@@ -286,24 +360,29 @@ class OpenPdfProposalDocuments implements ProposalDocuments {
         return String.join(separator, present);
     }
 
-    /** Rodapé de cada página: número da proposta e da página. */
-    private static final class Footer extends PdfPageEventHelper {
+    /** Em cada página: o timbrado no fundo, se houver, e o rodapé com o número da proposta e da página. */
+    private static final class PageDecoration extends PdfPageEventHelper {
 
         private final String label;
+        private final Image background;
 
-        Footer(String label) {
+        PageDecoration(String label, Image background) {
             this.label = label;
+            this.background = background;
         }
 
         @Override
         public void onEndPage(PdfWriter writer, Document document) {
+            if (background != null) {
+                writer.getDirectContentUnder().addImage(background);
+            }
             Phrase text = new Phrase(label + " · página " + writer.getPageNumber(), FOOTER);
             ColumnText.showTextAligned(
                     writer.getDirectContent(),
                     Element.ALIGN_CENTER,
                     text,
                     (document.left() + document.right()) / 2,
-                    document.bottom() - 24,
+                    document.bottom() - (background == null ? 24 : 14),
                     0);
         }
     }

@@ -91,3 +91,4 @@ O usuário autorizou seguir sem esperar o cliente. Assumimos o seguinte; tudo po
 - O "documento" do responsável é o CPF.
 - O arquivo sai sem assinatura: quem baixa assina no assinador.
 - Os dados do cliente são sempre digitados na hora, sem puxar órgão nem licitação.
+- **Timbrado (13/11):** o usuário mandou o timbrado da Shema (PNG A4). O PDF da proposta sai nele, em todas as páginas.

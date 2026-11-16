@@ -7,4 +7,12 @@ import br.com.shema.crm.shared.company.CompanyData;
 public interface ProposalDocuments {
 
     byte[] pdf(Proposal proposal, CompanyData company);
+
+    /**
+     * Se o PDF sai no papel timbrado. O timbrado já traz razão social, CNPJ, endereço e contatos, então o cabeçalho em
+     * texto não entra e esses dados deixam de faltar.
+     */
+    default boolean usesLetterhead() {
+        return false;
+    }
 }

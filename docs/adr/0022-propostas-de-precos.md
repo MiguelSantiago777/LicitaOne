@@ -55,10 +55,17 @@ O documento sai sem assinatura: quem baixa assina no assinador. Os dados do clie
 - O bloco da assinatura não se divide entre páginas, e cada página tem no rodapé o número da proposta e o da página.
 - Se faltarem dados da empresa no ambiente, o cabeçalho mostra o campo entre colchetes, como no kit de carona, e a tela avisa.
 
+### Papel timbrado (13/11/2026)
+- O timbrado da Shema (PNG A4 de página inteira, 300 dpi, enviado pelo usuário) fica em `backend/src/main/resources/branding/timbrado-shema.png` e vai no **fundo de cada página**. O PDF guarda a imagem uma vez só.
+- Com o timbrado, as margens passam a 120 pt em cima e 140 pt embaixo: o texto fica entre o logo e a faixa azul. O cabeçalho em texto não entra, porque o timbrado já tem razão social, CNPJ, inscrições, endereço e contatos.
+- As células das tabelas têm fundo branco, para os arcos dourados não passarem por trás dos valores.
+- Dos dados da empresa, o PDF só usa a **razão social** (na assinatura) e a **cidade** (na data). O aviso da tela cobra só esses dois.
+- O caminho fica em `shema.proposals.letterhead` (`SHEMA_PROPOSALS_LETTERHEAD`): aceita `file:/caminho/timbrado.png` para trocar sem gerar nova versão, e em branco volta ao cabeçalho em texto. Se a imagem não existir ou não abrir, o backend avisa no log e usa o cabeçalho em texto.
+
 ### Permissões
 - **Administrador e Comercial** criam e alteram **qualquer** proposta: a equipe é pequena, e uma pessoa termina a proposta da outra. **Leitura** vê e baixa o PDF.
 
 ## Consequências
 - Não há envio por e-mail nem assinatura dentro do sistema. Quem baixa assina fora e manda.
-- Sem timbrado por enquanto: o cabeçalho é texto. Se vier um logo, entra no `OpenPdfProposalDocuments`.
+- O timbrado muda pouco. Quando mudar, troque o PNG (nova versão) ou aponte `SHEMA_PROPOSALS_LETTERHEAD` para o arquivo novo.
 - A numeração não reaproveita números. A proposta aberta e abandonada fica na lista como "Em preenchimento", e pode ser cancelada.

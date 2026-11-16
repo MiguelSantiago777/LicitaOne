@@ -148,6 +148,10 @@ shema:
     representative-role: ${SHEMA_COMPANY_REPRESENTATIVE_ROLE:}
     email: ${SHEMA_COMPANY_EMAIL:}
     phone: ${SHEMA_COMPANY_PHONE:}
+  # Papel timbrado da proposta de preços: imagem A4 de página inteira (PNG ou JPG) no fundo de cada página. O padrão é o
+  # timbrado da Shema dentro do jar; aceita file:/caminho/timbrado.png. Em branco, o PDF sai com cabeçalho em texto.
+  proposals:
+    letterhead: ${SHEMA_PROPOSALS_LETTERHEAD:classpath:branding/timbrado-shema.png}
   auth:
     secure-cookie: false
     cors-origins: ${SHEMA_CORS_ORIGINS:http://localhost:4300}

@@ -181,6 +181,11 @@ class ProposalFlowTests {
         assertThat(pdf.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION))
                 .contains("attachment", "Proposta-" + number.replace('/', '-') + ".pdf");
         assertThat(new String(pdf.getBody(), 0, 5)).isEqualTo("%PDF-");
+        // Sai no papel timbrado (a imagem no fundo da página), e o timbrado já cobre CNPJ e endereço da empresa
+        assertThat(new String(pdf.getBody(), java.nio.charset.StandardCharsets.ISO_8859_1))
+                .contains("/Subtype/Image");
+        Map warning = ok(send(HttpMethod.GET, admin, "/api/v1/proposals/company-warning", null), 200);
+        assertThat((List<?>) warning.get("missing")).isEmpty();
 
         // Busca pelo número e pelo CNPJ
         Map byNumber = ok(send(HttpMethod.GET, admin, "/api/v1/proposals?q=" + number, null), 200);

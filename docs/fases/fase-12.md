@@ -25,8 +25,7 @@
 - **Baixar PDF** só fica disponível com tudo preenchido e salvo. **Duplicar** cria outra proposta com número novo. **Cancelar** pede confirmação e pode ser desfeito.
 
 ### PDF
-- A4, com:
-  - cabeçalho da empresa;
+- A4, **no papel timbrado da Shema** (fundo de cada página; o texto fica entre o logo e a faixa azul), com:
   - "PROPOSTA DE PREÇOS Nº 2026/0001";
   - cliente;
   - tabela de itens, com unidade e marca só se algum item tiver;
@@ -50,6 +49,10 @@
 - `shared.domain`: `BrDocuments` (CPF e CNPJ, inclusive o alfanumérico) e `AmountInWords` (valor por extenso).
 - `CompanyData` e `CompanyProperties` passaram de `extraction` para `shared.company`.
 
+### Depois da validação (13/11/2026)
+- Na lista, a linha inteira abre a proposta (antes só o número era link).
+- Papel timbrado no PDF ([ADR 0022](../adr/0022-propostas-de-precos.md#papel-timbrado-13112026)).
+
 ## Testes
 - Backend: **237 testes**, todos passando (`mvnw verify`, com Spotless e JaCoCo). Os novos:
   - `AmountInWordsTest`: 27 casos, de "um centavo" a "três bilhões de reais";
@@ -71,6 +74,5 @@
 - Frontend: lint, Prettier e testes de unidade passando.
 
 ## Pendente
-- **Dados da empresa no servidor** (`SHEMA_COMPANY_*`: CNPJ, endereço, cidade, e-mail e telefone). Sem eles, o cabeçalho do PDF mostra os campos entre colchetes.
-- **Timbrado ou logo**, se houver: hoje o cabeçalho é texto.
+- **Cidade e razão social no servidor** (`SHEMA_COMPANY_CITY` e `SHEMA_COMPANY_LEGAL_NAME`): saem na data e na assinatura. O resto (CNPJ, endereço, contatos) já está no timbrado.
 - Conferir com quem assina se o assinador aceita o PDF como sai (gov.br e certificado aceitam PDF comum).
