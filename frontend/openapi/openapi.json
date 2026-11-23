@@ -20,6 +20,10 @@
       "description": "Quadros kanban"
     },
     {
+      "name": "catalog",
+      "description": "Fornecedores e produtos por nicho"
+    },
+    {
       "name": "agencies",
       "description": "Órgãos"
     },
@@ -914,6 +918,193 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ContractResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/suppliers/{id}": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Um fornecedor, com contatos, nichos e os produtos que vende",
+        "operationId": "getSupplier",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Salva o fornecedor inteiro (dados, nichos e contatos)",
+        "operationId": "updateSupplier",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSupplierRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/products/{id}": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Um produto, com os preços dos fornecedores e os arquivos",
+        "operationId": "getProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Salva o produto inteiro (dados e preços)",
+        "description": "Se o preço de um fornecedor mudar e a data não, a data da cotação passa a ser hoje.",
+        "operationId": "updateProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/niches/{id}": {
+      "put": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Renomeia o nicho ou muda a descrição",
+        "operationId": "updateNiche",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNicheRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/NicheResponse"
                 }
               }
             }
@@ -3290,6 +3481,600 @@
         }
       }
     },
+    "/api/v1/catalog/suppliers": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Fornecedores, por razão social",
+        "description": "q acha pela razão social, nome fantasia, CNPJ ou cidade, sem diferenciar acento.",
+        "operationId": "searchSuppliers",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nicheId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeArchived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseSupplierSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Cadastra um fornecedor (só a razão social é obrigatória)",
+        "operationId": "createSupplier",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupplierRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/suppliers/{id}/restore": {
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Desarquiva o fornecedor",
+        "operationId": "restoreSupplier",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogVersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/suppliers/{id}/archive": {
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Arquiva o fornecedor (os preços continuam guardados)",
+        "operationId": "archiveSupplier",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogVersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/products": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Produtos, por nome, com o menor preço",
+        "description": "q acha pelo nome, marca ou código CATMAT/CATSER, sem diferenciar acento.",
+        "operationId": "searchProducts",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nicheId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "supplierId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "includeArchived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseProductSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Cadastra um produto (nome e nicho são obrigatórios)",
+        "operationId": "createProduct",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/products/{id}/restore": {
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Desarquiva o produto",
+        "operationId": "restoreProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogVersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/products/{id}/files": {
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Envia a foto ou a ficha técnica",
+        "description": "Até 10 MB. Foto: JPG, PNG ou WEBP; ficha: também PDF. O tipo é conferido pelo conteúdo.",
+        "operationId": "uploadProductFile",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "FOTO",
+                "FICHA"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductFileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/products/{id}/archive": {
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Arquiva o produto",
+        "operationId": "archiveProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogVersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/niches": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Nichos, por nome, com quantos fornecedores e produtos ativos tem cada um",
+        "operationId": "listNiches",
+        "parameters": [
+          {
+            "name": "includeArchived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NicheResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Cria um nicho",
+        "operationId": "createNiche",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NicheRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/NicheResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/niches/{id}/restore": {
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Desarquiva o nicho",
+        "operationId": "restoreNiche",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogVersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/NicheResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/niches/{id}/archive": {
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Arquiva o nicho (os cadastros ligados continuam)",
+        "operationId": "archiveNiche",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogVersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/NicheResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cards/{cardId}/move": {
       "post": {
         "tags": [
@@ -4742,6 +5527,104 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/suppliers/options": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Fornecedores ativos, para escolher o de um preço",
+        "operationId": "supplierOptions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SupplierOptionResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/products/{id}/files/{fileId}": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Baixa a foto ou a ficha técnica",
+        "operationId": "downloadProductFile",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Apaga a foto ou a ficha técnica",
+        "operationId": "deleteProductFile",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -7257,6 +8140,584 @@
           "version"
         ]
       },
+      "SupplierContactRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 0
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 0
+          }
+        }
+      },
+      "SupplierRequest": {
+        "type": "object",
+        "properties": {
+          "legalName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "tradeName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "cnpj": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "state": {
+            "type": "string",
+            "maxLength": 2,
+            "minLength": 0
+          },
+          "website": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "nicheIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 50,
+            "minItems": 0
+          },
+          "contacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierContactRequest"
+            },
+            "maxItems": 20,
+            "minItems": 0
+          }
+        }
+      },
+      "UpdateSupplierRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "supplier": {
+            "$ref": "#/components/schemas/SupplierRequest"
+          }
+        },
+        "required": [
+          "supplier",
+          "version"
+        ]
+      },
+      "NicheRefResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "archived": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "archived",
+          "id",
+          "name"
+        ]
+      },
+      "SupplierContactResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "id",
+          "name",
+          "phone"
+        ]
+      },
+      "SupplierProductResponse": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nicheName": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "unitPrice": {
+            "type": "number"
+          },
+          "quotedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "lowestPrice": {
+            "type": "boolean"
+          },
+          "archived": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "archived",
+          "brand",
+          "lowestPrice",
+          "name",
+          "nicheName",
+          "productId",
+          "quotedOn",
+          "stale",
+          "unit",
+          "unitPrice"
+        ]
+      },
+      "SupplierResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "legalName": {
+            "type": "string"
+          },
+          "tradeName": {
+            "type": "string"
+          },
+          "cnpj": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "website": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "niches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NicheRefResponse"
+            }
+          },
+          "contacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierContactResponse"
+            }
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierProductResponse"
+            }
+          },
+          "archivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "canEdit": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "archivedAt",
+          "canEdit",
+          "city",
+          "cnpj",
+          "contacts",
+          "id",
+          "legalName",
+          "niches",
+          "notes",
+          "products",
+          "state",
+          "tradeName",
+          "version",
+          "website"
+        ]
+      },
+      "ProductOfferRequest": {
+        "type": "object",
+        "properties": {
+          "supplierId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unitPrice": {
+            "type": "number"
+          },
+          "quotedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "leadTimeDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "minimumOrder": {
+            "type": "number"
+          }
+        }
+      },
+      "ProductRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "nicheId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "brand": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "catalogCode": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "offers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductOfferRequest"
+            },
+            "maxItems": 50,
+            "minItems": 0
+          }
+        }
+      },
+      "UpdateProductRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "product": {
+            "$ref": "#/components/schemas/ProductRequest"
+          }
+        },
+        "required": [
+          "product",
+          "version"
+        ]
+      },
+      "ProductFileResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "FOTO",
+              "FICHA"
+            ]
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uploadedBy": {
+            "type": "string"
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "contentType",
+          "fileName",
+          "id",
+          "kind",
+          "sizeBytes",
+          "uploadedAt",
+          "uploadedBy"
+        ]
+      },
+      "ProductOfferResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "supplierId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "supplierName": {
+            "type": "string"
+          },
+          "supplierArchived": {
+            "type": "boolean"
+          },
+          "unitPrice": {
+            "type": "number"
+          },
+          "quotedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "leadTimeDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "minimumOrder": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "leadTimeDays",
+          "minimumOrder",
+          "quotedOn",
+          "stale",
+          "supplierArchived",
+          "supplierId",
+          "supplierName",
+          "unitPrice"
+        ]
+      },
+      "ProductResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "niche": {
+            "$ref": "#/components/schemas/NicheRefResponse"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "catalogCode": {
+            "type": "string"
+          },
+          "offers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductOfferResponse"
+            }
+          },
+          "lowestOfferSupplierId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductFileResponse"
+            }
+          },
+          "archivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "canEdit": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "archivedAt",
+          "brand",
+          "canEdit",
+          "catalogCode",
+          "description",
+          "files",
+          "id",
+          "lowestOfferSupplierId",
+          "name",
+          "niche",
+          "offers",
+          "unit",
+          "version"
+        ]
+      },
+      "NicheRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 0
+          }
+        }
+      },
+      "UpdateNicheRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "niche": {
+            "$ref": "#/components/schemas/NicheRequest"
+          }
+        },
+        "required": [
+          "niche",
+          "version"
+        ]
+      },
+      "NicheResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "supplierCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "productCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "archivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "canEdit": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "archivedAt",
+          "canEdit",
+          "description",
+          "id",
+          "name",
+          "productCount",
+          "supplierCount",
+          "version"
+        ]
+      },
       "CardRequest": {
         "type": "object",
         "properties": {
@@ -9279,6 +10740,19 @@
           }
         }
       },
+      "CatalogVersionRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "version"
+        ]
+      },
       "MoveCardRequest": {
         "type": "object",
         "properties": {
@@ -10534,6 +12008,211 @@
           "ordered",
           "remaining",
           "value"
+        ]
+      },
+      "PageResponseSupplierSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierSummaryResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalItems",
+          "totalPages"
+        ]
+      },
+      "SupplierSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "legalName": {
+            "type": "string"
+          },
+          "tradeName": {
+            "type": "string"
+          },
+          "cnpj": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "niches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NicheRefResponse"
+            }
+          },
+          "productCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "archivedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "archivedAt",
+          "city",
+          "cnpj",
+          "id",
+          "legalName",
+          "niches",
+          "productCount",
+          "state",
+          "tradeName"
+        ]
+      },
+      "SupplierOptionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "cnpj": {
+            "type": "string"
+          },
+          "nicheIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "cnpj",
+          "id",
+          "name",
+          "nicheIds"
+        ]
+      },
+      "PageResponseProductSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductSummaryResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalItems",
+          "totalPages"
+        ]
+      },
+      "ProductSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "niche": {
+            "$ref": "#/components/schemas/NicheRefResponse"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "catalogCode": {
+            "type": "string"
+          },
+          "supplierCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lowestPrice": {
+            "type": "number"
+          },
+          "lowestSupplierName": {
+            "type": "string"
+          },
+          "lowestQuotedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "lowestStale": {
+            "type": "boolean"
+          },
+          "archivedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "archivedAt",
+          "brand",
+          "catalogCode",
+          "id",
+          "lowestPrice",
+          "lowestQuotedOn",
+          "lowestStale",
+          "lowestSupplierName",
+          "name",
+          "niche",
+          "supplierCount",
+          "unit"
         ]
       },
       "BoardSummaryResponse": {

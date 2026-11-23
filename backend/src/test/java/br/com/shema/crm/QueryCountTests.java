@@ -89,7 +89,9 @@ class QueryCountTests {
             "/api/v1/tenders?status=EM_ANDAMENTO&size=%d",
             "/api/v1/tasks?situation=TODAS&size=%d",
             "/api/v1/agencies?size=%d",
-            "/api/v1/alerts?size=%d"
+            "/api/v1/alerts?size=%d",
+            "/api/v1/catalog/suppliers?size=%d",
+            "/api/v1/catalog/products?size=%d"
         }) {
             Map<?, ?> page = call(uri.formatted(25));
             Object total = page.get("totalItems");
@@ -109,17 +111,21 @@ class QueryCountTests {
 
     @Test
     void screensWithoutPagingStayUnderACeiling() throws Exception {
-        Map<String, Integer> ceilings = Map.of(
-                "/api/v1/deals/pipeline", 8,
-                "/api/v1/price-records?filter=TODAS", 5,
-                "/api/v1/price-records/prospects?state=RJ", 3,
-                "/api/v1/tenders/summary", 2,
-                "/api/v1/tenders/top-agencies", 2,
-                "/api/v1/contracts/without-orders", 3,
-                "/api/v1/tenders/20000000-0000-4000-8000-000000000013/contracts", 7,
-                "/api/v1/tenders/20000000-0000-4000-8000-000000000013/history", 3,
-                "/api/v1/boards", 3,
-                "/api/v1/users", 3);
+        Map<String, Integer> ceilings = Map.ofEntries(
+                Map.entry("/api/v1/deals/pipeline", 8),
+                Map.entry("/api/v1/price-records?filter=TODAS", 5),
+                Map.entry("/api/v1/price-records/prospects?state=RJ", 3),
+                Map.entry("/api/v1/tenders/summary", 2),
+                Map.entry("/api/v1/tenders/top-agencies", 2),
+                Map.entry("/api/v1/contracts/without-orders", 3),
+                Map.entry("/api/v1/tenders/20000000-0000-4000-8000-000000000013/contracts", 7),
+                Map.entry("/api/v1/tenders/20000000-0000-4000-8000-000000000013/history", 3),
+                Map.entry("/api/v1/boards", 3),
+                Map.entry("/api/v1/catalog/niches", 3),
+                Map.entry("/api/v1/catalog/suppliers/options", 2),
+                Map.entry("/api/v1/catalog/products/63000000-0000-4000-8000-000000000001", 5),
+                Map.entry("/api/v1/catalog/suppliers/62000000-0000-4000-8000-000000000001", 7),
+                Map.entry("/api/v1/users", 3));
         for (var entry : ceilings.entrySet()) {
             assertThat(statements(entry.getKey()))
                     .as("consultas de %s", entry.getKey())

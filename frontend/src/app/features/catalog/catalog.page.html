@@ -1,0 +1,486 @@
+<div class="page-head">
+  <div>
+    <h1>Fornecedores e produtos</h1>
+    <p class="sub">
+      @switch (tab()) {
+        @case ('produtos') {
+          @if (products.value(); as l) {
+            <span class="num">{{ l.totalItems }}</span>
+            {{ l.totalItems === 1 ? 'produto' : 'produtos' }}, com o menor preço de custo
+          } @else {
+            Produtos com o preço de custo de cada fornecedor
+          }
+        }
+        @case ('fornecedores') {
+          @if (suppliers.value(); as l) {
+            <span class="num">{{ l.totalItems }}</span>
+            {{ l.totalItems === 1 ? 'fornecedor' : 'fornecedores' }}
+          } @else {
+            Fornecedores, contatos e os nichos que atendem
+          }
+        }
+        @default {
+          Ramos em que a Shema compra e vende
+        }
+      }
+      @if (nicheId()) {
+        · nicho <strong>{{ nicheName(nicheId()) }}</strong>
+      }
+    </p>
+  </div>
+  @if (canEdit()) {
+    <div class="page-actions">
+      <button type="button" class="btn primary" (click)="startCreate()" [disabled]="busy()">
+        <app-icon name="plus" [size]="16" />{{
+          tab() === 'produtos'
+            ? 'Novo produto'
+            : tab() === 'fornecedores'
+              ? 'Novo fornecedor'
+              : 'Novo nicho'
+        }}
+      </button>
+    </div>
+  }
+</div>
+
+<div class="tabs" role="tablist" aria-label="Cadastro">
+  @for (t of tabs; track t.id) {
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="tab() === t.id"
+      (click)="selectTab(t.id)"
+    >
+      {{ t.label }}
+      @if (t.id === 'nichos' && activeNiches().length) {
+        <span class="count">{{ activeNiches().length }}</span>
+      }
+    </button>
+  }
+</div>
+
+<div class="filters">
+  @if (tab() !== 'nichos') {
+    <label class="search filter-search">
+      <span class="visually-hidden">{{
+        tab() === 'produtos' ? 'Buscar produtos' : 'Buscar fornecedores'
+      }}</span>
+      <app-icon name="search" [size]="16" />
+      <input
+        class="input"
+        type="search"
+        name="q"
+        [placeholder]="tab() === 'produtos' ? 'Nome, marca ou CATMAT' : 'Nome, CNPJ ou cidade'"
+        [(ngModel)]="search"
+        (ngModelChange)="search$.next($event)"
+      />
+    </label>
+  }
+  <label class="visually-hidden" for="f-niche">Filtrar por nicho</label>
+  <select
+    id="f-niche"
+    class="input select"
+    [ngModel]="nicheId()"
+    (ngModelChange)="navigate({ nicho: $event || null })"
+  >
+    <option value="">Todos os nichos</option>
+    @for (n of activeNiches(); track n.id) {
+      <option [value]="n.id">{{ n.name }}</option>
+    }
+  </select>
+  @if (tab() === 'fornecedores') {
+    <label class="visually-hidden" for="f-uf">UF</label>
+    <select
+      id="f-uf"
+      class="input select"
+      [ngModel]="uf()"
+      (ngModelChange)="navigate({ uf: $event || null })"
+    >
+      <option value="">Todas as UFs</option>
+      @for (u of ufs; track u) {
+        <option [value]="u">{{ u }}</option>
+      }
+    </select>
+  }
+  <button
+    type="button"
+    class="btn"
+    [attr.aria-pressed]="archived()"
+    [class.toggled]="archived()"
+    (click)="navigate({ arquivados: archived() ? null : '1' })"
+  >
+    <app-icon name="filter" [size]="16" />Mostrar arquivados
+  </button>
+</div>
+
+@if (creating(); as kind) {
+  <form class="card create" (submit)="create($event)" aria-labelledby="h-create">
+    <h2 id="h-create" class="visually-hidden">
+      {{
+        kind === 'produtos'
+          ? 'Novo produto'
+          : kind === 'fornecedores'
+            ? 'Novo fornecedor'
+            : 'Novo nicho'
+      }}
+    </h2>
+    <div class="field grow">
+      <label for="new-name">{{
+        kind === 'produtos'
+          ? 'Nome do produto'
+          : kind === 'fornecedores'
+            ? 'Razão social'
+            : 'Nome do nicho'
+      }}</label>
+      <input
+        id="new-name"
+        class="input"
+        name="newName"
+        autocomplete="off"
+        required
+        [attr.maxlength]="kind === 'nichos' ? 80 : 200"
+        [(ngModel)]="newName"
+      />
+    </div>
+    @if (kind === 'nichos') {
+      <div class="field grow">
+        <label for="new-description">Descrição <span class="optional">(opcional)</span></label>
+        <input
+          id="new-description"
+          class="input"
+          name="newDescription"
+          maxlength="300"
+          autocomplete="off"
+          [(ngModel)]="newDescription"
+        />
+      </div>
+    } @else {
+      <div class="field">
+        <label for="new-niche"
+          >Nicho
+          @if (kind === 'fornecedores') {
+            <span class="optional">(opcional)</span>
+          }
+        </label>
+        <select id="new-niche" class="input" name="newNiche" [(ngModel)]="newNiche">
+          <option value="">{{ kind === 'produtos' ? 'Escolha…' : 'Nenhum por enquanto' }}</option>
+          @for (n of activeNiches(); track n.id) {
+            <option [value]="n.id">{{ n.name }}</option>
+          }
+        </select>
+      </div>
+    }
+    <div class="create-actions">
+      <button
+        type="submit"
+        class="btn primary"
+        [disabled]="busy() || !newName.trim() || (kind === 'produtos' && !newNiche)"
+      >
+        {{ kind === 'nichos' ? 'Criar nicho' : 'Cadastrar e abrir' }}
+      </button>
+      <button type="button" class="btn ghost" (click)="creating.set(null)">Cancelar</button>
+    </div>
+    @if (kind === 'produtos' && !activeNiches().length) {
+      <p class="hint">Crie um nicho primeiro, na aba Nichos.</p>
+    }
+  </form>
+}
+
+@if (error(); as message) {
+  <div class="alert" role="alert">
+    {{ message }}
+    <button
+      type="button"
+      class="btn ghost icon"
+      (click)="error.set(null)"
+      aria-label="Fechar aviso"
+    >
+      <app-icon name="x" [size]="16" />
+    </button>
+  </div>
+}
+
+@switch (tab()) {
+  @case ('produtos') {
+    <section class="card table-wrap">
+      <table class="data">
+        <caption class="visually-hidden">
+          Produtos
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Produto</th>
+            <th scope="col">Nicho</th>
+            <th scope="col">Unidade</th>
+            <th scope="col" class="n">Menor preço</th>
+            <th scope="col">Fornecedor</th>
+            <th scope="col" class="n">Fornecedores</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of products.value()?.items ?? []; track p.id) {
+            <tr class="clickable" [class.archived]="p.archivedAt" (click)="openProduct(p.id)">
+              <td class="main">
+                <a
+                  class="row-link"
+                  [routerLink]="['/fornecedores-produtos/produtos', p.id]"
+                  (click)="$event.stopPropagation()"
+                  >{{ p.name }}</a
+                >
+                @if (p.archivedAt) {
+                  <span class="badge">Arquivado</span>
+                }
+                @if (p.brand || p.catalogCode) {
+                  <span class="cell-sub">
+                    {{ p.brand }}{{ p.brand && p.catalogCode ? ' · ' : ''
+                    }}{{ p.catalogCode ? 'CATMAT/CATSER ' + p.catalogCode : '' }}
+                  </span>
+                }
+              </td>
+              <td class="nowrap">{{ p.niche?.name ?? '—' }}</td>
+              <td class="nowrap">{{ p.unit || '—' }}</td>
+              <td class="n nowrap">
+                @if ((p.lowestPrice ?? null) !== null) {
+                  <span class="money num">{{
+                    p.lowestPrice | currency: 'BRL' : 'symbol' : '1.2-4'
+                  }}</span>
+                  <span class="cell-sub num" [class.stale]="p.lowestStale">
+                    @if (p.lowestStale) {
+                      <app-icon name="clock" [size]="12" />
+                    }
+                    {{ formatDay(p.lowestQuotedOn) }}{{ p.lowestStale ? ' · cotação antiga' : '' }}
+                  </span>
+                } @else {
+                  <span class="cell-sub">Sem preço</span>
+                }
+              </td>
+              <td>{{ p.lowestSupplierName ?? '—' }}</td>
+              <td class="n num">{{ p.supplierCount }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty">
+                @if (products.isLoading()) {
+                  Carregando…
+                } @else if (q() || nicheId()) {
+                  Nenhum produto com este filtro.
+                } @else if (canEdit()) {
+                  Nenhum produto ainda. Clique em <strong>Novo produto</strong> para cadastrar o
+                  primeiro.
+                } @else {
+                  Nenhum produto ainda.
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+    @if (products.value(); as l) {
+      <app-pager
+        [page]="page()"
+        [size]="pageSize"
+        [total]="l.totalItems"
+        (pageChange)="navigate({ pagina: $event || null })"
+      />
+    }
+  }
+  @case ('fornecedores') {
+    <section class="card table-wrap">
+      <table class="data">
+        <caption class="visually-hidden">
+          Fornecedores
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Fornecedor</th>
+            <th scope="col">Cidade</th>
+            <th scope="col">Nichos</th>
+            <th scope="col" class="n">Produtos</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (s of suppliers.value()?.items ?? []; track s.id) {
+            <tr class="clickable" [class.archived]="s.archivedAt" (click)="openSupplier(s.id)">
+              <td class="main">
+                <a
+                  class="row-link"
+                  [routerLink]="['/fornecedores-produtos/fornecedores', s.id]"
+                  (click)="$event.stopPropagation()"
+                  >{{ s.tradeName || s.legalName }}</a
+                >
+                @if (s.archivedAt) {
+                  <span class="badge">Arquivado</span>
+                }
+                <span class="cell-sub">
+                  @if (s.tradeName) {
+                    {{ s.legalName }}
+                  }
+                  @if (s.cnpj) {
+                    <span class="num"
+                      >{{ s.tradeName ? ' · ' : '' }}CNPJ {{ formatCnpj(s.cnpj) }}</span
+                    >
+                  }
+                </span>
+              </td>
+              <td class="nowrap">
+                {{ s.city ?? '' }}{{ s.city && s.state ? '/' : '' }}{{ s.state ?? '' }}
+                @if (!s.city && !s.state) {
+                  —
+                }
+              </td>
+              <td>
+                <span class="chips">
+                  @for (n of s.niches; track n.id) {
+                    <span class="chip">{{ n.name }}</span>
+                  } @empty {
+                    <span class="cell-sub">Sem nicho</span>
+                  }
+                </span>
+              </td>
+              <td class="n num">{{ s.productCount }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="empty">
+                @if (suppliers.isLoading()) {
+                  Carregando…
+                } @else if (q() || nicheId() || uf()) {
+                  Nenhum fornecedor com este filtro.
+                } @else if (canEdit()) {
+                  Nenhum fornecedor ainda. Clique em <strong>Novo fornecedor</strong> para cadastrar
+                  o primeiro.
+                } @else {
+                  Nenhum fornecedor ainda.
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+    @if (suppliers.value(); as l) {
+      <app-pager
+        [page]="page()"
+        [size]="pageSize"
+        [total]="l.totalItems"
+        (pageChange)="navigate({ pagina: $event || null })"
+      />
+    }
+  }
+  @default {
+    <section class="card table-wrap">
+      <table class="data">
+        <caption class="visually-hidden">
+          Nichos
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Nicho</th>
+            <th scope="col" class="n">Fornecedores</th>
+            <th scope="col" class="n">Produtos</th>
+            @if (canEdit()) {
+              <th scope="col"><span class="visually-hidden">Ações</span></th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (n of shownNiches(); track n.id) {
+            <tr [class.archived]="n.archivedAt">
+              @if (renaming() === n.id) {
+                <td colspan="4">
+                  <form class="rename" (submit)="rename($event, n)">
+                    <label class="visually-hidden" [for]="'rename-' + n.id">Nome do nicho</label>
+                    <input
+                      [id]="'rename-' + n.id"
+                      class="input"
+                      name="renameName"
+                      maxlength="80"
+                      required
+                      [(ngModel)]="renameName"
+                    />
+                    <label class="visually-hidden" [for]="'rename-desc-' + n.id">Descrição</label>
+                    <input
+                      [id]="'rename-desc-' + n.id"
+                      class="input"
+                      name="renameDescription"
+                      maxlength="300"
+                      placeholder="Descrição (opcional)"
+                      [(ngModel)]="renameDescription"
+                    />
+                    <button
+                      type="submit"
+                      class="btn primary"
+                      [disabled]="busy() || !renameName.trim()"
+                    >
+                      Salvar
+                    </button>
+                    <button type="button" class="btn ghost" (click)="renaming.set(null)">
+                      Cancelar
+                    </button>
+                  </form>
+                </td>
+              } @else {
+                <td class="main">
+                  <span class="cell-main">{{ n.name }}</span>
+                  @if (n.archivedAt) {
+                    <span class="badge">Arquivado</span>
+                  }
+                  @if (n.description) {
+                    <span class="cell-sub">{{ n.description }}</span>
+                  }
+                </td>
+                <td class="n">
+                  <button type="button" class="link num" (click)="openNiche(n, 'fornecedores')">
+                    {{ n.supplierCount
+                    }}<span class="visually-hidden"> fornecedores de {{ n.name }}</span>
+                  </button>
+                </td>
+                <td class="n">
+                  <button type="button" class="link num" (click)="openNiche(n, 'produtos')">
+                    {{ n.productCount
+                    }}<span class="visually-hidden"> produtos de {{ n.name }}</span>
+                  </button>
+                </td>
+                @if (canEdit()) {
+                  <td class="n nowrap">
+                    <button
+                      type="button"
+                      class="btn ghost"
+                      (click)="startRename(n)"
+                      [disabled]="busy()"
+                    >
+                      Renomear<span class="visually-hidden"> {{ n.name }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn ghost"
+                      (click)="toggleArchive(n)"
+                      [disabled]="busy()"
+                    >
+                      {{ n.archivedAt ? 'Desarquivar' : 'Arquivar'
+                      }}<span class="visually-hidden"> {{ n.name }}</span>
+                    </button>
+                  </td>
+                }
+              }
+            </tr>
+          } @empty {
+            <tr>
+              <td [attr.colspan]="canEdit() ? 4 : 3" class="empty">
+                @if (niches.isLoading()) {
+                  Carregando…
+                } @else if (canEdit()) {
+                  Nenhum nicho ainda. Clique em <strong>Novo nicho</strong> para criar o primeiro
+                  (por exemplo, limpeza ou informática).
+                } @else {
+                  Nenhum nicho ainda.
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+}

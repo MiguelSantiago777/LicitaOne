@@ -26,3 +26,4 @@ Cada decisão relevante tem um arquivo `NNNN-titulo.md` com contexto, decisão e
 | [0020](0020-assistente-de-perguntas.md) | "Pergunte ao LicitaOne": assistente de perguntas sobre a carteira | Aceito |
 | [0021](0021-gemini-como-provedor.md) | Gemini como provedor alternativo da IA | Proposto |
 | [0022](0022-propostas-de-precos.md) | Propostas de preços (número fixo por ano, PDF sem assinatura) | Proposto |
+| [0023](0023-fornecedores-e-produtos.md) | Fornecedores e produtos por nicho (menor preço de custo, foto e ficha) | Proposto |

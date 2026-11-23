@@ -1,0 +1,336 @@
+<a class="link back" routerLink="/fornecedores-produtos" [queryParams]="{ aba: 'fornecedores' }"
+  ><app-icon name="arrow-left" [size]="16" />Fornecedores</a
+>
+
+@if (loadError(); as message) {
+  <div class="alert" role="alert">{{ message }}</div>
+} @else if (supplier(); as s) {
+  <div class="page-head">
+    <div>
+      <div class="title-line">
+        <h1>{{ s.tradeName || s.legalName }}</h1>
+        @if (s.archivedAt) {
+          <span class="badge"><span class="dot"></span>Arquivado</span>
+        }
+      </div>
+      <p class="sub">
+        Fornecedor
+        @if (editable()) {
+          · <app-save-status [state]="saver.state()" />
+        }
+      </p>
+    </div>
+    @if (s.canEdit) {
+      <div class="page-actions">
+        <button type="button" class="btn" (click)="toggleArchive()" [disabled]="busy()">
+          <app-icon [name]="s.archivedAt ? 'undo' : 'x'" [size]="16" />{{
+            s.archivedAt ? 'Desarquivar' : 'Arquivar fornecedor'
+          }}
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (saver.error(); as message) {
+    <div class="alert" role="alert">
+      <span>{{ message }}</span>
+      @if (saver.state() === 'conflict') {
+        <button type="button" class="btn" (click)="reloadPage()">Recarregar</button>
+      }
+    </div>
+  }
+  @if (actionError(); as message) {
+    <div class="alert" role="alert">
+      <span>{{ message }}</span>
+      <button
+        type="button"
+        class="btn ghost icon"
+        (click)="actionError.set(null)"
+        aria-label="Fechar aviso"
+      >
+        <app-icon name="x" [size]="16" />
+      </button>
+    </div>
+  }
+  @if (s.archivedAt) {
+    <div class="note">
+      Fornecedor arquivado: não aparece na lista nem na escolha de preços, e o preço dele não conta
+      como o menor. Os preços que já tinha continuam guardados.
+      @if (s.canEdit) {
+        Desarquive para voltar a editar.
+      }
+    </div>
+  }
+
+  <div class="stack">
+    <section class="card" aria-labelledby="h-data">
+      <div class="card-head"><h2 id="h-data">Dados da empresa</h2></div>
+      <div class="card-body grid">
+        <div class="field span-2">
+          <label for="s-legal">Razão social</label>
+          <input
+            id="s-legal"
+            class="input"
+            name="legalName"
+            maxlength="200"
+            autocomplete="off"
+            required
+            [(ngModel)]="form.legalName"
+            (ngModelChange)="changed()"
+            [readonly]="!editable()"
+          />
+        </div>
+        <div class="field">
+          <label for="s-trade">Nome fantasia</label>
+          <input
+            id="s-trade"
+            class="input"
+            name="tradeName"
+            maxlength="200"
+            autocomplete="off"
+            [(ngModel)]="form.tradeName"
+            (ngModelChange)="changed()"
+            [readonly]="!editable()"
+          />
+        </div>
+        <div class="field">
+          <label for="s-cnpj">CNPJ</label>
+          <input
+            id="s-cnpj"
+            class="input num"
+            name="cnpj"
+            maxlength="18"
+            autocomplete="off"
+            inputmode="text"
+            [(ngModel)]="form.cnpj"
+            (ngModelChange)="changed()"
+            (blur)="tidyCnpj()"
+            [readonly]="!editable()"
+          />
+        </div>
+        <div class="field">
+          <label for="s-city">Cidade</label>
+          <input
+            id="s-city"
+            class="input"
+            name="city"
+            maxlength="100"
+            autocomplete="off"
+            [(ngModel)]="form.city"
+            (ngModelChange)="changed()"
+            [readonly]="!editable()"
+          />
+        </div>
+        <div class="field">
+          <label for="s-state">UF</label>
+          <select
+            id="s-state"
+            class="input"
+            name="state"
+            [(ngModel)]="form.state"
+            (ngModelChange)="changed()"
+            [disabled]="!editable()"
+          >
+            <option value="">—</option>
+            @for (u of ufs; track u) {
+              <option [value]="u">{{ u }}</option>
+            }
+          </select>
+        </div>
+        <div class="field span-2">
+          <label for="s-site">Site</label>
+          <input
+            id="s-site"
+            class="input"
+            name="website"
+            maxlength="200"
+            autocomplete="off"
+            type="url"
+            [(ngModel)]="form.website"
+            (ngModelChange)="changed()"
+            [readonly]="!editable()"
+          />
+        </div>
+        <div class="field span-2">
+          <label for="s-notes">Observações</label>
+          <textarea
+            id="s-notes"
+            class="input"
+            name="notes"
+            rows="3"
+            maxlength="2000"
+            [(ngModel)]="form.notes"
+            (ngModelChange)="changed()"
+            [readonly]="!editable()"
+          ></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="h-niches">
+      <div class="card-head">
+        <h2 id="h-niches">Nichos que atende</h2>
+        <span class="meta">{{ nicheIds().size }} marcados</span>
+      </div>
+      <div class="card-body">
+        <fieldset class="checks">
+          <legend class="visually-hidden">Nichos que atende</legend>
+          @for (n of nicheChoices(); track n.id) {
+            <label class="check">
+              <input
+                type="checkbox"
+                [checked]="nicheIds().has(n.id)"
+                (change)="toggleNiche(n.id, $any($event.target).checked)"
+                [disabled]="!editable()"
+              />
+              {{ n.name }}
+              @if (n.archivedAt) {
+                <span class="cell-sub">(arquivado)</span>
+              }
+            </label>
+          } @empty {
+            <p class="cell-sub">
+              Nenhum nicho cadastrado. Crie na aba
+              <a routerLink="/fornecedores-produtos" [queryParams]="{ aba: 'nichos' }">Nichos</a>.
+            </p>
+          }
+        </fieldset>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="h-contacts">
+      <div class="card-head">
+        <h2 id="h-contacts">Contatos</h2>
+        @if (editable()) {
+          <button type="button" class="btn" (click)="addContact()">
+            <app-icon name="plus" [size]="16" />Adicionar contato
+          </button>
+        }
+      </div>
+      <div class="card-body">
+        @for (c of contacts; track c.key; let i = $index) {
+          <div class="row-grid contact">
+            <div class="field">
+              <label [for]="'ct-name-' + c.key">Nome</label>
+              <input
+                [id]="'ct-name-' + c.key"
+                class="input"
+                [name]="'ctName' + c.key"
+                maxlength="120"
+                autocomplete="off"
+                [(ngModel)]="c.name"
+                (ngModelChange)="changed()"
+                [readonly]="!editable()"
+              />
+            </div>
+            <div class="field">
+              <label [for]="'ct-phone-' + c.key">Telefone</label>
+              <input
+                [id]="'ct-phone-' + c.key"
+                class="input num"
+                [name]="'ctPhone' + c.key"
+                maxlength="40"
+                autocomplete="off"
+                type="tel"
+                [(ngModel)]="c.phone"
+                (ngModelChange)="changed()"
+                [readonly]="!editable()"
+              />
+            </div>
+            <div class="field">
+              <label [for]="'ct-email-' + c.key">E-mail</label>
+              <input
+                [id]="'ct-email-' + c.key"
+                class="input"
+                [name]="'ctEmail' + c.key"
+                maxlength="254"
+                autocomplete="off"
+                type="email"
+                [(ngModel)]="c.email"
+                (ngModelChange)="changed()"
+                [readonly]="!editable()"
+              />
+            </div>
+            @if (editable()) {
+              <button
+                type="button"
+                class="btn ghost icon remove"
+                (click)="removeContact(c)"
+                [attr.aria-label]="'Remover contato ' + (i + 1)"
+              >
+                <app-icon name="trash" [size]="16" />
+              </button>
+            }
+          </div>
+        } @empty {
+          <p class="cell-sub">Nenhum contato.</p>
+        }
+      </div>
+    </section>
+
+    <section class="card table-wrap" aria-labelledby="h-products">
+      <div class="card-head">
+        <h2 id="h-products">Produtos que vende</h2>
+        <span class="meta">{{ s.products.length }}</span>
+      </div>
+      <table class="data">
+        <thead>
+          <tr>
+            <th scope="col">Produto</th>
+            <th scope="col">Nicho</th>
+            <th scope="col" class="n">Preço de custo</th>
+            <th scope="col">Cotação</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of s.products; track p.productId) {
+            <tr [class.archived]="p.archived">
+              <td>
+                <a
+                  class="row-link"
+                  [routerLink]="['/fornecedores-produtos/produtos', p.productId]"
+                  >{{ p.name }}</a
+                >
+                @if (p.archived) {
+                  <span class="badge">Arquivado</span>
+                }
+                @if (p.brand || p.unit) {
+                  <span class="cell-sub"
+                    >{{ p.brand }}{{ p.brand && p.unit ? ' · ' : '' }}{{ p.unit }}</span
+                  >
+                }
+              </td>
+              <td>{{ p.nicheName ?? '—' }}</td>
+              <td class="n nowrap">
+                @if ((p.unitPrice ?? null) !== null) {
+                  <span class="money num">{{
+                    p.unitPrice | currency: 'BRL' : 'symbol' : '1.2-4'
+                  }}</span>
+                  @if (p.lowestPrice) {
+                    <span class="badge green"><span class="dot"></span>Menor preço</span>
+                  }
+                } @else {
+                  <span class="cell-sub">Sem preço</span>
+                }
+              </td>
+              <td class="nowrap num" [class.stale]="p.stale">
+                @if (p.stale) {
+                  <app-icon name="clock" [size]="12" />
+                }
+                {{ formatDay(p.quotedOn) }}{{ p.stale ? ' · antiga' : '' }}
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="empty">
+                Nenhum produto com preço deste fornecedor. O preço é informado na tela do produto.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  </div>
+} @else {
+  <p class="cell-sub">Carregando…</p>
+}

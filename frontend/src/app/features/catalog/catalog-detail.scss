@@ -1,0 +1,239 @@
+.back {
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+.title-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.alert,
+.note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 8px 8px 14px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+.alert {
+  background: var(--red-bg);
+  color: var(--red);
+}
+.note {
+  display: block;
+  padding: 10px 14px;
+  background: var(--gray-bg);
+  color: var(--text-2);
+}
+
+.stack {
+  display: grid;
+  gap: 20px;
+  max-width: 1100px;
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+.span-2 {
+  grid-column: span 2;
+}
+textarea.input {
+  height: auto;
+  min-height: 40px;
+  padding: 8px 12px;
+  resize: vertical;
+  line-height: 1.4;
+}
+.input[readonly],
+select.input:disabled {
+  background: var(--surface-2);
+}
+.input.n {
+  text-align: right;
+}
+.input.invalid {
+  border-color: var(--red);
+}
+.hint {
+  margin: 8px 0 0;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+/* Nichos */
+.checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  cursor: pointer;
+}
+.check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brand);
+}
+
+/* Linhas de contato e de preço */
+.row-grid {
+  display: grid;
+  gap: 10px 12px;
+  align-items: end;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.row-grid:first-child {
+  padding-top: 0;
+}
+.row-grid:last-of-type {
+  border-bottom: 0;
+}
+.contact {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1.2fr) 36px;
+}
+.offer {
+  --w: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 2fr) var(--w) var(--w) minmax(0, 0.7fr) minmax(0, 0.8fr) 36px;
+}
+.offer.lowest .supplier select {
+  border-color: var(--green);
+}
+.offer-tags {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.offer-tags:empty {
+  display: none;
+}
+.remove {
+  align-self: end;
+}
+
+/* Produtos do fornecedor */
+.row-link {
+  font-weight: 650;
+  color: var(--text);
+  margin-right: 8px;
+}
+.row-link:hover {
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+td .cell-sub {
+  display: block;
+}
+.nowrap {
+  white-space: nowrap;
+}
+.n .badge {
+  margin-left: 6px;
+}
+.stale {
+  color: var(--amber);
+}
+tr.archived .row-link {
+  color: var(--text-3);
+}
+
+/* Arquivos */
+.upload {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+.upload select {
+  width: auto;
+}
+.upload label.btn {
+  cursor: pointer;
+}
+.upload label.btn.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+.upload label.btn:focus-within {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.files {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.files li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.thumb {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  object-fit: cover;
+  background: var(--surface-2);
+}
+.icon-thumb {
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+}
+.file-info {
+  flex: 1;
+  min-width: 0;
+}
+.file-info .cell-main,
+.file-info .cell-sub {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 760px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .span-2 {
+    grid-column: auto;
+  }
+  .contact,
+  .offer {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .contact .field:first-child,
+  .offer .supplier {
+    grid-column: 1 / -1;
+  }
+  .remove {
+    justify-self: end;
+    grid-column: 2;
+  }
+}

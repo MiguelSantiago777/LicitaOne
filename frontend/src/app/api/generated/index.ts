@@ -4,6 +4,7 @@ export * from './alerts/alerts.service';
 export * from './assistant/assistant.service';
 export * from './auth/auth.service';
 export * from './boards/boards.service';
+export * from './catalog/catalog.service';
 export * from './contracts/contracts.service';
 export * from './deals/deals.service';
 export * from './documents/documents.service';

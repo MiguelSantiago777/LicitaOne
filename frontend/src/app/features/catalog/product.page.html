@@ -1,0 +1,355 @@
+<a class="link back" routerLink="/fornecedores-produtos"
+  ><app-icon name="arrow-left" [size]="16" />Produtos</a
+>
+
+@if (loadError(); as message) {
+  <div class="alert" role="alert">{{ message }}</div>
+} @else if (product(); as p) {
+  <div class="page-head">
+    <div>
+      <div class="title-line">
+        <h1>{{ p.name }}</h1>
+        @if (p.archivedAt) {
+          <span class="badge"><span class="dot"></span>Arquivado</span>
+        }
+      </div>
+      <p class="sub">
+        {{ p.niche?.name ?? 'Produto' }}
+        @if (editable()) {
+          · <app-save-status [state]="saver.state()" />
+        }
+      </p>
+    </div>
+    @if (p.canEdit) {
+      <div class="page-actions">
+        <button type="button" class="btn" (click)="toggleArchive()" [disabled]="busy()">
+          <app-icon [name]="p.archivedAt ? 'undo' : 'x'" [size]="16" />{{
+            p.archivedAt ? 'Desarquivar' : 'Arquivar produto'
+          }}
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (saver.error(); as message) {
+    <div class="alert" role="alert">
+      <span>{{ message }}</span>
+      @if (saver.state() === 'conflict') {
+        <button type="button" class="btn" (click)="reloadPage()">Recarregar</button>
+      }
+    </div>
+  }
+  @if (actionError(); as message) {
+    <div class="alert" role="alert">
+      <span>{{ message }}</span>
+      <button
+        type="button"
+        class="btn ghost icon"
+        (click)="actionError.set(null)"
+        aria-label="Fechar aviso"
+      >
+        <app-icon name="x" [size]="16" />
+      </button>
+    </div>
+  }
+  @if (p.archivedAt) {
+    <div class="note">
+      Produto arquivado: não aparece na lista, mas os preços continuam guardados.
+      @if (p.canEdit) {
+        Desarquive para voltar a editar.
+      }
+    </div>
+  }
+
+  <div class="stack">
+    <section class="card" aria-labelledby="h-data">
+      <div class="card-head"><h2 id="h-data">Dados do produto</h2></div>
+      <div class="card-body grid">
+        <div class="field span-2">
+          <label for="p-name">Nome</label>
+          <input
+            id="p-name"
+            class="input"
+            name="name"
+            maxlength="200"
+            autocomplete="off"
+            required
+            [(ngModel)]="form.name"
+            (ngModelChange)="changed()"
+            [readonly]="!editable()"
+          />
+        </div>
+        <div class="field">
+          <label for="p-niche">Nicho</label>
+          <select
+            id="p-niche"
+            class="input"
+            name="nicheId"
+            [(ngModel)]="form.nicheId"
+            (ngModelChange)="changed()"
+            [disabled]="!editable()"
+          >
+            @for (n of nicheChoices(); track n.id) {
+              <option [value]="n.id">{{ n.name }}{{ n.archivedAt ? ' (arquivado)' : '' }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label for="p-unit">Unidade</label>
+          <input
+            id="p-unit"
+            class="input"
+            name="unit"
+            maxlength="20"
+            autocomplete="off"
+            placeholder="un, cx, kg…"
+            [(ngModel)]="form.unit"
+            (ngModelChange)="changed()"
+            [readonly]="!editable()"
+          />
+        </div>
+        <div class="field">
+          <label for="p-brand">Marca</label>
+          <input
+            id="p-brand"
+            class="input"
+            name="brand"
+            maxlength="100"
+            autocomplete="off"
+            [(ngModel)]="form.brand"
+            (ngModelChange)="changed()"
+            [readonly]="!editable()"
+          />
+        </div>
+        <div class="field">
+          <label for="p-code">Código CATMAT/CATSER</label>
+          <input
+            id="p-code"
+            class="input num"
+            name="catalogCode"
+            maxlength="20"
+            autocomplete="off"
+            inputmode="numeric"
+            [(ngModel)]="form.catalogCode"
+            (ngModelChange)="changed()"
+            [readonly]="!editable()"
+          />
+        </div>
+        <div class="field span-2">
+          <label for="p-desc">Descrição</label>
+          <textarea
+            id="p-desc"
+            class="input"
+            name="description"
+            rows="3"
+            maxlength="2000"
+            [(ngModel)]="form.description"
+            (ngModelChange)="changed()"
+            [readonly]="!editable()"
+          ></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="h-offers">
+      <div class="card-head">
+        <h2 id="h-offers">Preços dos fornecedores</h2>
+        @if (editable()) {
+          <button type="button" class="btn" (click)="addOffer()">
+            <app-icon name="plus" [size]="16" />Adicionar fornecedor
+          </button>
+        }
+      </div>
+      <div class="card-body">
+        @for (r of rows; track r.key; let i = $index) {
+          <div class="row-grid offer" [class.lowest]="lowestKey() === r.key">
+            <div class="field supplier">
+              <label [for]="'of-supplier-' + r.key">Fornecedor</label>
+              <select
+                [id]="'of-supplier-' + r.key"
+                class="input"
+                [name]="'ofSupplier' + r.key"
+                [(ngModel)]="r.supplierId"
+                (ngModelChange)="changed()"
+                [disabled]="!editable()"
+              >
+                <option value="">Escolha…</option>
+                @for (s of supplierChoices(); track s.id) {
+                  @if (!usedElsewhere(r, s.id)) {
+                    <option [value]="s.id">
+                      {{ s.name }}{{ s.archived ? ' (arquivado)' : '' }}
+                    </option>
+                  }
+                }
+              </select>
+            </div>
+            <div class="field">
+              <label [for]="'of-price-' + r.key">Preço de custo (R$)</label>
+              <input
+                [id]="'of-price-' + r.key"
+                class="input num n"
+                [name]="'ofPrice' + r.key"
+                inputmode="decimal"
+                autocomplete="off"
+                [class.invalid]="invalid().has('p' + r.key)"
+                [attr.aria-invalid]="invalid().has('p' + r.key) || null"
+                [(ngModel)]="r.unitPrice"
+                (ngModelChange)="changed()"
+                (blur)="tidyRow(r)"
+                [readonly]="!editable()"
+              />
+            </div>
+            <div class="field">
+              <label [for]="'of-date-' + r.key">Data da cotação</label>
+              <input
+                [id]="'of-date-' + r.key"
+                class="input num"
+                type="date"
+                [name]="'ofDate' + r.key"
+                [max]="today"
+                [(ngModel)]="r.quotedOn"
+                (ngModelChange)="changed()"
+                [readonly]="!editable()"
+              />
+            </div>
+            <div class="field">
+              <label [for]="'of-days-' + r.key">Prazo (dias)</label>
+              <input
+                [id]="'of-days-' + r.key"
+                class="input num n"
+                [name]="'ofDays' + r.key"
+                inputmode="numeric"
+                autocomplete="off"
+                [class.invalid]="invalid().has('d' + r.key)"
+                [attr.aria-invalid]="invalid().has('d' + r.key) || null"
+                [(ngModel)]="r.leadTimeDays"
+                (ngModelChange)="changed()"
+                [readonly]="!editable()"
+              />
+            </div>
+            <div class="field">
+              <label [for]="'of-min-' + r.key">Pedido mínimo</label>
+              <input
+                [id]="'of-min-' + r.key"
+                class="input num n"
+                [name]="'ofMin' + r.key"
+                inputmode="decimal"
+                autocomplete="off"
+                [class.invalid]="invalid().has('m' + r.key)"
+                [attr.aria-invalid]="invalid().has('m' + r.key) || null"
+                [(ngModel)]="r.minimumOrder"
+                (ngModelChange)="changed()"
+                (blur)="tidyRow(r)"
+                [readonly]="!editable()"
+              />
+            </div>
+            @if (editable()) {
+              <button
+                type="button"
+                class="btn ghost icon remove"
+                (click)="removeOffer(r)"
+                [attr.aria-label]="'Remover fornecedor ' + (supplierName(r.supplierId) || i + 1)"
+              >
+                <app-icon name="trash" [size]="16" />
+              </button>
+            }
+            <div class="offer-tags">
+              @if (lowestKey() === r.key) {
+                <span class="badge green"><span class="dot"></span>Menor preço</span>
+              }
+              @if (isStale(r)) {
+                <span class="badge amber"
+                  ><app-icon name="clock" [size]="12" />Cotação com mais de 90 dias</span
+                >
+              }
+            </div>
+          </div>
+        } @empty {
+          <p class="cell-sub">
+            Nenhum fornecedor ainda.
+            @if (editable()) {
+              Clique em <strong>Adicionar fornecedor</strong> para informar um preço.
+            }
+          </p>
+        }
+        @if (editable() && rows.length) {
+          <p class="hint">Ao mudar o preço sem mexer na data, a cotação passa a ser de hoje.</p>
+        }
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="h-files">
+      <div class="card-head">
+        <h2 id="h-files">Foto e ficha técnica</h2>
+        <span class="meta">{{ p.files.length }}</span>
+      </div>
+      <div class="card-body">
+        @if (p.canEdit && !p.archivedAt) {
+          <div class="upload">
+            <label class="visually-hidden" for="up-kind">Tipo do arquivo</label>
+            <select id="up-kind" class="input" name="uploadKind" [(ngModel)]="uploadKind">
+              <option value="FOTO">Foto</option>
+              <option value="FICHA">Ficha técnica</option>
+            </select>
+            <label class="btn" [class.disabled]="busy()">
+              <app-icon name="paperclip" [size]="16" />Enviar arquivo
+              <input
+                #fileInput
+                class="visually-hidden"
+                type="file"
+                [accept]="
+                  uploadKind === 'FOTO' ? '.jpg,.jpeg,.png,.webp' : '.pdf,.jpg,.jpeg,.png,.webp'
+                "
+                [disabled]="busy()"
+                (change)="upload(fileInput)"
+              />
+            </label>
+            <span class="cell-sub">Até 10 MB. Foto: JPG, PNG ou WEBP. Ficha: também PDF.</span>
+          </div>
+        }
+        <ul class="files">
+          @for (f of p.files; track f.id) {
+            <li>
+              @if (thumbs()[f.id]; as url) {
+                <img class="thumb" [src]="url" [alt]="'Foto: ' + f.fileName" />
+              } @else {
+                <span class="thumb icon-thumb"><app-icon name="tenders" [size]="20" /></span>
+              }
+              <span class="file-info">
+                <span class="cell-main">{{ f.fileName }}</span>
+                <span class="cell-sub">
+                  {{ f.kind === 'FOTO' ? 'Foto' : 'Ficha técnica' }} ·
+                  {{ formatSize(f.sizeBytes) }} · {{ f.uploadedAt | date: 'dd/MM/yyyy'
+                  }}{{ f.uploadedBy ? ' · ' + f.uploadedBy : '' }}
+                </span>
+              </span>
+              <button
+                type="button"
+                class="btn ghost icon"
+                (click)="download(f)"
+                [attr.aria-label]="'Baixar ' + f.fileName"
+              >
+                <app-icon name="download" [size]="16" />
+              </button>
+              @if (p.canEdit && !p.archivedAt) {
+                <button
+                  type="button"
+                  class="btn ghost icon"
+                  (click)="removeFile(f)"
+                  [disabled]="busy()"
+                  [attr.aria-label]="'Apagar ' + f.fileName"
+                >
+                  <app-icon name="trash" [size]="16" />
+                </button>
+              }
+            </li>
+          } @empty {
+            <li class="cell-sub">Nenhum arquivo.</li>
+          }
+        </ul>
+      </div>
+    </section>
+  </div>
+} @else {
+  <p class="cell-sub">Carregando…</p>
+}

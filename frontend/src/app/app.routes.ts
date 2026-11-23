@@ -71,6 +71,21 @@ export const routes: Routes = [
           import('./features/proposals/proposal.page').then((m) => m.ProposalPage),
       },
       {
+        path: 'fornecedores-produtos',
+        title: 'Fornecedores e produtos · LicitaOne',
+        loadComponent: () => import('./features/catalog/catalog.page').then((m) => m.CatalogPage),
+      },
+      {
+        path: 'fornecedores-produtos/fornecedores/:id',
+        title: 'Fornecedor · LicitaOne',
+        loadComponent: () => import('./features/catalog/supplier.page').then((m) => m.SupplierPage),
+      },
+      {
+        path: 'fornecedores-produtos/produtos/:id',
+        title: 'Produto · LicitaOne',
+        loadComponent: () => import('./features/catalog/product.page').then((m) => m.ProductPage),
+      },
+      {
         path: 'tarefas',
         title: 'Tarefas · LicitaOne',
         loadComponent: () => import('./features/tasks/tasks.page').then((m) => m.TasksPage),

@@ -92,3 +92,10 @@ O usuário autorizou seguir sem esperar o cliente. Assumimos o seguinte; tudo po
 - O arquivo sai sem assinatura: quem baixa assina no assinador.
 - Os dados do cliente são sempre digitados na hora, sem puxar órgão nem licitação.
 - **Timbrado (13/11):** o usuário mandou o timbrado da Shema (PNG A4). O PDF da proposta sai nele, em todas as páginas.
+
+### Fornecedores e produtos por nicho (23/11/2026)
+- Pedido do usuário: uma aba de fornecedores e produtos, organizados por nichos. Plano em [fases/fase-13-plano.md](fases/fase-13-plano.md).
+- O fornecedor atende um ou mais nichos; o produto fica em um nicho; cada produto tem um ou mais fornecedores, cada um com o seu preço de custo.
+- Os nichos são cadastrados na própria tela por Administrador e Vendas.
+- O produto guarda preço de custo e data por fornecedor, CATMAT/CATSER, foto ou ficha técnica, prazo de entrega e pedido mínimo.
+- A ligação com as propostas de preços fica para depois.
