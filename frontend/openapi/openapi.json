@@ -48,6 +48,10 @@
       "description": "Leitura de atas, contratos e pedidos com IA"
     },
     {
+      "name": "reports",
+      "description": "Relatórios para o balanço"
+    },
+    {
       "name": "tasks",
       "description": "Tarefas"
     },
@@ -4853,6 +4857,132 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/TaskSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Um número do balanço num ano: mês a mês, anos, órgãos, municípios, UFs e tipos",
+        "description": "year padrão é o atual. state (UF) e sphere (MUNICIPAL, ESTADUAL, FEDERAL, OUTRA) filtram pelo órgão.",
+        "operationId": "getReport",
+        "parameters": [
+          {
+            "name": "metric",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PEDIDOS",
+                "CONTRATOS",
+                "LICITACOES",
+                "CARONAS"
+              ]
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sphere",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/pdf": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "O mesmo relatório em PDF, com os gráficos",
+        "operationId": "downloadReportPdf",
+        "parameters": [
+          {
+            "name": "metric",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PEDIDOS",
+                "CONTRATOS",
+                "LICITACOES",
+                "CARONAS"
+              ]
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sphere",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             }
@@ -11406,6 +11536,272 @@
         "required": [
           "open",
           "overdue"
+        ]
+      },
+      "ReportMonthResponse": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "value": {
+            "type": "number"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "previousYearValue": {
+            "type": "number"
+          },
+          "previousYearCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cumulative": {
+            "type": "number"
+          },
+          "previousYearCumulative": {
+            "type": "number"
+          },
+          "changePercent": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "changePercent",
+          "count",
+          "cumulative",
+          "month",
+          "previousYearCount",
+          "previousYearCumulative",
+          "previousYearValue",
+          "value"
+        ]
+      },
+      "ReportResponse": {
+        "type": "object",
+        "properties": {
+          "metric": {
+            "type": "string",
+            "enum": [
+              "PEDIDOS",
+              "CONTRATOS",
+              "LICITACOES",
+              "CARONAS"
+            ]
+          },
+          "metricLabel": {
+            "type": "string"
+          },
+          "singular": {
+            "type": "string"
+          },
+          "plural": {
+            "type": "string"
+          },
+          "dateBasis": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "state": {
+            "type": "string"
+          },
+          "sphere": {
+            "type": "string"
+          },
+          "sphereLabel": {
+            "type": "string"
+          },
+          "availableYears": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "elapsedMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ReportSummaryResponse"
+          },
+          "months": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportMonthResponse"
+            }
+          },
+          "years": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportYearResponse"
+            }
+          },
+          "byAgency": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportSliceResponse"
+            }
+          },
+          "byCity": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportSliceResponse"
+            }
+          },
+          "byState": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportSliceResponse"
+            }
+          },
+          "kindTitle": {
+            "type": "string"
+          },
+          "byKind": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportSliceResponse"
+            }
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "availableYears",
+          "byAgency",
+          "byCity",
+          "byKind",
+          "byState",
+          "dateBasis",
+          "elapsedMonths",
+          "generatedAt",
+          "kindTitle",
+          "metric",
+          "metricLabel",
+          "months",
+          "plural",
+          "singular",
+          "sphere",
+          "sphereLabel",
+          "state",
+          "summary",
+          "year",
+          "years"
+        ]
+      },
+      "ReportSliceResponse": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "share": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "count",
+          "detail",
+          "key",
+          "label",
+          "share",
+          "value"
+        ]
+      },
+      "ReportSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "average": {
+            "type": "number"
+          },
+          "bestMonth": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bestValue": {
+            "type": "number"
+          },
+          "worstMonth": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "worstValue": {
+            "type": "number"
+          },
+          "previousSamePeriod": {
+            "type": "number"
+          },
+          "changePercent": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "average",
+          "bestMonth",
+          "bestValue",
+          "changePercent",
+          "count",
+          "previousSamePeriod",
+          "total",
+          "worstMonth",
+          "worstValue"
+        ]
+      },
+      "ReportYearResponse": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "number"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "months": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "count",
+          "months",
+          "total",
+          "year"
         ]
       },
       "PageResponseProposalSummaryResponse": {

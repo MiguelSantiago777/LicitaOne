@@ -134,7 +134,8 @@
   height: 20px;
   padding: 0 6px;
   border-radius: 999px;
-  background: #ef4444;
+  // #dc2626: 4,8:1 com o branco (o #ef4444 dava 3,8:1, abaixo do AA para texto pequeno)
+  background: #dc2626;
   color: #fff;
   font-size: 11px;
   font-weight: 700;

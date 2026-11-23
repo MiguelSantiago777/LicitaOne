@@ -99,3 +99,10 @@ O usuário autorizou seguir sem esperar o cliente. Assumimos o seguinte; tudo po
 - Os nichos são cadastrados na própria tela por Administrador e Vendas.
 - O produto guarda preço de custo e data por fornecedor, CATMAT/CATSER, foto ou ficha técnica, prazo de entrega e pedido mínimo.
 - A ligação com as propostas de preços fica para depois.
+
+### Relatórios para o balanço (23/11/2026)
+- Pedido do usuário: uma aba de relatórios com gráficos para o balanço: quanto foi feito em cada mês, o melhor mês, divisão por ano. Plano em [fases/fase-14-plano.md](fases/fase-14-plano.md).
+- Quatro números, sempre separados: pedidos recebidos, contratos assinados, licitações vencidas e caronas.
+- Quebras por mês e ano, órgão, tipo e município/UF.
+- Exportação em PDF com os gráficos.
+- Todos os perfis veem os relatórios.

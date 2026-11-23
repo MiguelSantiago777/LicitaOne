@@ -1,0 +1,344 @@
+<div class="page-head">
+  <div>
+    <h1>Relatórios</h1>
+    <p class="sub">
+      @if (report.value(); as r) {
+        {{ r.metricLabel }} em {{ r.year }} · {{ r.dateBasis.toLowerCase() }} define o mês
+        @if (r.state) {
+          · UF {{ r.state }}
+        }
+        @if (r.sphereLabel) {
+          · esfera {{ r.sphereLabel.toLowerCase() }}
+        }
+      } @else {
+        Balanço por mês e por ano
+      }
+    </p>
+  </div>
+  <div class="page-actions">
+    <button
+      type="button"
+      class="btn"
+      (click)="download()"
+      [disabled]="downloading() || !report.hasValue()"
+      [attr.aria-busy]="downloading() || null"
+    >
+      <app-icon name="download" [size]="16" />{{ downloading() ? 'Gerando…' : 'Baixar PDF' }}
+    </button>
+  </div>
+</div>
+
+<div class="tabs" role="tablist" aria-label="Número do relatório">
+  @for (m of metrics; track m.id) {
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="metric() === m.id"
+      (click)="navigate({ numero: m.id === 'PEDIDOS' ? null : m.id })"
+    >
+      {{ m.label }}
+    </button>
+  }
+</div>
+
+<div class="filters">
+  <span class="field-inline">
+    <label for="f-year">Ano</label>
+    <select
+      id="f-year"
+      class="input"
+      [ngModel]="year()"
+      (ngModelChange)="navigate({ ano: $event })"
+    >
+      @for (y of years(); track y) {
+        <option [ngValue]="y">{{ y }}</option>
+      }
+    </select>
+  </span>
+  <span class="field-inline">
+    <label for="f-uf">UF</label>
+    <select
+      id="f-uf"
+      class="input"
+      [ngModel]="uf()"
+      (ngModelChange)="navigate({ uf: $event || null })"
+    >
+      <option value="">Todas</option>
+      @for (u of ufs; track u) {
+        <option [value]="u">{{ u }}</option>
+      }
+    </select>
+  </span>
+  <span class="field-inline">
+    <label for="f-sphere">Esfera</label>
+    <select
+      id="f-sphere"
+      class="input"
+      [ngModel]="sphere()"
+      (ngModelChange)="navigate({ esfera: $event || null })"
+    >
+      <option value="">Todas</option>
+      @for (s of spheres; track s.id) {
+        <option [value]="s.id">{{ s.label }}</option>
+      }
+    </select>
+  </span>
+</div>
+
+@if (error(); as message) {
+  <div class="alert" role="alert">
+    {{ message }}
+    <button
+      type="button"
+      class="btn ghost icon"
+      (click)="error.set(null)"
+      aria-label="Fechar aviso"
+    >
+      <app-icon name="x" [size]="16" />
+    </button>
+  </div>
+}
+
+@if (report.error()) {
+  <div class="card empty" role="alert">
+    <strong>Não foi possível carregar o relatório.</strong>
+    <button type="button" class="btn sm" (click)="report.reload()">Tentar de novo</button>
+  </div>
+} @else if (report.value(); as r) {
+  <section class="kpis" aria-label="Resumo do ano">
+    <div class="card kpi">
+      <span class="kpi-label">Total em {{ r.year }}</span>
+      <p class="kpi-value">{{ brl(r.summary.total) }}</p>
+      <p class="kpi-foot">
+        {{ r.summary.count }} {{ r.summary.count === 1 ? r.singular : r.plural }}
+      </p>
+    </div>
+    <div class="card kpi">
+      <span class="kpi-label">Média por mês</span>
+      <p class="kpi-value">{{ brl(r.summary.average) }}</p>
+      <p class="kpi-foot">
+        @if (r.elapsedMonths === 12) {
+          nos 12 meses
+        } @else if (r.elapsedMonths === 0) {
+          o ano ainda não começou
+        } @else {
+          de janeiro a {{ monthName(r.elapsedMonths).toLowerCase() }}
+        }
+      </p>
+    </div>
+    <div class="card kpi">
+      <span class="kpi-label">Melhor mês</span>
+      <p class="kpi-value">{{ r.summary.bestMonth ? monthName(r.summary.bestMonth) : '—' }}</p>
+      <p class="kpi-foot">
+        @if ((r.summary.bestValue ?? null) !== null) {
+          {{ brl(r.summary.bestValue) }}
+          @if (r.summary.worstMonth) {
+            · mais fraco: {{ monthName(r.summary.worstMonth).toLowerCase() }}
+          }
+        } @else {
+          sem movimento no ano
+        }
+      </p>
+    </div>
+    <div class="card kpi">
+      <span class="kpi-label">Sobre {{ r.year - 1 }}</span>
+      <p
+        class="kpi-value delta"
+        [class.up]="(r.summary.changePercent ?? 0) > 0"
+        [class.down]="(r.summary.changePercent ?? 0) < 0"
+      >
+        @if ((r.summary.changePercent ?? null) !== null) {
+          <app-icon [name]="r.summary.changePercent >= 0 ? 'trend' : 'trend-down'" [size]="20" />
+        }
+        {{ signedPercent(r.summary.changePercent) }}
+      </p>
+      <p class="kpi-foot">
+        @if (r.elapsedMonths > 0) {
+          {{
+            r.elapsedMonths === 12
+              ? 'ano inteiro'
+              : 'jan–' + monthShort(r.elapsedMonths).toLowerCase()
+          }}
+          de {{ r.year - 1 }}: {{ brl(r.summary.previousSamePeriod) }}
+        } @else {
+          sem período para comparar
+        }
+      </p>
+    </div>
+  </section>
+
+  <section class="card block" aria-labelledby="h-months">
+    <div class="card-head"><h2 id="h-months">Mês a mês</h2></div>
+    <div class="card-body">
+      @if (hasMovement()) {
+        <app-month-chart
+          [months]="r.months"
+          [year]="r.year"
+          [best]="r.summary.bestMonth"
+          [unit]="unit()"
+        />
+      } @else {
+        <p class="no-data">
+          Nenhum registro de {{ r.plural }} em {{ r.year }} nem em {{ r.year - 1 }}
+          {{ r.state || r.sphereLabel ? 'com estes filtros' : '' }}.
+        </p>
+      }
+      <details class="table-toggle">
+        <summary>Ver tabela mês a mês</summary>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Tabela mês a mês">
+          <table class="data">
+            <caption class="visually-hidden">
+              {{
+                r.metricLabel
+              }}
+              por mês em
+              {{
+                r.year
+              }}
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Mês</th>
+                <th scope="col" class="n">{{ r.year }}</th>
+                <th scope="col" class="n">Qtde.</th>
+                <th scope="col" class="n">{{ r.year - 1 }}</th>
+                <th scope="col" class="n">Sobre o mês anterior</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of r.months; track m.month) {
+                <tr [class.best]="m.month === r.summary.bestMonth">
+                  <th scope="row">
+                    {{ monthName(m.month) }}
+                    @if (m.month === r.summary.bestMonth) {
+                      <span class="badge green"><span class="dot"></span>Melhor</span>
+                    }
+                  </th>
+                  <td class="n num">{{ brl(m.value) }}</td>
+                  <td class="n num">{{ m.count }}</td>
+                  <td class="n num muted">{{ brl(m.previousYearValue) }}</td>
+                  <td class="n num">{{ signedPercent(m.changePercent) }}</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <th scope="row">Total</th>
+                <td class="n num">{{ brl(r.summary.total) }}</td>
+                <td class="n num">{{ r.summary.count }}</td>
+                <td class="n num muted"></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="card block" aria-labelledby="h-cumulative">
+    <div class="card-head"><h2 id="h-cumulative">Acumulado do ano</h2></div>
+    <div class="card-body">
+      @if (hasMovement()) {
+        <app-cumulative-chart [months]="r.months" [year]="r.year" />
+      } @else {
+        <p class="no-data">Sem movimento para acumular.</p>
+      }
+    </div>
+  </section>
+
+  <section class="card block" aria-labelledby="h-years">
+    <div class="card-head">
+      <h2 id="h-years">Comparação entre anos</h2>
+      <span class="meta">{{ r.metricLabel }} por ano</span>
+    </div>
+    <div class="card-body">
+      <app-bar-list
+        [items]="yearBars()"
+        [singular]="r.singular"
+        [plural]="r.plural"
+        emptyText="Nenhum ano com movimento."
+      />
+      @if (r.years.length) {
+        <details class="table-toggle">
+          <summary>Ver tabela ano × mês</summary>
+          <div class="table-wrap" tabindex="0" role="region" aria-label="Tabela ano por mês">
+            <table class="data compact-table">
+              <caption class="visually-hidden">
+                {{
+                  r.metricLabel
+                }}
+                por ano e mês
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Ano</th>
+                  @for (m of monthNumbers; track m) {
+                    <th scope="col" class="n">{{ monthShort(m) }}</th>
+                  }
+                  <th scope="col" class="n">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (y of r.years; track y.year) {
+                  <tr>
+                    <th scope="row">{{ y.year }}</th>
+                    @for (v of y.months; track $index) {
+                      <td class="n num" [class.muted]="v === 0">
+                        {{ v === 0 ? '—' : compact(v, false) }}
+                      </td>
+                    }
+                    <td class="n num strong">{{ compact(y.total, false) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </details>
+      }
+    </div>
+  </section>
+
+  <div class="split">
+    <section class="card" aria-labelledby="h-agencies">
+      <div class="card-head">
+        <h2 id="h-agencies">Órgãos que mais compraram</h2>
+        <span class="meta">{{ r.year }}</span>
+      </div>
+      <div class="card-body">
+        <app-bar-list [items]="bars(r.byAgency)" [singular]="r.singular" [plural]="r.plural" />
+      </div>
+    </section>
+    <section class="card" aria-labelledby="h-cities">
+      <div class="card-head">
+        <h2 id="h-cities">Municípios</h2>
+        <span class="meta">{{ r.year }}</span>
+      </div>
+      <div class="card-body">
+        <app-bar-list [items]="bars(r.byCity)" [singular]="r.singular" [plural]="r.plural" />
+      </div>
+    </section>
+    <section class="card" aria-labelledby="h-states">
+      <div class="card-head">
+        <h2 id="h-states">Por UF</h2>
+        <span class="meta">{{ r.year }}</span>
+      </div>
+      <div class="card-body">
+        <app-bar-list [items]="bars(r.byState)" [singular]="r.singular" [plural]="r.plural" />
+      </div>
+    </section>
+    @if (r.kindTitle) {
+      <section class="card" aria-labelledby="h-kinds">
+        <div class="card-head">
+          <h2 id="h-kinds">{{ r.kindTitle }}</h2>
+          <span class="meta">{{ r.year }}</span>
+        </div>
+        <div class="card-body">
+          <app-bar-list [items]="bars(r.byKind)" [singular]="r.singular" [plural]="r.plural" />
+        </div>
+      </section>
+    }
+  </div>
+} @else {
+  <p class="loading">Carregando…</p>
+}

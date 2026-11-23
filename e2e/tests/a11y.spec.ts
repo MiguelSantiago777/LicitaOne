@@ -43,6 +43,8 @@ const pages: { path: string; heading: string }[] = [
   { path: '/fornecedores-produtos/fornecedores/62000000-0000-4000-8000-000000000001', heading: 'Alfa Limpeza' },
   { path: '/tarefas', heading: 'Tarefas' },
   { path: '/alertas', heading: 'Alertas' },
+  { path: '/relatorios', heading: 'Relatórios' },
+  { path: '/relatorios?numero=LICITACOES', heading: 'Relatórios' },
   { path: '/importacao', heading: 'Importação' },
   { path: '/usuarios', heading: 'Usuários' },
 ];
@@ -54,7 +56,8 @@ test('login sem violações de acessibilidade', async ({ page }) => {
 });
 
 test('telas principais sem violações de acessibilidade', async ({ page }) => {
-  test.setTimeout(90_000);
+  // Uma tela por vez em todas as abas (as Fases 13 e 14 somaram 7): passa de 1 min com a suíte cheia rodando junto
+  test.setTimeout(180_000);
   await login(page);
   for (const p of pages) {
     await page.goto(p.path);

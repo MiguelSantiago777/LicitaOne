@@ -89,7 +89,13 @@ export class Shell {
           { path: '/alertas', label: 'Alertas', icon: 'bell' },
         ],
       },
-      { label: 'Dados', items: [{ path: '/importacao', label: 'Importação', icon: 'imports' }] },
+      {
+        label: 'Dados',
+        items: [
+          { path: '/relatorios', label: 'Relatórios', icon: 'chart' },
+          { path: '/importacao', label: 'Importação', icon: 'imports' },
+        ],
+      },
     ];
     if (this.session.user()?.role === 'ADMIN') {
       groups.push({

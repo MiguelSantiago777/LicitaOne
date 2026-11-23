@@ -27,3 +27,4 @@ Cada decisão relevante tem um arquivo `NNNN-titulo.md` com contexto, decisão e
 | [0021](0021-gemini-como-provedor.md) | Gemini como provedor alternativo da IA | Proposto |
 | [0022](0022-propostas-de-precos.md) | Propostas de preços (número fixo por ano, PDF sem assinatura) | Proposto |
 | [0023](0023-fornecedores-e-produtos.md) | Fornecedores e produtos por nicho (menor preço de custo, foto e ficha) | Proposto |
+| [0024](0024-relatorios-do-balanco.md) | Relatórios para o balanço (quatro números, gráficos sem biblioteca, PDF) | Proposto |
